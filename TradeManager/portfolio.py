@@ -1,4 +1,3 @@
-from test import test_data
 import pandas as pd
 import numpy as np
 
@@ -14,7 +13,7 @@ class Portfolio(object):
         # for account_number in self.account_numbers:
         #     acc = Account(account_number)
         #     self.accounts.append(acc.get_positions())
-        return test_data.accounts
+        pass
 
     def concat_positions(self):
         portfolio_accounts = []
@@ -40,8 +39,3 @@ class Portfolio(object):
 
     def get_portfolio_value(self, portfolio_positions):
         return portfolio_positions['position'].sum()
-
-if __name__ == "__main__":
-    account_numbers = {'account_numbers': ['11-11', 'X4-557']}
-    p = Portfolio(account_numbers)
-    print(p.aggregated_portfolio)

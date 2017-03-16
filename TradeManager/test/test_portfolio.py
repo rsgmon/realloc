@@ -1,6 +1,6 @@
 from unittest import TestCase
 from TradeManager.portfolio import Portfolio
-from test.test_data import accounts, trade_request
+from TradeManager.test.test_data import accounts, trade_request
 
 
 class TestPortfolio(TestCase):

@@ -1,13 +1,12 @@
-import test.test_data
-import test.intermediate_test_data
 import pandas as pd
 import numpy as np
 from TradeManager.portfolio import Portfolio
+from TradeManager.tradeCalculator import TradeCalculator
 
 
 class TradeManager(object):
     def __init__(self, trade_request=None):
-        self.trade_request = test.test_data.trade_request
+        self.trade_request = trade_request
         self.model = self.get_model()
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
@@ -32,7 +31,7 @@ class Model(object):
         self.model_positions = self.get_model(self.model)
 
     def get_model(self, model):
-        model = test.test_data.model['model_positions']
+        model = TradeManager.test.test_data.model['model_positions']
         return pd.DataFrame(model).rename(columns={'weight':'model_weight'}).groupby('symbol').agg(np.sum)
 
 

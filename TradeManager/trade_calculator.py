@@ -1,6 +1,4 @@
 import pandas as pd
-import test.intermediate_test_data
-
 
 class TradeCalculator(object):
     def __init__(self, portfolio, model_weights):
@@ -28,7 +26,7 @@ class TradeCalculator(object):
             return self.portfolio_trade_list[self.portfolio_trade_list['shares'] > 0]
 
     def request_prices(self):
-        return test.intermediate_test_data.prices
+        return TradeManager.test.intermediate_test_data.prices
 
     def generate_trades(self):
         pass
@@ -36,7 +34,3 @@ class TradeCalculator(object):
 class PendingSalesObject(object):
     def __init__(self, trade_list):
         self.trade_list = trade_list
-
-if __name__ == "__main__":
-    tc = TradeCalculator(test.intermediate_test_data.portfolio, test.intermediate_test_data.model_positions)
-    print(tc._add_share_trades())
