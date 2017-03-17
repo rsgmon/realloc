@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from TradeManager.portfolio import Portfolio
-from TradeManager.tradeCalculator import TradeCalculator
+from TradeManager.trade_calculator import TradeCalculator
 
 
 class TradeManager(object):

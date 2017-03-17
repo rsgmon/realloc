@@ -1,28 +1,34 @@
 import pandas as pd
 import numpy as np
+import json
 
 class Portfolio(object):
-    def __init__(self, account_numbers):
-        self.account_numbers = account_numbers
-        self.accounts = self.get_portfolio()
-        self.concatenated_positions = self.concat_positions()
-        self.aggregated_portfolio = self.aggregate_share_positions()
-        self.portfolio_value = self.get_portfolio_value(self.aggregated_portfolio)
+    def __init__(self, account_instructions):
+        self.account_instructions = account_instructions
+        self.accounts = self._get_accounts_from_brokers(self.account_instructions)
+        # self.concatenated_positions = self.concat_positions()
+        # self.aggregated_portfolio = self.aggregate_share_positions()
+        # self.portfolio_value = self.get_portfolio_value(self.aggregated_portfolio)
 
-    def get_portfolio(self):
-        # for account_number in self.account_numbers:
-        #     acc = Account(account_number)
-        #     self.accounts.append(acc.get_positions())
-        pass
+    def _get_accounts_from_brokers(self, account_instructions ):
+        if not isinstance(account_instructions, list):
+            account_instructions = [account_instructions]
+        accounts_from_broker = []
+        for instruction in account_instructions:
+            with open(instruction, 'r') as account:
+                account = json.loads(account.read())
+            accounts_from_broker.append(account)
+        return accounts_from_broker
 
-    def concat_positions(self):
+    def _pandaize_positions(self, accounts=None):
+        accounts = accounts if accounts else self.accounts
         portfolio_accounts = []
-        for account in self.accounts:
+        for account in accounts:
             portfolio_accounts.append(pd.DataFrame(account['account_positions']))
         portfolio_level_positions = pd.concat(portfolio_accounts, axis=1).fillna(0)
         return portfolio_level_positions
 
-    def aggregate_share_positions(self):
+    def _aggregate_share_positions(self):
         portfolio_concatenated_positions = pd.DataFrame()
         for account in self.accounts:
             portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions,

@@ -10,3 +10,7 @@ model = {'model_id': 'TTT', 'model_positions': [{'symbol': 'ABC', 'weight': 0.15
 prices = [{'symbol': 'MMM', 'price': 40}, {'symbol': 'XYZ', 'price': 43},
           {'symbol': 'DEF', 'price': 212}, {'symbol': 'ABC', 'price': 120},
           {'symbol': 'GGG', 'price': 34}, {'symbol': 'cash', 'price': 1}]
+
+
+
+account_instructions = 'C:\\Users\\Rye\\Google Drive\\School\\Python\\PortMgr\\TradeManager\\test\\test_data\\account_data.json'
