@@ -3,12 +3,27 @@ import numpy as np
 import json
 
 class Portfolio(object):
-    def __init__(self, account_instructions):
-        self.account_instructions = account_instructions
-        self.accounts = self._get_accounts_from_brokers(self.account_instructions)
-        # self.concatenated_positions = self.concat_positions()
-        # self.aggregated_portfolio = self.aggregate_share_positions()
-        # self.portfolio_value = self.get_portfolio_value(self.aggregated_portfolio)
+    def __init__(self, portfolio_request=None):
+        if portfolio_request:
+            self.portfolio_request = portfolio_request
+            self.portfolio = self.get_portfolio_positions(self.portfolio_request)
+            self.portfolio_value = self.get_portfolio_value(self.portfolio_request)
+
+    def _assemble_accounts(self, portfolio_request):
+        accounts = []
+        if 'account_instructions' in portfolio_request:
+            if portfolio_request['account_instructions']:
+                for broker_account in self._get_accounts_from_brokers(portfolio_request['account_instructions']):
+                    accounts.append(broker_account)
+        if 'raw_accounts' in portfolio_request:
+            if portfolio_request['raw_accounts']:
+                for user_account in portfolio_request['raw_accounts']:
+                    accounts.append(user_account)
+        return accounts
+
+    def _validate_accounts(self, accounts):
+        #this method needs futher work but is here a placeholder to remember that
+        return accounts
 
     def _get_accounts_from_brokers(self, account_instructions ):
         if not isinstance(account_instructions, list):
@@ -20,28 +35,35 @@ class Portfolio(object):
             accounts_from_broker.append(account)
         return accounts_from_broker
 
-    def _pandaize_positions(self, accounts=None):
-        accounts = accounts if accounts else self.accounts
-        portfolio_accounts = []
-        for account in accounts:
-            portfolio_accounts.append(pd.DataFrame(account['account_positions']))
-        portfolio_level_positions = pd.concat(portfolio_accounts, axis=1).fillna(0)
-        return portfolio_level_positions
-
-    def _aggregate_share_positions(self):
+    def _aggregate_share_positions(self, accounts):
         portfolio_concatenated_positions = pd.DataFrame()
-        for account in self.accounts:
-            portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions,
-                                                   pd.DataFrame(account['account_positions'])])
-        grouped_portfolio_positions = portfolio_concatenated_positions.groupby('symbol').agg(np.sum)
+        for account in accounts:
+            portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, pd.DataFrame(account['account_positions'])])
+        return portfolio_concatenated_positions
+
+    def _clean_aggregated_positions(self, aggregated_position):
+        price_matrix = self._create_price_matrix(aggregated_position)
+        grouped_portfolio_positions = aggregated_position.groupby('symbol').agg(np.sum)
         del grouped_portfolio_positions['price']
-        portfolio_concatenated_positions.set_index('symbol',inplace=True)
-        price_matrix = portfolio_concatenated_positions['price']
-        price_matrix.drop_duplicates(inplace=True)
         portfolio_positions = pd.concat([grouped_portfolio_positions, price_matrix], axis=1)
         portfolio_positions['position'] = portfolio_positions['shares']* portfolio_positions['price']
         portfolio_positions['portfolio_weight'] = portfolio_positions['position']/portfolio_positions['position'].sum()
         return portfolio_positions
 
-    def get_portfolio_value(self, portfolio_positions):
-        return portfolio_positions['position'].sum()
+    def _create_price_matrix(self, aggregated_position):
+        price_matrix = aggregated_position.copy(deep=True)
+        price_matrix.drop_duplicates(inplace=True, subset='symbol')
+        price_matrix.set_index('symbol', inplace=True)
+        del price_matrix['shares']
+        return price_matrix
+
+    def get_portfolio_value(self, account_instructions):
+        cleaned_positions = self.get_portfolio_positions(account_instructions)
+        return cleaned_positions['position'].sum()
+
+    def get_portfolio_positions(self, portfolio_request):
+        raw_accounts = self._assemble_accounts(portfolio_request)
+        validated_accounts = self._validate_accounts(raw_accounts)
+        aggregated_positions = self._aggregate_share_positions(validated_accounts)
+        cleaned_positions = self._clean_aggregated_positions(aggregated_positions)
+        return cleaned_positions

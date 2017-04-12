@@ -1,23 +1,19 @@
 from unittest import TestCase
 from TradeManager.portfolio import Portfolio
-from TradeManager.test.test_data.test_data import accounts, trade_request, account_instructions
+from TradeManager.trade_manager import TradeRequest
+from TradeManager.test.test_data.test_data import account_instructions, valid_request
 
 
 class TestPortfolio(TestCase):
     def setUp(self):
-        self.portfolio = Portfolio(account_instructions)
+        self.trade_request = TradeRequest(valid_request)
+        self.portfolio = Portfolio()
 
     def test_get_portfolio(self):
-        portfolio_positions = self.portfolio._get_accounts_from_brokers(self.portfolio.account_instructions)
-        self.assertEqual(len(portfolio_positions[0]), 2)
+        self.assertEqual(len(self.portfolio.get_portfolio_positions(self.trade_request.portfolio_request)),6)
 
-    def test_concat_positions(self):
-        pandaized_position = self.portfolio._pandaize_positions()
-        self.assertEqual(len(pandaized_position), 3)
+    def test_get_portfolio_value(self):
+        self.assertEqual(self.portfolio.get_portfolio_value(self.trade_request.portfolio_request), 161200.0)
 
-    def test_aggregate_share_positions(self):
-        aggregated_portfolio_positions = self.portfolio._aggregate_share_positions()
-        print(aggregated_portfolio_positions)
-
-    # def test_get_portfolio_value(self):
-    #     self.assertTrue(self.portfolio.get_portfolio_value(self.portfolio.aggregated_portfolio))
+    def test_testit(self):
+        self.assertTrue(1)
