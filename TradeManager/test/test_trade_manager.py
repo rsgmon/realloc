@@ -15,8 +15,8 @@ class TestTradeManager(TestCase):
         self.assertEqual(valid_request['model_request']['raw_model'], self.trade_request.model_request)
 
     def test_trade_calculator(self):
-        pass#print(self.trade_calculator.portfolio_trade_list)
+        self.assertEqual(self.trade_calculator.portfolio_trade_list['shares']['ABC'], 99.0)
 
     def test_trade_allocator(self):
-        allocator =  TradeAllocator(self.trade_manager.portfolio, self.trade_calculator.portfolio_trade_list)
-        print(allocator.portfolio.accounts, allocator.trade_list)
+        allocator =  TradeAllocator(self.trade_manager.portfolio.account_matrix, self.trade_calculator.portfolio_trade_list)
+        allocator.score_trades()

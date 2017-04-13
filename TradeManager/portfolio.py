@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import json
+from TradeManager.test.test_data.test_data import prices
 
 class Portfolio(object):
     def __init__(self, portfolio_request=None):
@@ -52,11 +53,13 @@ class Portfolio(object):
         return portfolio_positions
 
     def _create_price_matrix(self, aggregated_position):
-        price_matrix = aggregated_position.copy(deep=True)
-        price_matrix.drop_duplicates(inplace=True, subset='symbol')
-        price_matrix.set_index('symbol', inplace=True)
-        del price_matrix['shares']
-        return price_matrix
+        # price_matrix = aggregated_position.copy(deep=True)
+        # price_matrix.drop_duplicates(inplace=True, subset='symbol')
+        # price_matrix.set_index('symbol', inplace=True)
+        # del price_matrix['shares']
+        # return price_matrix
+        """At this point I have simply imported the prices for demo purposes. In the end when a transaction is initiated all prices will have to be retrieved from some source and that set of prices has to be the 'price source of truth' for that entire transaction."""
+        return pd.DataFrame(prices).set_index('symbol')
 
     def get_portfolio_value(self, account_instructions):
         cleaned_positions = self.get_portfolio_positions(account_instructions)
