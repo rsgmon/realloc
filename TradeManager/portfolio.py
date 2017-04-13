@@ -8,6 +8,7 @@ class Portfolio(object):
             self.portfolio_request = portfolio_request
             self.portfolio = self.get_portfolio_positions(self.portfolio_request)
             self.portfolio_value = self.get_portfolio_value(self.portfolio_request)
+            self.accounts = pd.DataFrame(self._assemble_accounts(self.portfolio_request))
 
     def _assemble_accounts(self, portfolio_request):
         accounts = []
@@ -67,3 +68,15 @@ class Portfolio(object):
         aggregated_positions = self._aggregate_share_positions(validated_accounts)
         cleaned_positions = self._clean_aggregated_positions(aggregated_positions)
         return cleaned_positions
+
+    def create_account_matrix(self, portfolio_request):
+        accounts = self._assemble_accounts(portfolio_request)
+        account_matrix = pd.DataFrame()
+        for account in accounts:
+            pdaccount = pd.DataFrame(account['account_positions']).set_index('symbol')
+            pdaccount.rename(columns={'shares': account['account_number']}, inplace=True, )
+            account_matrix = pd.concat([account_matrix, pdaccount], axis=1)
+        del account_matrix['price']
+        print(account_matrix.fillna(0))
+
+

@@ -7,7 +7,7 @@ from TradeManager.test.test_data.test_data import account_instructions, valid_re
 class TestPortfolio(TestCase):
     def setUp(self):
         self.trade_request = TradeRequest(valid_request)
-        self.portfolio = Portfolio()
+        self.portfolio = Portfolio(self.trade_request.portfolio_request)
 
     def test_get_portfolio(self):
         self.assertEqual(len(self.portfolio.get_portfolio_positions(self.trade_request.portfolio_request)),6)
@@ -16,4 +16,4 @@ class TestPortfolio(TestCase):
         self.assertEqual(self.portfolio.get_portfolio_value(self.trade_request.portfolio_request), 161200.0)
 
     def test_testit(self):
-        self.assertTrue(1)
+        self.portfolio.create_account_matrix(self.trade_request.portfolio_request)

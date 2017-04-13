@@ -1,6 +1,7 @@
 from unittest import TestCase
-from TradeManager.trade_manager import TradeManager, TradeRequest
+from TradeManager.trade_manager import TradeManager, TradeRequest, TradeAllocator
 from TradeManager.trade_calculator import TradeCalculator
+from TradeManager.portfolio import Portfolio
 from TradeManager.test.test_data.test_data import valid_request
 
 class TestTradeManager(TestCase):
@@ -14,4 +15,8 @@ class TestTradeManager(TestCase):
         self.assertEqual(valid_request['model_request']['raw_model'], self.trade_request.model_request)
 
     def test_trade_calculator(self):
-        print(self.trade_calculator.portfolio_trade_list)
+        pass#print(self.trade_calculator.portfolio_trade_list)
+
+    def test_trade_allocator(self):
+        allocator =  TradeAllocator(self.trade_manager.portfolio, self.trade_calculator.portfolio_trade_list)
+        print(allocator.portfolio.accounts, allocator.trade_list)

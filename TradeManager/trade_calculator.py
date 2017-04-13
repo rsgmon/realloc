@@ -1,4 +1,5 @@
 import pandas as pd
+from TradeManager.test.test_data.test_data import prices
 
 class TradeCalculator(object):
     def __init__(self, portfolio, model):
@@ -11,7 +12,6 @@ class TradeCalculator(object):
         # print(pd.DataFrame(model.model_positions))
         # print(self.portfolio.portfolio['portfolio_weight'])
         portfolio_model_weights = pd.concat([model.model_positions, self.portfolio.portfolio['portfolio_weight']], axis=1).fillna(0)
-
         portfolio_trade_list = (portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value
         portfolio_trade_list.name = 'dollar_trades'
         return pd.DataFrame(portfolio_trade_list)
@@ -27,3 +27,6 @@ class TradeCalculator(object):
             return self.portfolio_trade_list[self.portfolio_trade_list['shares'] < 0]
         else:
             return self.portfolio_trade_list[self.portfolio_trade_list['shares'] > 0]
+
+    def request_prices(self):
+        return pd.DataFrame(prices).set_index('symbol')

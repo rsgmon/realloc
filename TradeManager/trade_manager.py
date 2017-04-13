@@ -9,7 +9,7 @@ class TradeManager(object):
         self.trade_request = TradeRequest(trade_request)
         self.model = self.get_model()
         self.portfolio = self.get_portfolio()
-        # self.portfolio_trades = self.get_portfolio_trades()
+        self.portfolio_trades = self.get_portfolio_trades()
         # self.trades_by_account = self.allocate_trades()
 
     def get_model(self):
@@ -19,7 +19,7 @@ class TradeManager(object):
         return Portfolio(self.trade_request.portfolio_request)
 
     def get_portfolio_trades(self):
-        return TradeCalculator(self.model, self.portfolio)
+        return TradeCalculator(self.portfolio, self.model)
 
     def allocate_trades(self):
         return TradeAllocator(self.portfolio, self.portfolio_trades)
@@ -64,7 +64,6 @@ class TradeRequest(object):
         self.valid_request = {'portfolio_request': self.portfolio_request, 'model_request':self.model_request }
 
 
-
 class Model(object):
     def __init__(self, model_request=None):
         if model_request:
@@ -97,10 +96,10 @@ class TradeAllocator(object):
         self.trade_list = trade_list
 
     def construct_trade_account_matrix(self):
-        trade_account_matrix = self.trade_list
-        for account in self.portfolio.accounts:
-            trade_account_matrix = pd.concat([trade_account_matrix, pd.DataFrame(account['account_positions']).set_index('symbol').rename(columns={'position':account['account_number']})], axis=1).fillna(0)
-        return trade_account_matrix
+        pass# trade_account_matrix = self.trade_list
+        # for account in self.portfolio:
+        #     trade_account_matrix = pd.concat([trade_account_matrix, pd.DataFrame(account['account_positions']).set_index('symbol').rename(columns={'position':account['account_number']})], axis=1).fillna(0)
+        # return trade_account_matrix
 
     def determine_trades(self, trade_account_matrix):
         trade_account_matrix['sells'] = trade_account_matrix['dollar_trades'].apply(lambda x: 0 if x > 0 else x)
