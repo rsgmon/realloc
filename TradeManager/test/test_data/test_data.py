@@ -1,15 +1,17 @@
 # test_data structure is how tradeshop expects it
 
-raw_accounts = [{'account_number': '11-12', 'account_positions': [{'symbol': 'MMM', 'shares': 500, 'price': 40},
-                                                                  {'symbol': 'DEF', 'shares': 100, 'price': 43.},
-                                                                  {'symbol': 'cash', 'shares': 25000, 'price': 1}]},
-                {'account_number': 'X4-557', 'account_positions': [{'symbol': 'GHI', 'shares': 100, 'price': 43},
-                                                                   {'symbol': 'MMM', 'shares': 100, 'price': 212},
-                                                                   {'symbol': 'cash', 'shares': 5000, 'price': 1}]}]
+raw_accounts = [
+    {'account_number': '11-12', 'account_positions': [{'symbol': 'MMM', 'shares': 500, 'price': 40},
+                                                      {'symbol': 'DEF', 'shares': 100, 'price': 43.},
+                                                      {'symbol': 'cash', 'shares': 25000, 'price': 1}]},
+    {'account_number': 'X4-557', 'account_positions': [{'symbol': 'GHI', 'shares': 100, 'price': 43},
+                                                       {'symbol': 'MMM', 'shares': 100, 'price': 212},
+                                                       {'symbol': 'cash', 'shares': 5000, 'price': 1}]}]
 
 raw_model = {'model_id': 'TTT',
-             'model_positions': [{'symbol': 'ABC', 'model_weight': 0.15}, {'symbol': 'DEF', 'model_weight': 0.05},
-                                 {'symbol': 'GGG', 'model_weight': 0.05}, {'symbol': 'cash', 'model_weight': 0.05}]}
+             'model_positions': [
+                 {'symbol': 'ABC', 'model_weight': 0.15}, {'symbol': 'DEF', 'model_weight': 0.05},
+                 {'symbol': 'GGG', 'model_weight': 0.05}, {'symbol': 'cash', 'model_weight': 0.05}]}
 
 model_instructions = {'instructions': 'instructions'}
 model_request_raw_model = {'raw_model': raw_model}
@@ -19,7 +21,7 @@ model_request_both = {'instructions': model_instructions, 'raw_model': raw_model
 prices = [{'symbol': 'MMM', 'price': 40}, {'symbol': 'XYZ', 'price': 43},
           {'symbol': 'DEF', 'price': 212}, {'symbol': 'ABC', 'price': 120},
           {'symbol': 'GGG', 'price': 34}, {'symbol': 'cash', 'price': 1}
-          , {'symbol': 'GHI', 'price': 18}]
+    , {'symbol': 'GHI', 'price': 18}]
 
 account_instructions = [
     'C:\\Users\\Rye\\Google Drive\\School\\Python\\PortMgr\\TradeManager\\test\\test_data\\abc_broker.json',

@@ -15,5 +15,5 @@ class TestPortfolio(TestCase):
     def test_get_portfolio_value(self):
         self.assertEqual(self.portfolio.get_portfolio_value(self.trade_request.portfolio_request), 161200.0)
 
-    def test_testit(self):
-        self.portfolio.create_account_matrix(self.trade_request.portfolio_request)
+    def test_create_account_matrix(self):
+        self.assertTrue(type(self.portfolio.account_matrix))
