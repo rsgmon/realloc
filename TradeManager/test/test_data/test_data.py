@@ -1,4 +1,5 @@
 # test_data structure is how tradeshop expects it
+import pandas as pd
 
 raw_accounts = [
     {'account_number': '11-12', 'account_positions': [{'symbol': 'MMM', 'shares': 500, 'price': 40},
@@ -41,3 +42,4 @@ acc_inst_two_models = {'portfolio_id': 'a1', 'account_instructions': account_ins
 valid_request = {'portfolio_id': 'a1',
                  'portfolio_request': {'raw_accounts': raw_accounts},
                  'model_request': model_request_raw_model}
+

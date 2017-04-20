@@ -5,6 +5,9 @@ from TradeManager.test.test_data.test_data import prices
 
 class Portfolio(object):
     def __init__(self, portfolio_request=None):
+        """
+        :param portfolio_request: dict that is usually a member of a TradeRequest object.
+        """
         if portfolio_request:
             self.portfolio_request = portfolio_request
             self.portfolio = self.get_portfolio_positions(self.portfolio_request)
@@ -12,6 +15,9 @@ class Portfolio(object):
             self.account_matrix = self.create_account_matrix(self.portfolio_request)
 
     def _assemble_accounts(self, portfolio_request):
+        """
+            :param portfolio_request: dict that is usually a member of a TradeRequest object.
+        """
         accounts = []
         if 'account_instructions' in portfolio_request:
             if portfolio_request['account_instructions']:
@@ -80,4 +86,5 @@ class Portfolio(object):
             pdaccount.rename(columns={'shares': account['account_number']}, inplace=True, )
             account_matrix = pd.concat([account_matrix, pdaccount], axis=1)
         del account_matrix['price']
+        y = account_matrix.fillna(0)
         return account_matrix.fillna(0)

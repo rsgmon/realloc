@@ -5,19 +5,19 @@ from TradeManager.test.test_data.test_data import model_request_both, model_requ
 
 class TestTradeRequest(TestCase):
     def setUp(self):
+        pass
         self.trade_request = TradeRequest(valid_request)
         self.model = Model(self.trade_request.model_request)
 
     def test_set_model_request(self):
-        self.assertRaises(Exception, self.trade_request._set_model_request, acc_inst_no_model)
-        self.assertRaises(Exception, self.trade_request._set_model_request, acc_inst_two_models)
+        self.assertRaises(Exception, TradeRequest, acc_inst_no_model)
+        self.assertRaises(Exception, TradeRequest, acc_inst_two_models)
         self.assertEqual(self.trade_request.model_request, raw_model)
 
     def test_set_portfolio_request(self):
-        self.assertRaises(Exception, self.trade_request._set_portfolio_request, blank)
-        self.assertRaises(Exception, self.trade_request._set_portfolio_request, no_port_raw_model)
-        self.assertRaises(Exception, self.trade_request._set_portfolio_request, no_port_raw_model)
-        self.assertEqual(len(self.trade_request.portfolio_request), 2)
+        self.assertRaises(Exception, TradeRequest, blank)
+        self.assertRaises(Exception, TradeRequest, no_port_raw_model)
+        self.assertEqual(len(self.trade_request.portfolio_request), 1)
 
     def test_set_model(self):
         self.assertEqual(len(self.model.model_positions),4)

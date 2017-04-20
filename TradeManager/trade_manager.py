@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from TradeManager.portfolio import Portfolio
 from TradeManager.trade_calculator import TradeCalculator
-
+import sys
 
 class TradeManager(object):
     def __init__(self, trade_request=None):
@@ -31,19 +31,19 @@ class TradeRequest(object):
         self._set_trade_request(trade_request)
 
     def _set_portfolio_request(self, trade_request):
-        if 'portfolio_request' in trade_request:
+        try:
             portfolio_request = trade_request['portfolio_request']
-        else:
-            raise Exception('Trade request must contain a portfolio request object. Yours did not')
+        except KeyError as error:
+            raise RuntimeError('Trade request must contain a portfolio request object. Yours did not') from error
         if 'account_instructions' not in portfolio_request and 'raw_accounts' not in portfolio_request:
             raise Exception('No account information provided Need account instructions or a raw accounts.')
         return portfolio_request
 
     def _set_model_request(self, trade_request):
-        if 'model_request' in trade_request:
+        try:
             model_request = trade_request['model_request']
-        else:
-            raise Exception('Trade request must contain a model request object. Yours did not')
+        except KeyError as error:
+            raise RuntimeError('Trade request must contain a model request object. Yours did not') from error
         return self._validate_fields(model_request, 'instructions', 'raw_model')
 
     def _validate_fields(self, validation_request, instruction, raw):
@@ -89,38 +89,6 @@ class PriceRetriever(object):
     def get_prices(self, symbols):
         pass
 
-
-class TradeAllocator(object):
-    def __init__(self, account_matrix, trade_list):
-        self.account_matrix = account_matrix
-        self.trade_list = trade_list
-        self.account_trade_matrix = self.construct_account_trade_matrix(self.account_matrix, self.trade_list)
-
-    def construct_account_trade_matrix(self, account_matrix, trade_list):
-        del trade_list['dollar_trades']
-        del trade_list['price']
-        account_trade_matrix = pd.concat([account_matrix, trade_list], axis=1).assign(scores=0)
-        return account_trade_matrix.fillna(0)
-
-    def score_trades(self):
-        m = self.account_trade_matrix
-        m = m.apply(self.sum_scores, axis=1)
-        print(m)
-
-
-    def sum_scores(self, score):
-        if score['shares'] < 0:
-            score['scores']+= 1
-            k = score.drop(['shares','scores'])
-            if k.iloc[0] == 0 and k.iloc[1] != 0 or k.iloc[0] != 0 and k.iloc[1] == 0:
-                score['scores'] += 1
-        return score
-
-
-    def determine_trades(self, trade_account_matrix):
-        trade_account_matrix['sells'] = trade_account_matrix['dollar_trades'].apply(lambda x: 0 if x > 0 else x)
-
-        return trade_account_matrix
 
 class Account(object):
     def __init__(self, account):
