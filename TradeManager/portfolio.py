@@ -10,6 +10,7 @@ class Portfolio(object):
         """
         if portfolio_request:
             self.portfolio_request = portfolio_request
+            self._get_account_number_list()
             self.portfolio = self.get_portfolio_positions(self.portfolio_request)
             self.portfolio_value = self.get_portfolio_value(self.portfolio_request)
             self.account_matrix = self.create_account_matrix(self.portfolio_request)
@@ -88,3 +89,15 @@ class Portfolio(object):
         del account_matrix['price']
         y = account_matrix.fillna(0)
         return account_matrix.fillna(0)
+
+
+    def _get_account_number_list(self):
+        account_numbers = []
+        for number in self._assemble_accounts(self.portfolio_request):
+            account_numbers.append(number['account_number'])
+        self._account_numbers = tuple(account_numbers)
+
+    @property
+    def account_numbers(self):
+        """Get the account numbers."""
+        return self._account_numbers

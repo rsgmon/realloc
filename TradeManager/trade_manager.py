@@ -96,5 +96,3 @@ class Account(object):
 
     def get_positions(self):
         pass
-
-

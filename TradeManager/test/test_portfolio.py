@@ -10,10 +10,13 @@ class TestPortfolio(TestCase):
         self.portfolio = Portfolio(self.trade_request.portfolio_request)
 
     def test_get_portfolio(self):
-        self.assertEqual(len(self.portfolio.get_portfolio_positions(self.trade_request.portfolio_request)),6)
+        self.assertEqual(len(self.portfolio.get_portfolio_positions(self.trade_request.portfolio_request)),8)
 
     def test_get_portfolio_value(self):
-        self.assertEqual(self.portfolio.get_portfolio_value(self.trade_request.portfolio_request), 161200.0)
+        self.assertEqual(self.portfolio.get_portfolio_value(self.trade_request.portfolio_request), 79500.0)
 
     def test_create_account_matrix(self):
         self.assertTrue(type(self.portfolio.account_matrix))
+
+    def test_account_numbers(self):
+        print(self.portfolio.account_numbers)
