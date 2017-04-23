@@ -67,14 +67,19 @@ class TradeSelector(object):
             if count == 2:
                 return acc_number
             else: return 0
-        tam['trades'] = tam.apply(lambda row: my_test(row, account_numbers), axis=1)
-        return tam[tam.loc[:,'trades'] !=0]
+        tam['trade_account'] = tam.apply(my_test, args=[account_numbers], axis=1)
+        return tam[tam.loc[:,'trade_account'] !=0]
 
-    def _remove_non_trade(self, selected_accounts, account_numbers):
-        pass #
+    def _size_trade(self, selected_trades, account_numbers):
+        def size_trade(row, account_numbers):
+            for number in account_numbers:
+                if row[number] > row['shares']:
+                    return row['shares']
+                else: return row[number]
+        return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
 
     def get_trades(self, trade_account_matrix, account_numbers):
         selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
-        ready = self._remove_non_trade(selected_accounts, account_numbers)
+        selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
         print(selected_accounts)
 
