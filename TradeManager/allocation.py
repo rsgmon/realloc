@@ -68,7 +68,7 @@ class TradeSelector(object):
                 return acc_number
             else: return 0
         tam['trades'] = tam.apply(lambda row: my_test(row, account_numbers), axis=1)
-        return tam
+        return tam[tam.loc[:,'trades'] !=0]
 
     def _remove_non_trade(self, selected_accounts, account_numbers):
         pass #
