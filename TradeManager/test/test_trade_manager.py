@@ -10,6 +10,7 @@ class TestTradeManager(TestCase):
     def setUp(self):
         self.trade_manager = TradeManager(valid_request)
         self.trade_calculator = TradeCalculator(self.trade_manager.portfolio, self.trade_manager.model)
+        # pd.to_pickle(self.trade_calculator.portfolio_trade_list, '.\/test_data\/trade_list.pkl')
         self.trade_request = TradeRequest(valid_request)
 
     def test_trade_request(self):
@@ -21,14 +22,13 @@ class TestTradeManager(TestCase):
 
 class TestAllocation(TestCase):
     def setUp(self):
-        self.account_matrix = pd.read_pickle('test_data/account_matrix.pkl')
+        self.portfolio = pd.read_pickle('test_data/portfolio.pkl')
         self.trade_list = pd.read_pickle('test_data/trade_list.pkl')
-        self.tam = TradeAccountMatrix(self.account_matrix, self.trade_list)
+        self.tam = TradeAccountMatrix(self.portfolio, self.trade_list)
 
     def test_trade_account_matrix(self):
-        tam = TradeAccountMatrix(self.account_matrix, self.trade_list)
-        tam._
+        self.tam.trades_remaining
 
     def test_select_trade(self):
         trade_selector = TradeSelector()
-        trade_selector.get_trades(self.tam.trade_account_matrix)
+        trade_selector.get_trades(self.tam.trade_account_matrix, self.portfolio.account_numbers)

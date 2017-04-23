@@ -3,7 +3,6 @@ from TradeManager.portfolio import Portfolio
 from TradeManager.trade_manager import TradeRequest
 from TradeManager.test.test_data.test_data import account_instructions, valid_request
 
-
 class TestPortfolio(TestCase):
     def setUp(self):
         self.trade_request = TradeRequest(valid_request)
