@@ -12,8 +12,8 @@ class TradeAllocator(object):
         # while tam_has trades
             # trade = trade_selector
             # update_tam
-        trade = trade_selector._select_accounts(self._tam.trade_account_matrix, self.portfolio._account_numbers)
-        # self._tam.update_tam(trade)
+        trade = trade_selector.get_trades(self._tam.trade_account_matrix, self.portfolio._account_numbers)
+        self._tam.update_tam(trade)
 
 
 class TradeAccountMatrix(object):
@@ -28,9 +28,10 @@ class TradeAccountMatrix(object):
         return trade_account_matrix.fillna(0)
 
     def _remove_trades(self, trade):
-        trade_to_update = self.trade_account_matrix.loc[trade['symbol'],'shares']
-        updated_trade = trade_to_update - trade['amount']
-        self.trade_account_matrix.loc[trade['symbol'],'shares'] = updated_trade
+        pass
+        # trade_to_update = self.trade_account_matrix.loc[trade['symbol'],'shares']
+        # updated_trade = trade_to_update - trade['size']
+        # self.trade_account_matrix.loc[trade['symbol'],'shares'] = updated_trade
 
     def _remove_holdings(self, trade):
         holding_to_update = self.trade_account_matrix.loc[trade['symbol'],trade['account']]
@@ -39,7 +40,8 @@ class TradeAccountMatrix(object):
 
     def update_tam(self, trade):
         self._remove_trades(trade)
-        self._remove_holdings(trade)
+        print(self.trade_account_matrix)
+        # self._remove_holdings(trade)
 
     @property
     def trades_remaining(self):
@@ -78,8 +80,13 @@ class TradeSelector(object):
                 else: return row[number]
         return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
 
+    def _prepare_for_tam_update(self, row, account_numbers ):
+        for number in account_numbers:
+            if row[number] > 0:
+                row[number] = row['size']
+        print(row)
+
     def get_trades(self, trade_account_matrix, account_numbers):
         selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
         selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
-        print(selected_accounts)
-
+        selected_accounts.apply(self._prepare_for_tam_update, args=[account_numbers], axis=1)

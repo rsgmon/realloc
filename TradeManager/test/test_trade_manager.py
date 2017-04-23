@@ -24,10 +24,11 @@ class TestAllocation(TestCase):
     def setUp(self):
         self.portfolio = pd.read_pickle('test_data/portfolio.pkl')
         self.trade_list = pd.read_pickle('test_data/trade_list.pkl')
+        self.trades = pd.read_pickle('test_data/trades.pkl')
         self.tam = TradeAccountMatrix(self.portfolio, self.trade_list)
 
     def test_trade_account_matrix(self):
-        self.tam.trades_remaining
+        self.tam.update_tam(self.trades)
 
     def test_select_trade(self):
         trade_selector = TradeSelector()
