@@ -28,20 +28,30 @@ class TradeAccountMatrix(object):
         return trade_account_matrix.fillna(0)
 
     def _remove_trades(self, trade):
-        pass
-        # trade_to_update = self.trade_account_matrix.loc[trade['symbol'],'shares']
-        # updated_trade = trade_to_update - trade['size']
-        # self.trade_account_matrix.loc[trade['symbol'],'shares'] = updated_trade
+        trade['shares'] = 0
+        self.trade_account_matrix['shares'].update(trade['shares'])
+        return self.trade_account_matrix
 
     def _remove_holdings(self, trade):
-        holding_to_update = self.trade_account_matrix.loc[trade['symbol'],trade['account']]
-        updated_holding = holding_to_update + trade['amount']
-        self.trade_account_matrix.loc[trade['symbol'],trade['account']] = updated_holding
+        new_holding= pd.DataFrame()
+        def net_holdings(row):
+            if pd.isnull(row.iloc[1]):
+                return row.iloc[0]
+            if row.iloc[0] == abs(row.iloc[1]):
+                return 0
+            if row.iloc[0] > abs(row.iloc[1]):
+                return row.iloc[0] - abs(row.iloc[1])
+        for number in self.portfolio.account_numbers:
+            update = pd.concat([self.trade_account_matrix[number],trade[number]], axis=1)
+            final = update.apply(net_holdings, axis=1)
+            self.trade_account_matrix[number] = final
+
 
     def update_tam(self, trade):
         self._remove_trades(trade)
+        self._remove_holdings(trade)
         print(self.trade_account_matrix)
-        # self._remove_holdings(trade)
+
 
     @property
     def trades_remaining(self):
@@ -84,7 +94,7 @@ class TradeSelector(object):
         for number in account_numbers:
             if row[number] > 0:
                 row[number] = row['size']
-        print(row)
+        return row
 
     def get_trades(self, trade_account_matrix, account_numbers):
         selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
