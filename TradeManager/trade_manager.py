@@ -22,7 +22,7 @@ class TradeManager(object):
         return TradeCalculator(self.portfolio, self.model)
 
     def allocate_trades(self):
-        return TradeAllocator(self.portfolio, self.portfolio_trades)
+        pass #return TradeAllocator(self.portfolio, self.portfolio_trades)
 
 
 class TradeRequest(object):

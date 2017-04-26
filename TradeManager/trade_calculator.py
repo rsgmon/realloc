@@ -9,7 +9,7 @@ class TradeCalculator(object):
         # self.buy_trades = self._split_trade_list()
 
     def _get_dollar_trades(self, portfolio, model):
-        portfolio_model_weights = pd.concat([model.model_positions, self.portfolio.portfolio['portfolio_weight']], axis=1).fillna(0)
+        portfolio_model_weights = pd.concat([model.model_positions, self.portfolio.portfolio_positions['portfolio_weight']], axis=1).fillna(0)
         portfolio_trade_list = (portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value
         portfolio_trade_list.name = 'dollar_trades'
         return pd.DataFrame(portfolio_trade_list)

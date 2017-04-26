@@ -11,9 +11,10 @@ class Portfolio(object):
         if portfolio_request:
             self.portfolio_request = portfolio_request
             self._get_account_number_list()
-            self.portfolio = self.get_portfolio_positions(self.portfolio_request)
-            self.portfolio_value = self.get_portfolio_value(self.portfolio_request)
-            self.account_matrix = self.create_account_matrix(self.portfolio_request)
+            self._portfolio = self.get_portfolio_positions(self.portfolio_request)
+            self._portfolio_value = self.get_portfolio_value(self.portfolio_request)
+            self._account_matrix = self.create_account_matrix(self.portfolio_request)
+            self._cash_matrix = self.get_cash_matrix()
 
     def _assemble_accounts(self, portfolio_request):
         """
@@ -48,36 +49,37 @@ class Portfolio(object):
         portfolio_concatenated_positions = pd.DataFrame()
         for account in accounts:
             portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, pd.DataFrame(account['account_positions'])])
-        return portfolio_concatenated_positions
+        del portfolio_concatenated_positions['price']
+        grouped_portfolio_positions = portfolio_concatenated_positions.groupby('symbol').agg(np.sum)
+        return grouped_portfolio_positions
 
     def _clean_aggregated_positions(self, aggregated_position):
-        price_matrix = self._create_price_matrix(aggregated_position)
-        grouped_portfolio_positions = aggregated_position.groupby('symbol').agg(np.sum)
-        del grouped_portfolio_positions['price']
-        portfolio_positions = pd.concat([grouped_portfolio_positions, price_matrix], axis=1)
+        price_matrix = self.get_price_matrix()
+        portfolio_positions = pd.concat([aggregated_position, price_matrix], axis=1)
         portfolio_positions['position'] = portfolio_positions['shares']* portfolio_positions['price']
         portfolio_positions['portfolio_weight'] = portfolio_positions['position']/portfolio_positions['position'].sum()
         return portfolio_positions
 
-    def _create_price_matrix(self, aggregated_position):
-        # price_matrix = aggregated_position.copy(deep=True)
-        # price_matrix.drop_duplicates(inplace=True, subset='symbol')
-        # price_matrix.set_index('symbol', inplace=True)
-        # del price_matrix['shares']
-        # return price_matrix
-        """At this point I have simply imported the prices for demo purposes. In the end when a transaction is initiated all prices will have to be retrieved from some source and that set of prices has to be the 'price source of truth' for that entire transaction."""
-        return pd.DataFrame(prices).set_index('symbol')
+    def get_price_matrix(self):
+        """This is still a very demo version method. I assume I have price list but made it a little more Robust in case I do more testing. I get the prices and then check if that symbol is in the portfolio and delete shares as if I know I wouldn't have shares. In the end when a transaction is initiated all prices will have to be retrieved from some source and that set of prices has to be the 'price source of truth' for that entire transaction."""
+        all_prices = pd.DataFrame(prices).set_index('symbol')
+        portfolio_prices = pd.concat([self._aggregated_positions, all_prices], axis=1).dropna()
+        del portfolio_prices['shares']
+        return portfolio_prices
 
     def get_portfolio_value(self, account_instructions):
         cleaned_positions = self.get_portfolio_positions(account_instructions)
         return cleaned_positions['position'].sum()
 
     def get_portfolio_positions(self, portfolio_request):
-        raw_accounts = self._assemble_accounts(portfolio_request)
-        validated_accounts = self._validate_accounts(raw_accounts)
-        aggregated_positions = self._aggregate_share_positions(validated_accounts)
-        cleaned_positions = self._clean_aggregated_positions(aggregated_positions)
-        return cleaned_positions
+        self._raw_accounts = self._assemble_accounts(portfolio_request)
+        self._validated_accounts = self._validate_accounts(self._raw_accounts)
+        self._aggregated_positions = self._aggregate_share_positions(self._validated_accounts)
+        self._cleaned_positions = self._clean_aggregated_positions(self._aggregated_positions)
+        return self._cleaned_positions
+
+    def get_cash_matrix(self):
+        return pd.DataFrame(self._account_matrix.loc['cash',:])
 
     def create_account_matrix(self, portfolio_request):
         accounts = self._assemble_accounts(portfolio_request)
@@ -101,3 +103,20 @@ class Portfolio(object):
     def account_numbers(self):
         """Get the account numbers."""
         return self._account_numbers
+
+    @property
+    def portfolio_positions(self):
+        """Get the portfolio positions."""
+        return self._portfolio
+
+    @property
+    def portfolio_value(self):
+        return self._portfolio_value
+
+    @property
+    def account_matrix(self):
+        return self._account_matrix
+
+    @property
+    def cash_matrix(self):
+        return self._cash_matrix

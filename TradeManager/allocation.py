@@ -9,17 +9,25 @@ class TradeAllocator(object):
 
     def allocate_trades(self):
         trade_selector = TradeSelector()
+        # The algorithm is unimportant. we could attempt to identify trades in the data
+        # Or go through a specific algorithm to identify trade types.
         # while tam_has trades
             # trade = trade_selector
+            # store trades
             # update_tam
         trade = trade_selector.get_trades(self._tam.trade_account_matrix, self.portfolio._account_numbers)
+        trade_instructions = TradeInstructions()
+        # save new trades (need a persistant object and the trades)
         self._tam.update_tam(trade)
+        #if _tam.has_trades then repeat or go to next step.
+        # We could (haven't decided) return the trades only or more info like updated portfolio.
 
 
 class TradeAccountMatrix(object):
     def __init__(self, portfolio, trade_list):
-        self.portfolio= portfolio
+        self.portfolio = portfolio
         self.trade_list = trade_list
+        self.cash = portfolio.cash_matrix.copy()
         self.trade_account_matrix = self._construct_account_trade_matrix(self.portfolio.account_matrix, self.trade_list)
 
     def _construct_account_trade_matrix(self, account_matrix, trade_list):
@@ -46,12 +54,23 @@ class TradeAccountMatrix(object):
             final = update.apply(net_holdings, axis=1)
             self.trade_account_matrix[number] = final
 
+    def _update_cash(self, trade):
+        def cash_from_trades(row, account_numbers):
+            for number in account_numbers:
+                if row[number] != 0:
+                    return {number: row[number]*-1 * row['price']}
+        updated_cash = trade.apply(cash_from_trades, args=[self.portfolio.account_numbers], axis=1).values
+        updated_cash_grid = pd.DataFrame()
+        for account in updated_cash:
+            updated_cash_grid = pd.concat([updated_cash_grid, pd.Series(account)])
+        updated_cash_grid['cash'] = updated_cash_grid[0]
+        self.cash['cash'] += updated_cash_grid['cash']
+
 
     def update_tam(self, trade):
         self._remove_trades(trade)
         self._remove_holdings(trade)
-        print(self.trade_account_matrix)
-
+        self._update_cash(trade)
 
     @property
     def trades_remaining(self):
@@ -59,7 +78,6 @@ class TradeAccountMatrix(object):
             return False
         else:
             return True
-
 
 
 class TradeSelector(object):
@@ -100,3 +118,15 @@ class TradeSelector(object):
         selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
         selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
         selected_accounts.apply(self._prepare_for_tam_update, args=[account_numbers], axis=1)
+
+class TradeInstructions(object):
+    def __init__(self):
+        self._trades = pd.DataFrame()
+
+    @property
+    def trades(self):
+        return self._trades
+
+    @trades.setter
+    def trades(self, new_trade):
+        self._trades = pd.concat([self._trades, new_trade])
