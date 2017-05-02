@@ -9,15 +9,17 @@ raw_accounts = [
                                                        {'symbol': 'MMM', 'shares': 100, 'price': 212},
                                                        {'symbol': 'cash', 'shares': 5000, 'price': 1}]}]
 
-raw_model = {'model_id': 'TTT',
+# models are created to generate certain trades
+# sell only
+raw_models = {'model_id': 'TTT',
              'model_positions': [
-                 {'symbol': 'ABC', 'model_weight': 0.15}, {'symbol': 'DEF', 'model_weight': 0.05},
-                 {'symbol': 'GGG', 'model_weight': 0.05}, {'symbol': 'cash', 'model_weight': 0.05}]}
+                 {'symbol': 'MMM', 'model_weight': 0.01}, {'symbol': 'DEF', 'model_weight': 0.05},
+                 {'symbol': 'YOU', 'model_weight': 0.05}, {'symbol': 'cash', 'model_weight': 0.05}]}
 
 model_instructions = {'instructions': 'instructions'}
-model_request_raw_model = {'raw_model': raw_model}
+model_request_raw_model = {'raw_model': raw_models}
 model_request_instructions = {'instructions': model_instructions}
-model_request_both = {'instructions': model_instructions, 'raw_model': raw_model}
+model_request_both = {'instructions': model_instructions, 'raw_model': raw_models}
 
 prices = [{'symbol': 'MMM', 'price': 40}, {'symbol': 'XYZ', 'price': 43},
           {'symbol': 'DEF', 'price': 212}, {'symbol': 'ABC', 'price': 120},

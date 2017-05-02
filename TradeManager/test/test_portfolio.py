@@ -8,6 +8,8 @@ class TestPortfolio(TestCase):
     def setUp(self):
         self.trade_request = TradeRequest(valid_request)
         self.portfolio = Portfolio(self.trade_request.portfolio_request)
+        # pd.to_pickle(self.portfolio, '.\/test_data\/portfolio.pkl')
+
 
     def test_get_portfolio(self):
         self.assertEqual(len(self.portfolio.get_portfolio_positions(self.trade_request.portfolio_request)),4)
@@ -20,6 +22,7 @@ class TestPortfolio(TestCase):
 
     def test_account_numbers(self):
         self.portfolio.account_numbers
+        print(self.portfolio.portfolio_positions)
 
     def test_get_cash_matrix(self):
         self.portfolio.get_cash_matrix()

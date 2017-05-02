@@ -40,6 +40,7 @@ class TradeRequest(object):
         return portfolio_request
 
     def _set_model_request(self, trade_request):
+        print(trade_request)
         try:
             model_request = trade_request['model_request']
         except KeyError as error:
