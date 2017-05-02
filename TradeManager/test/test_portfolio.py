@@ -1,7 +1,7 @@
 from unittest import TestCase
 from TradeManager.portfolio import Portfolio
 from TradeManager.trade_manager import TradeRequest
-from TradeManager.test.test_data.test_data import account_instructions, valid_request
+from TradeManager.test.test_data.test_data import account_instructions, valid_request, raw_account_1
 import pandas as pd
 
 class TestPortfolio(TestCase):
@@ -22,7 +22,6 @@ class TestPortfolio(TestCase):
 
     def test_account_numbers(self):
         self.portfolio.account_numbers
-        print(self.portfolio.portfolio_positions)
 
     def test_get_cash_matrix(self):
         self.portfolio.get_cash_matrix()
