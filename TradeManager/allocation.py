@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 
 class TradeAllocator(object):
-    def __init__(self, portfolio, trade_list):
+    def __init__(self, portfolio, trade_calculator):
         self.portfolio = portfolio
-        self.trade_list = trade_list
-        self._tam = TradeAccountMatrix(self.portfolio, self.trade_list)
+        self.trade_calculator = trade_calculator
+        self._tam = TradeAccountMatrix(self.portfolio, self.trade_calculator)
 
     def allocate_trades(self):
         trade_selector = TradeSelector()
@@ -15,7 +15,7 @@ class TradeAllocator(object):
             # trade = trade_selector
             # store trades
             # update_tam
-        trade = trade_selector.get_trades(self._tam.trade_account_matrix, self.portfolio.account_numbers)
+        trade = trade_selector.get_trades(self._tam, self.portfolio.account_numbers)
         trade_instructions = TradeInstructions()
         trade_instructions.trades = trade
         # save new trades (need a persistant object and the trades)
@@ -28,11 +28,11 @@ class TradeAllocator(object):
 
 
 class TradeAccountMatrix(object):
-    def __init__(self, portfolio, trade_list):
+    def __init__(self, portfolio, trade_calculator):
         self.portfolio = portfolio
-        self.trade_list = trade_list
+        self.trade_calculator = trade_calculator
         self.cash = portfolio.cash_matrix.copy()
-        self.trade_account_matrix = self._construct_account_trade_matrix(self.portfolio.account_matrix, self.trade_list)
+        self.trade_account_matrix = self._construct_account_trade_matrix(self.portfolio.account_matrix, self.trade_calculator.portfolio_trade_list)
 
     def _construct_account_trade_matrix(self, account_matrix, trade_list):
         # del trade_list['dollar_trades']
@@ -85,9 +85,8 @@ class TradeAccountMatrix(object):
 
 
 class TradeSelector(object):
-
     def _select_accounts(self, trade_account_matrix, account_numbers):
-        tam = trade_account_matrix.copy()
+        tam = trade_account_matrix.trade_account_matrix.copy()
         def my_test(row, account_numbers):
             count = 0
             if row['shares'] < 0:
@@ -125,9 +124,9 @@ class TradeSelector(object):
 class SelectorSellMultipleAccounts(TradeSelector):
     def _select_accounts(self, trade_account_matrix, account_numbers):
         # print(trade_account_matrix.trade_account_matrix.loc[(trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1)==1])
-        print(trade_account_matrix.trade_account_matrix.loc[
-                  (trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1) == 2])
-        print(trade_account_matrix.trade_account_matrix, '\n', account_numbers, trade_account_matrix.cash)
+        # print(trade_account_matrix.trade_account_matrix.loc[
+        #           (trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1) == 2])
+        # print(trade_account_matrix.trade_account_matrix, '\n', account_numbers, trade_account_matrix.cash)
 
         return (trade_account_matrix.cash)
 
