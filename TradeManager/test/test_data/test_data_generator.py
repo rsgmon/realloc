@@ -30,9 +30,8 @@ def read_pickle(file):
         apickle = pickle.load(afile)
     return apickle
 
-
-# pickle_portfolios_models()
-# pickle_trade_calculator()
+pickle_portfolios_models()
+pickle_trade_calculator()
 # a = read_pickle('mocks.pkl')
 # for b in a:
 #     print(b)

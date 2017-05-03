@@ -23,7 +23,7 @@ class TestTradeManager(TestCase):
 
     def test_trade_calculator(self):
         # pd.to_pickle(self.trade_calculator.portfolio_trade_list, '.\/test_data\/trade_list.pkl')
-        self.assertEqual(self.trade_calculator.portfolio_trade_list['shares']['MMM'], -219)
+        self.assertEqual(self.trade_calculator.portfolio_trade_list['shares']['MMM'], -375)
 
 class TestAllocation(TestCase):
     def setUp(self):
@@ -43,26 +43,27 @@ class TestAllocation(TestCase):
         print(c.portfolio_trade_list)
         print(self.trades)
 
-    # def test_tam_setup(self):
-    #     self.assertGreater(len(self.tam.trade_account_matrix), 0)
-    #
-    # def test_trade_account_matrix(self):
-    #     tam_original = self.tam.trade_account_matrix.copy()
-    #     self.tam.update_tam(self.trades)
-    #     """need tests that checks updated tams are correct"""
-    #
-    # def test_select_trade(self):
-    #     trade_selector = TradeSelector()
-    #     trade_selector.get_trades(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
-    #
-    # def test_trade_instructions(self):
-    #     self.trade_instructions.trades=self.trades
-    #     self.trade_instructions.trades=self.trades
-    #     self.assertGreater(len(self.trade_instructions.trades), 0)
-    #
-    # def test_selector_sell_multiple_accounts(self):
-    #     selector_sell_multiple_accounts = SelectorSellMultipleAccounts()
-    #     selector_sell_multiple_accounts._select_accounts(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
+    def test_tam_setup(self):
+        self.assertGreater(len(self.tam.trade_account_matrix), 0)
 
-    # def test_allocator_controller(self):
-    #     self.allocator.allocate_trades()
+    def test_trade_account_matrix(self):
+        tam_original = self.tam.trade_account_matrix.copy()
+        self.tam.update_tam(self.trades)
+        print(self.tam.trade_account_matrix)
+        """need tests that checks updated tams are correct"""
+
+    def test_select_trade(self):
+        trade_selector = TradeSelector()
+        trade_selector.get_trades(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
+
+    def test_trade_instructions(self):
+        self.trade_instructions.trades=self.trades
+        self.trade_instructions.trades=self.trades
+        self.assertGreater(len(self.trade_instructions.trades), 0)
+
+    def test_selector_sell_multiple_accounts(self):
+        selector_sell_multiple_accounts = SelectorSellMultipleAccounts()
+        selector_sell_multiple_accounts._select_accounts(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
+
+    def test_allocator_controller(self):
+        self.allocator.allocate_trades()
