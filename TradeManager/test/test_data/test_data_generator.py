@@ -15,13 +15,13 @@ def pickle_portfolios_models():
         mock['portfolio'] = portfolio.Portfolio(mock['request'].portfolio_request)
         mock['model'] = trade_manage.Model(mock['request'].model_request)
         mocks[request] = mock
-    # with open('mocks.pkl', 'wb') as myfile:
-    #     pickle.dump(mocks, myfile)
+    with open('mocks.pkl', 'wb') as myfile:
+        pickle.dump(mocks, myfile)
 
 def pickle_trade_calculator():
     mocks = read_pickle('mocks.pkl')
     for mock in mocks:
-        mock['trade_calculator'] = tc.TradeCalculator(mock['portfolio'], mock['model'])
+        mocks[mock]['trade_calculator'] = tc.TradeCalculator(mocks[mock]['portfolio'], mocks[mock]['model'])
     with open('mocks.pkl', 'wb') as myfile:
         pickle.dump(mocks, myfile)
 
@@ -31,7 +31,8 @@ def read_pickle(file):
     return apickle
 
 
-pickle_portfolios_models()
+# pickle_portfolios_models()
 # pickle_trade_calculator()
 # a = read_pickle('mocks.pkl')
-# print(a[0]['trade_calculator'].portfolio_trade_list)
+# for b in a:
+#     print(b)

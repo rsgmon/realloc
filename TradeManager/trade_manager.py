@@ -61,9 +61,8 @@ class TradeRequest(object):
 class Model(object):
     def __init__(self, model_request=None):
         if model_request:
-            print(model_request)
             self.model_request = model_request
-            # self.model_positions = self.get_raw_model_positions(self.model_request)
+            self.model_positions = self.get_raw_model_positions(self.model_request)
 
     def get_raw_model_positions(self, model_request):
         model_positions =  pd.DataFrame(model_request['raw_model']['model_positions'])

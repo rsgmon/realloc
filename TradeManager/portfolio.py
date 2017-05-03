@@ -51,6 +51,7 @@ class Portfolio(object):
             portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, pd.DataFrame(account['account_positions'])])
         del portfolio_concatenated_positions['price']
         grouped_portfolio_positions = portfolio_concatenated_positions.groupby('symbol').agg(np.sum)
+        grouped_portfolio_positions.drop('cash', inplace=True)
         return grouped_portfolio_positions
 
     def _clean_aggregated_positions(self, aggregated_position):

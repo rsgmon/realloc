@@ -8,10 +8,12 @@ class TestTradeRequest(TestCase):
         self.trade_request = TradeRequest(trade_requests['one_holding_equal_weighted'])
         self.model = Model(self.trade_request.model_request)
 
+    def test_trade_request(self):
+        print(self.model.model_positions)
+
     def test_set_model_request(self):
         self.assertRaises(Exception, TradeRequest, acc_inst_no_model)
         self.assertRaises(Exception, TradeRequest, acc_inst_two_models)
-
 
     def test_set_portfolio_request(self):
         self.assertRaises(Exception, TradeRequest, blank)
