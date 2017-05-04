@@ -18,11 +18,11 @@ raw_account_1 = [one_holding]
 raw_account_1_2 = [one_holding, two_holding]
 raw_account_2_3 = [two_holding, three_holding]
 
-zero_model = {'model_id': 'TTT', 'model_positions': [{'symbol': 'DEF', 'model_weight': 1}]}
+zero_model = {'model_id': 'TTT', 'model_positions': []}
 one_position = {'model_id': 'TTT', 'model_positions': [{'symbol': 'DEF', 'model_weight': 1}]}
 equal_weighted_model = {'model_id': 'TTT', 'model_positions': [
     {'symbol': 'MMM', 'model_weight': 0.25}, {'symbol': 'DEF', 'model_weight': 0.25},
-    {'symbol': 'YOU', 'model_weight': 0.25}, {'symbol': 'cash', 'model_weight': 0.25}]}
+    {'symbol': 'YOU', 'model_weight': 0.25}]}
 
 trade_requests = {}
 trade_requests['one_holding_zero_model'] = {'portfolio_id': 'a1', 'portfolio_request': {'raw_accounts': raw_account_1},

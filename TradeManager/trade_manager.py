@@ -65,10 +65,13 @@ class Model(object):
             self.model_positions = self.get_raw_model_positions(self.model_request)
 
     def get_raw_model_positions(self, model_request):
+        if not model_request['raw_model']['model_positions']:
+            model_request['raw_model']['model_positions'].append({'symbol': 'placeholder', 'model_weight': 0})
         model_positions =  pd.DataFrame(model_request['raw_model']['model_positions'])
         model_positions.set_index('symbol', inplace=True)
+        if 'cash' in model_positions.index:
+            model_positions.drop('cash', inplace=True)
         return model_positions
-
 
     def retrieve_model_from_database(self):
         pass

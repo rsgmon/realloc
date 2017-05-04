@@ -22,39 +22,37 @@ class TestTradeManager(TestCase):
         self.trade_calculator = TradeCalculator(self.portfolio, self.model)
 
     def test_trade_calculator(self):
-        # pd.to_pickle(self.trade_calculator.portfolio_trade_list, '.\/test_data\/trade_list.pkl')
-        self.assertEqual(self.trade_calculator.portfolio_trade_list['shares']['MMM'], -375)
+        self.assertEqual(self.trade_calculator.portfolio_trade_list['shares']['MMM'], -219)
 
 class TestAllocation(TestCase):
     def setUp(self):
         self.mocks = read_pickle('.\/test_data\/mocks.pkl')
-        self.tam = TradeAccountMatrix(self.mocks['one_holding_one_position']['portfolio'], self.mocks['one_holding_one_position']['trade_calculator'])
+        self.tam = TradeAccountMatrix(self.mocks['one_holding_equal_weighted']['portfolio'], self.mocks['one_holding_equal_weighted']['trade_calculator'])
+        self.tam_sell_only = TradeAccountMatrix(self.mocks['one_holding_zero_model']['portfolio'],
+                                      self.mocks['one_holding_zero_model']['trade_calculator'])
         self.trade_selector = TradeSelector()
         self.trades = self.trade_selector.get_trades(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
         self.trade_instructions = TradeInstructions()
         self.allocator = TradeAllocator(self.mocks['one_holding_one_position']['portfolio'], self.mocks['one_holding_one_position']['trade_calculator'])
 
-    def test_show_mocks(self):
-        p = self.mocks['one_holding_one_position']['portfolio']
-        print(p.portfolio_positions)
-        print(p.account_matrix)
-        print(p.cash_matrix)
-        c = self.mocks['one_holding_one_position']['trade_calculator']
-        print(c.portfolio_trade_list)
-        print(self.trades)
-
     def test_tam_setup(self):
         self.assertGreater(len(self.tam.trade_account_matrix), 0)
 
-    def test_trade_account_matrix(self):
-        tam_original = self.tam.trade_account_matrix.copy()
-        self.tam.update_tam(self.trades)
-        print(self.tam.trade_account_matrix)
+    def test_update_sells_only_trade_account_matrix(self):
+        tam_original = self.tam_sell_only.trade_account_matrix.copy()
+        self.tam_sell_only.update_tam(self.trades)
+        self.assertGreater(tam_original.ix[0,0], self.tam_sell_only.trade_account_matrix.ix[0,0])
         """need tests that checks updated tams are correct"""
+
+    def test_cash_updated(self):
+        tam_original_cash = self.tam_sell_only.cash.copy()
+        self.tam_sell_only.update_tam(self.trades)
+        self.assertGreater(self.tam_sell_only.cash.ix[0,0], tam_original_cash.ix[0,0])
 
     def test_select_trade(self):
         trade_selector = TradeSelector()
-        trade_selector.get_trades(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
+        # print(trade_selector.get_trades(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers))
+
 
     def test_trade_instructions(self):
         self.trade_instructions.trades=self.trades
@@ -62,8 +60,9 @@ class TestAllocation(TestCase):
         self.assertGreater(len(self.trade_instructions.trades), 0)
 
     def test_selector_sell_multiple_accounts(self):
+        tam = TradeAccountMatrix(self.mocks['one_holding_two_holding_zero_model']['portfolio'], self.mocks['one_holding_two_holding_zero_model']['trade_calculator'])
         selector_sell_multiple_accounts = SelectorSellMultipleAccounts()
-        selector_sell_multiple_accounts._select_accounts(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers)
+        print(selector_sell_multiple_accounts._select_accounts(tam, self.mocks['one_holding_two_holding_zero_model']['portfolio'].account_numbers))
 
     def test_allocator_controller(self):
         self.allocator.allocate_trades()

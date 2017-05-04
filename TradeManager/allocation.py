@@ -83,6 +83,9 @@ class TradeAccountMatrix(object):
         else:
             return True
 
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
+
 
 class TradeSelector(object):
     def _select_accounts(self, trade_account_matrix, account_numbers):
@@ -120,13 +123,16 @@ class TradeSelector(object):
         selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
         return selected_accounts.apply(self._prepare_for_tam_update, args=[account_numbers], axis=1)
 
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
+
 
 class SelectorSellMultipleAccounts(TradeSelector):
     def _select_accounts(self, trade_account_matrix, account_numbers):
         # print(trade_account_matrix.trade_account_matrix.loc[(trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1)==1])
-        # print(trade_account_matrix.trade_account_matrix.loc[
-        #           (trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1) == 2])
-        # print(trade_account_matrix.trade_account_matrix, '\n', account_numbers, trade_account_matrix.cash)
+        print(trade_account_matrix.trade_account_matrix.loc[
+                  (trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1) == 2])
+        print(trade_account_matrix.trade_account_matrix, '\n', account_numbers, trade_account_matrix.cash)
 
         return (trade_account_matrix.cash)
 

@@ -16,7 +16,7 @@ class Portfolio(object):
             self._portfolio_value, self._portfolio = self.set_portfolio_positions_and_value(self._aggregated_positions)
             self._account_matrix = self.create_account_matrix(self.portfolio_request)
             self._cash_matrix = self.set_cash_matrix()
-            self._account_position_matrix = self.set_account_position_matrix()
+            self._account_position_matrix = self._account_matrix.drop('cash')
 
     def _assemble_accounts(self, portfolio_request):
         """
@@ -77,8 +77,6 @@ class Portfolio(object):
     def set_cash_matrix(self):
         return pd.DataFrame(self._account_matrix.loc['cash',:])
 
-    def set_account_position_matrix(self):
-        return self._account_matrix.drop('cash')
 
     def create_account_matrix(self, portfolio_request):
         accounts = self._assemble_accounts(portfolio_request)

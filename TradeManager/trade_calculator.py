@@ -16,7 +16,7 @@ class TradeCalculator(object):
 
     def _add_share_trades(self):
         trade_list = self._get_dollar_trades(self.portfolio, self.model)
-        combined_trade_list_portfolio_prices = pd.concat([trade_list, self.request_prices()], axis=1)
+        combined_trade_list_portfolio_prices = pd.concat([trade_list, self.request_prices()], axis=1).dropna()
         combined_trade_list_portfolio_prices['shares'] = (combined_trade_list_portfolio_prices['dollar_trades']/combined_trade_list_portfolio_prices['price']).round()
         return combined_trade_list_portfolio_prices
 
@@ -27,4 +27,8 @@ class TradeCalculator(object):
             return self.portfolio_trade_list[self.portfolio_trade_list['shares'] > 0]
 
     def request_prices(self):
+        """Need to update this to fetch portfolio and model prices only."""
         return pd.DataFrame(prices).set_index('symbol')
+
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
