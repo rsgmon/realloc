@@ -10,7 +10,7 @@ import pickle
 """one_holding_one_position
 one_holding_zero_model
 one_holding_two_holding_zero_model
-one_holding_equal_weighted"""
+one_holding_equal_weighted, one_holding_two_holding_two_position"""
 
 
 
@@ -53,16 +53,15 @@ class TestAllocation(TestCase):
         trade_selector = TradeSelector()
         # print(trade_selector.get_trades(self.tam, self.mocks['one_holding_one_position']['portfolio'].account_numbers))
 
-
     def test_trade_instructions(self):
         self.trade_instructions.trades=self.trades
         self.trade_instructions.trades=self.trades
         self.assertGreater(len(self.trade_instructions.trades), 0)
 
     def test_selector_sell_multiple_accounts(self):
-        tam = TradeAccountMatrix(self.mocks['one_holding_two_holding_zero_model']['portfolio'], self.mocks['one_holding_two_holding_zero_model']['trade_calculator'])
+        tam = TradeAccountMatrix(self.mocks['one_holding_two_holding_two_position']['portfolio'], self.mocks['one_holding_two_holding_two_position']['trade_calculator'])
         selector_sell_multiple_accounts = SelectorSellMultipleAccounts()
-        print(selector_sell_multiple_accounts._select_accounts(tam, self.mocks['one_holding_two_holding_zero_model']['portfolio'].account_numbers))
+        print(selector_sell_multiple_accounts._select_accounts(tam, self.mocks['one_holding_two_holding_two_position']['portfolio'].account_numbers))
 
     def test_allocator_controller(self):
         self.allocator.allocate_trades()

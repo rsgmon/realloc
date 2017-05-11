@@ -20,6 +20,7 @@ raw_account_2_3 = [two_holding, three_holding]
 
 zero_model = {'model_id': 'TTT', 'model_positions': []}
 one_position = {'model_id': 'TTT', 'model_positions': [{'symbol': 'DEF', 'model_weight': 1}]}
+two_position = {'model_id': 'DDD', 'model_positions': [{'symbol': 'DEF', 'model_weight': 0.95}, {'symbol': 'MMM', 'model_weight': 0.02}]}
 equal_weighted_model = {'model_id': 'TTT', 'model_positions': [
     {'symbol': 'MMM', 'model_weight': 0.25}, {'symbol': 'DEF', 'model_weight': 0.25},
     {'symbol': 'YOU', 'model_weight': 0.25}]}
@@ -33,6 +34,9 @@ trade_requests['one_holding_equal_weighted'] = {'portfolio_id': 'a1', 'portfolio
                               'model_request': {'raw_model': equal_weighted_model}}
 trade_requests['one_holding_two_holding_zero_model'] = {'portfolio_id': 'a1', 'portfolio_request': {'raw_accounts': raw_account_1_2},
                               'model_request': {'raw_model': zero_model}}
+trade_requests['one_holding_two_holding_two_position'] = {'portfolio_id': 'a1', 'portfolio_request': {'raw_accounts': raw_account_1_2},
+                              'model_request': {'raw_model': two_position}}
+
 trade_requests_keys = trade_requests.keys()
 
 

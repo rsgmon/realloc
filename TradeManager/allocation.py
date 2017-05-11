@@ -129,12 +129,16 @@ class TradeSelector(object):
 
 class SelectorSellMultipleAccounts(TradeSelector):
     def _select_accounts(self, trade_account_matrix, account_numbers):
-        # print(trade_account_matrix.trade_account_matrix.loc[(trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1)==1])
-        print(trade_account_matrix.trade_account_matrix.loc[
-                  (trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1) == 2])
-        print(trade_account_matrix.trade_account_matrix, '\n', account_numbers, trade_account_matrix.cash)
 
-        return (trade_account_matrix.cash)
+        # print(trade_account_matrix.trade_account_matrix.loc[(trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1)==1])
+        sells_only = (trade_account_matrix.trade_account_matrix.loc[trade_account_matrix.trade_account_matrix.loc[:, 'shares'] < 0])
+        sells_with_multiple_accounts = (sells_only[(sells_only.loc[:, account_numbers] > 0).sum(axis=1) >1])
+        sells_with_multiple_accounts
+        # print(trade_account_matrix.trade_account_matrix.loc[
+        #           (trade_account_matrix.trade_account_matrix.loc[:, account_numbers] > 0).sum(axis=1) == 2])
+        # print(trade_account_matrix.trade_account_matrix, '\n', account_numbers, trade_account_matrix.cash)
+
+        # return (trade_account_matrix.cash)
 
     def _size_trade(self, selected_trades, account_numbers):
         return account_numbers
