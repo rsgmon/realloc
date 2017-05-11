@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from TradeManager.portfolio import Portfolio
 from TradeManager.trade_calculator import TradeCalculator
+
 import sys
 
 class TradeManager(object):
