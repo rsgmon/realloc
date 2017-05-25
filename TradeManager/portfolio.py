@@ -5,78 +5,42 @@ from TradeManager.test.test_data.test_data import prices
 
 
 class Portfolio(object):
-    def __init__(self, portfolio_request=None):
+    def __init__(self, portfolio_request, prices):
         """
-        :param portfolio_request: dict that is usually a member of a TradeRequest object.
+        Returns a portfolio object
+        :param portfolio_request: dataframe containing accounts, positions, and restrictions.
+        :param prices: dataframe containing symbols and prices 
         """
-        if portfolio_request:
-            self.portfolio_request = portfolio_request
-            self._get_account_number_list()
-            self._aggregate_positions(self.portfolio_request)
-            self._portfolio_value, self._portfolio = self.set_portfolio_positions_and_value(self._aggregated_positions)
-            self._account_matrix = self.create_account_matrix(self.portfolio_request)
-            self._cash_matrix = self.set_cash_matrix()
-            self._account_position_matrix = self._account_matrix.drop('cash')
+        self.portfolio_request = portfolio_request
+        self.prices = prices
+        self.account_numbers = self.portfolio_request['account'].unique()
+        self._assemble_accounts()
+        self.set_portfolio_positions_and_value()
+        # self._account_matrix = self.create_account_matrix(self.portfolio_request)
+        # self._cash_matrix = self.set_cash_matrix()
+        # self._account_position_matrix = self._account_matrix.drop('cash')
 
-    def _assemble_accounts(self, portfolio_request):
+    def _assemble_accounts(self):
         """
             :param portfolio_request: dict that is usually a member of a TradeRequest object.
         """
-        accounts = []
-        if 'account_instructions' in portfolio_request:
-            if portfolio_request['account_instructions']:
-                for broker_account in self._get_accounts_from_brokers(portfolio_request['account_instructions']):
-                    accounts.append(broker_account)
-        if 'raw_accounts' in portfolio_request:
-            if portfolio_request['raw_accounts']:
-                for user_account in portfolio_request['raw_accounts']:
-                    accounts.append(user_account)
-        return accounts
+        self.accounts = []
+        for account in self.account_numbers:
+            self.accounts.append(Account(self.portfolio_request[self.portfolio_request.loc[:, 'account'] == account]))
 
-    def _validate_accounts(self, accounts):
-        #this method needs futher work but is here a placeholder to remember that
-        return accounts
-
-    def _get_accounts_from_brokers(self, account_instructions ):
-        if not isinstance(account_instructions, list):
-            account_instructions = [account_instructions]
-        accounts_from_broker = []
-        for instruction in account_instructions:
-            with open(instruction, 'r') as account:
-                account = json.loads(account.read())
-            accounts_from_broker.append(account)
-        return accounts_from_broker
-
-    def _aggregate_share_positions(self, accounts):
+    def _aggregate_share_positions(self):
         portfolio_concatenated_positions = pd.DataFrame()
-        for account in accounts:
-            portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, pd.DataFrame(account['account_positions'])])
-        del portfolio_concatenated_positions['price']
-        grouped_portfolio_positions = portfolio_concatenated_positions.groupby('symbol').agg(np.sum)
-        return grouped_portfolio_positions
+        for account in self.accounts:
+            portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, account.account_positions])
+        return portfolio_concatenated_positions.groupby(portfolio_concatenated_positions.index).agg(np.sum)
 
-    def set_portfolio_positions_and_value(self, aggregated_position):
-        price_matrix = self.get_price_matrix()
-        portfolio_positions = pd.concat([aggregated_position, price_matrix], axis=1)
-        portfolio_positions['position'] = portfolio_positions['shares']* portfolio_positions['price']
-        portfolio_positions['portfolio_weight'] = portfolio_positions['position']/portfolio_positions['position'].sum()
-        return portfolio_positions['position'].sum(), portfolio_positions.drop('cash')
-
-    def get_price_matrix(self):
-        """This is still a very demo version method. I assume I have price list but made it a little more Robust in case I do more testing. I get the prices and then check if that symbol is in the portfolio and delete shares as if I know I wouldn't have shares. In the end when a transaction is initiated all prices will have to be retrieved from some source and that set of prices has to be the 'price source of truth' for that entire transaction."""
-        all_prices = pd.DataFrame(prices).set_index('symbol')
-        portfolio_prices = pd.concat([self._aggregated_positions, all_prices], axis=1).dropna()
-        del portfolio_prices['shares']
-        return portfolio_prices
-
-    def _aggregate_positions(self, portfolio_request):
-        self._raw_accounts = self._assemble_accounts(portfolio_request)
-        self._validated_accounts = self._validate_accounts(self._raw_accounts)
-        self._aggregated_positions = self._aggregate_share_positions(self._validated_accounts)
+    def set_portfolio_positions_and_value(self):
+        self.portfolio_positions = pd.concat([self._aggregate_share_positions(), self.prices], axis=1)
+        self.portfolio_positions['position'] = self.portfolio_positions['shares']* self.portfolio_positions['price']
+        self.portfolio_positions['portfolio_weight'] = self.portfolio_positions['position']/self.portfolio_positions['position'].sum()
 
     def set_cash_matrix(self):
         return pd.DataFrame(self._account_matrix.loc['cash',:])
-
 
     def create_account_matrix(self, portfolio_request):
         accounts = self._assemble_accounts(portfolio_request)
@@ -89,21 +53,8 @@ class Portfolio(object):
         return account_matrix.fillna(0)
 
 
-    def _get_account_number_list(self):
-        account_numbers = []
-        for number in self._assemble_accounts(self.portfolio_request):
-            account_numbers.append(number['account_number'])
-        self._account_numbers = tuple(account_numbers)
 
-    @property
-    def account_numbers(self):
-        """Get the account numbers."""
-        return self._account_numbers
 
-    @property
-    def portfolio_positions(self):
-        """Get the portfolio positions."""
-        return self._portfolio
 
     @property
     def portfolio_value(self):
@@ -116,6 +67,24 @@ class Portfolio(object):
     @property
     def cash_matrix(self):
         return self._cash_matrix
+
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
+
+class Account(object):
+    def __init__(self, request):
+        self.account_raw = request
+        self.account_number = self.account_raw['account'].unique()
+        self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions', 'account'], 1).set_index(
+            ['symbol'])
+        self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(
+            subset=['symbol']).drop(['restrictions', 'account'], 1).set_index(
+            ['symbol'])
+        self.account_level_restrictions = self.account_raw.dropna(subset=['restrictions']).drop(['symbol', 'shares'], 1)
+
+        # todo self.position_level_restrcitions
+
+
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])

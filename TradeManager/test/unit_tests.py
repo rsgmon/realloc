@@ -1,11 +1,12 @@
 from unittest import TestCase
-from TradeManager.trade_manager import TradeManager, TradeRequest, Model
+from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, TradeAllocator, SelectorSellMultipleAccounts
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio
 from TradeManager.test.test_data.test_data import raw_model, acc_inst_no_model, acc_inst_two_models, blank, no_port_raw_model, trade_requests, trade_requests_keys
 from TradeManager.test.test_data.test_data_generator import read_pickle
 import pickle
+
 
 """one_holding_one_position
 one_holding_zero_model
@@ -68,49 +69,44 @@ class TestAllocation(TestCase):
 
 class TestTradeRequest(TestCase):
     def setUp(self):
-        self.trade_request = TradeRequest(trade_requests['one_holding_zero_model'])
-        self.model = Model(self.trade_request.model_request)
+        # self.trade_request = TradeRequest(trade_requests['one_holding_zero_model'])
+        # with open('test_data\/Trade Request Example.xlsx') as xl:
+        self.trade_request_excel = TradeRequest(read_pickle('test_data\/excel_request.pkl'), 'test_data\/Trade Request Example.xlsx', test_prices_file_path='test_data\/prices.json')
 
-    def test_trade_request(self):
-        pass#print(self.model.model_positions)
+    def test_price_retriever(self):
+        self.assertRaises(RuntimeError,PriceRetriever(self.trade_request_excel.request_raw, file_name='test_data\/prices.json', test_array_index=0))
+        # self.assertGreater(price_retriever.price_list.sum().price, 1)
 
-    def test_set_model_request(self):
-        self.assertRaises(Exception, TradeRequest, acc_inst_no_model)
-        self.assertRaises(Exception, TradeRequest, acc_inst_two_models)
 
-    def test_set_portfolio_request(self):
-        self.assertRaises(Exception, TradeRequest, blank)
-        self.assertRaises(Exception, TradeRequest, no_port_raw_model)
 
-    def test_set_model(self):
-        self.assertGreater(len(self.model.model_positions),0)
+    def test_trade_request_attributes(self):
+        self.assertGreater(len(self.trade_request_excel.portfolio_request), 0)
+        self.assertGreater(len(self.trade_request_excel.model_request), 0)
 
 
 class TestPortfolio(TestCase):
     def setUp(self):
-        self.trade_requests = [TradeRequest(trade_requests[value]) for value in trade_requests]
-        self.portfolios = [Portfolio(value.portfolio_request) for value in self.trade_requests]
-        self.trade_request_dict = dict(zip(trade_requests_keys, self.trade_requests))
-        # pd.to_pickle(self.portfolio, '.\/test_data\/portfolio.pkl')
+        self.trade_requests = read_pickle('test_data\/request.pkl')
+        self.portfolio = Portfolio(self.trade_requests.portfolio_request, self.trade_requests.prices)
 
     def test_print_portfolio_details(self):
-        print(self.portfolios[0])
+        print(self.portfolio)
 
-    def test_portfolio_attributes(self):
-        for portfolio in self.portfolios:
-            self.assertGreater(len(portfolio.portfolio_positions),0)
-            self.assertGreater(portfolio.portfolio_value, 0)
-
-    def test_create_account_matrix(self):
-        portfolio = Portfolio(self.trade_request_dict['one_holding_zero_model'].portfolio_request)
-        self.assertGreater(len(portfolio.account_matrix), 0)
-
-    def test_account_numbers(self):
-        self.assertGreater(len(self.portfolios[0].account_numbers), 0)
-
-    def test_get_cash_matrix(self):
-        cash_matrix = self.portfolios[0].set_cash_matrix()
-        self.assertGreater(cash_matrix.loc['22-22',:][0], 0)
-
-    def test_get_price_matrix(self):
-        self.assertGreaterEqual(len(self.portfolios[0].cash_matrix), 1)
+    # def test_portfolio_attributes(self):
+    #     for portfolio in self.portfolios:
+    #         self.assertGreater(len(portfolio.portfolio_positions),0)
+    #         self.assertGreater(portfolio.portfolio_value, 0)
+    #
+    # def test_create_account_matrix(self):
+    #     portfolio = Portfolio(self.trade_request_dict['one_holding_zero_model'].portfolio_request)
+    #     self.assertGreater(len(portfolio.account_matrix), 0)
+    #
+    # def test_account_numbers(self):
+    #     self.assertGreater(len(self.portfolios[0].account_numbers), 0)
+    #
+    # def test_get_cash_matrix(self):
+    #     cash_matrix = self.portfolios[0].set_cash_matrix()
+    #     self.assertGreater(cash_matrix.loc['22-22',:][0], 0)
+    #
+    # def test_get_price_matrix(self):
+    #     self.assertGreaterEqual(len(self.portfolios[0].cash_matrix), 1)

@@ -1,0 +1,198 @@
+[
+ {
+   "account": "model",
+   "symbol": "AGG",
+   "weight": "15.00%",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "model",
+   "symbol": "SPY",
+   "weight": "10.00%",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "model",
+   "symbol": "TRR",
+   "weight": "5.00%",
+   "price": null,
+   "restrictions": "99"
+ },
+ {
+   "account": "model",
+   "symbol": "IBM",
+   "weight": "2.00%",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "model",
+   "symbol": "GGG",
+   "weight": "1.00%",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "model",
+   "symbol": "AAPL",
+   "weight": "4.00%",
+   "price": null,
+   "restrictions": "27"
+ },
+ {
+   "account": "model",
+   "symbol": "FB",
+   "weight": "3.00%",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "",
+   "weight": "",
+   "price": null,
+   "restrictions": "tsm1500"
+ },
+ {
+   "account": "45-33",
+   "symbol": "",
+   "weight": "",
+   "price": null,
+   "restrictions": "acm0.05"
+ },
+ {
+   "account": "45-33",
+   "symbol": "YYY",
+   "weight": " 100.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "BHI",
+   "weight": " 352.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "FB",
+   "weight": " 98.20 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "GGG",
+   "weight": " 74.50 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "POTRE",
+   "weight": " 1,000.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "BHYUJ",
+   "weight": " 69.50 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "Almost account_cash",
+   "weight": " 10,000.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "45-33",
+   "symbol": "account_cash",
+   "weight": " 5,687.21 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "1455-0987",
+   "symbol": "AGG",
+   "weight": " 750.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "1455-0987",
+   "symbol": "SPY",
+   "weight": " 32.50 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "1455-0987",
+   "symbol": "TRH",
+   "weight": " 67.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "1455-0987",
+   "symbol": "A4854f56",
+   "weight": " 99.00 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "1455-0987",
+   "symbol": "account_cash",
+   "weight": " 9,994.67 ",
+   "price": null,
+   "restrictions": ""
+ },
+ {
+   "account": "5268-5955",
+   "symbol": "EMHY",
+   "weight": "172.0904",
+   "price": 50.381,
+   "restrictions": ""
+ },
+ {
+   "account": "5268-5955",
+   "symbol": "LQD",
+   "weight": "121.1987",
+   "price": 118.4,
+   "restrictions": ""
+ },
+ {
+   "account": "5268-5955",
+   "symbol": "EMB",
+   "weight": "63.0238",
+   "price": 114.47,
+   "restrictions": ""
+ },
+ {
+   "account": "5268-5955",
+   "symbol": "MBB",
+   "weight": "126.484",
+   "price": 106.66,
+   "restrictions": ""
+ },
+ {
+   "account": "5268-5955",
+   "symbol": "BWX",
+   "weight": "434.2813",
+   "price": 27.03,
+   "restrictions": ""
+ },
+ {
+   "account": "5268-5955",
+   "symbol": "account_cash",
+   "weight": "360.44",
+   "price": null,
+   "restrictions": ""
+ }
+]

@@ -5,6 +5,10 @@ import TradeManager.trade_calculator as tc
 import TradeManager.trade_manager as trade_manage
 import pickle
 
+def pickle_trade_request():
+    mocks = trade_manage.TradeRequest(read_pickle('excel_request.pkl'), 'Trade Request Example.xlsx', test_prices_file_path='prices.json')
+    with open('request.pkl', 'wb') as myfile:
+        pickle.dump(mocks, myfile)
 
 def pickle_portfolios_models():
     # trade_requests = [trade_manage.TradeRequest(test_data.trade_requests[value]) for value in test_data.trade_requests]
@@ -30,8 +34,9 @@ def read_pickle(file):
         apickle = pickle.load(afile)
     return apickle
 
-pickle_portfolios_models()
-pickle_trade_calculator()
+# pickle_trade_request()
+# pickle_portfolios_models()
+# pickle_trade_calculator()
 # a = read_pickle('mocks.pkl')
 # for b in a:
 #     print(b)
