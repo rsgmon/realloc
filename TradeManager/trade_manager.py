@@ -25,59 +25,52 @@ class TradeManager(object):
     def allocate_trades(self):
         pass #return TradeAllocator(self.portfolio, self.portfolio_trades)
 
-
-class TradeRequest(object):
-
-    def __init__(self, file_type_label, file_path, test_prices_file_path=None):
-        """ Return a Trade Request.
-        Args:
-        :param file_type_label: (str) has the extension which identifies file type
-        :param file_path: (str) path to file (in production becomes the file itself)
-        :param test_prices_file_path: (str) for testing only 
-        """
-        self.error = []
+class RawRequest(object):
+    def __init__(self, file_type_label, file_path):
         self.file_type_label = file_type_label
         self.file_path = file_path
         self._route_trade_request_type()
-        self._set_trade_request()
-        if test_prices_file_path:
-            self._set_prices(self.request_raw, test_prices_file_path)
-        else:
-            self._set_prices(self.request_raw)
 
     def _route_trade_request_type(self):
         """
         Determines what file type the trade request was received in and routes to the appropriate opener.
         """
         if 'xl' in self.file_type_label:
-            self.request_raw = pd.read_excel(self.file_path, engine='xlrd')
-            # self.request_raw['symbol'].astype("int")
+            self.raw_request = pd.read_excel(self.file_path, engine='xlrd')
+            # self.raw_request['symbol'].astype("int")
         elif 'csv' in 'csv':
-            self.request_raw = pd.read_csv(self.file_path)
+            self.raw_request = pd.read_csv(self.file_path)
         elif 'json' in 'json':
-            self.request_raw = pd.read_json(self.file_path)
-            #todo must transform into pandas
+            self.raw_request = pd.read_json(self.file_path)
+            # todo must transform into pandas
         elif 'txt' in 'txt':
-            pass #todo
-        else: return Exception
-
-    def _set_prices(self, request_raw, test_prices_file_path=None):
-        if test_prices_file_path:
-            self.prices = PriceRetriever(request_raw, test_prices_file_path).price_list
+            pass  # todo
         else:
-            self.prices = PriceRetriever(request_raw).price_list
+            return Exception
+
+class TradeRequest(object):
+    def __init__(self, raw_request):
+        """ Return a Trade Request.
+        Args:
+        :param file_type_label: (str) has the extension which identifies file type
+        :param file_path: (str) path to file (in production becomes the file itself)
+        :param test_prices_file_path: (str) for testing only 
+        """
+        self.raw_request = raw_request.raw_request
+        self.error = []
+        self._set_trade_request()
 
     def _set_portfolio_request(self):
         try:
             # todo we need to add _get_accounts_from_brokers and incorporate
-            self.portfolio_request = self.request_raw.loc[self.request_raw['account'] != 'model', ['account','symbol', 'shares', 'restrictions']]
+            self.portfolio_request = self.raw_request.loc[self.raw_request['account'] != 'model', ['account','symbol', 'shares', 'restrictions']]
 
         except KeyError as error:
             raise RuntimeError('Trade request must contain a portfolio request object. Yours did not') from error
 
     def _set_model_request(self):
         try:
-            self.model_request = self.request_raw.loc[self.request_raw['account'] == 'model', ['symbol', 'weight']].set_index(['symbol'])
+            self.model_request = self.raw_request.loc[self.raw_request['account'] == 'model', ['symbol', 'weight']].set_index(['symbol'])
         except KeyError as error:
             raise RuntimeError('Trade request must contain a model request object. Yours did not') from error
 
@@ -131,16 +124,16 @@ class Model(object):
 
 
 class PriceRetriever(object):
-    def __init__(self, trade_request, file_name=None, test_array_index=0):
+    def __init__(self, raw_request):
         """
         Returns PriceRetriever object. If everything worked, .price_list contains the symbols and prices. If not returns an error.
         :param trade_request: object contains all symbols 
         :param file_name: (testing only) string pointing to file holding prices
         """
         self.error = []
-        self.trade_request = trade_request
+        self.raw_request = raw_request.raw_request
 
-    def set_prices(self):
+    def __call__(self, file_name=None, test_array_index=0):
         self._set_symbol_retrieval_list()
         if file_name:
             self._test_set_remote_prices(file_name, test_array_index)
@@ -149,28 +142,27 @@ class PriceRetriever(object):
         self._combine_local_remote_prices()
         self._flag_no_price()
 
-    def __call__(self, file_name=None, test_array_index=0):
-
 
     def _set_symbol_retrieval_list(self):
         """
         Creates the list of symbols to retrieve from third party price provider.
         :return: none
         """
-        symbols_only = self.trade_request[self.trade_request.loc[:,'symbol'].notnull()].copy()
+        symbols_only = self.raw_request[self.raw_request.loc[:,'symbol'].notnull()].copy()
         symbols_only['symbol'] = symbols_only.loc[:,'symbol'].astype(str)
         symbols_only = symbols_only[~symbols_only.loc[:,'symbol'].str.contains('account_cash', case=False) & symbols_only.loc[:,'price'].isnull()]
-        self.price_retrieval_list = symbols_only['symbol']
+        self.price_retrieval_list = symbols_only
 
     def _combine_local_remote_prices(self):
         """        
         :return: none 
         """
-        local = self.trade_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
+        local = self.raw_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
         self.price_list = pd.concat([self.price_list, local])
 
     def _set_remote_prices(self):
         prices = []
+
         for symbol in self.price_retrieval_list:
             try:
                 yahoo = Share(symbol=symbol)
@@ -178,11 +170,11 @@ class PriceRetriever(object):
                 prices.append(price)
             except (AttributeError, TypeError) as e:
                 self.error.append( {symbol, 'Invalid symbol. Check for spaces or other non-alphanumeric characters'})
-        self.price_list = pd.DataFrame(prices, index=self.price_retrieval_list, columns=['price'])
+        self.price_list = pd.DataFrame(prices, index=self.price_retrieval_list, columns=['price']).apply(pd.to_numeric)
 
     def _test_set_remote_prices(self, file_name, test_array_index):
         """
-        Everytime 
+         
         :param file_name: string, path to file
         :param test_array_index: int, position of test data in the array test data objects
         :return: none
@@ -194,8 +186,9 @@ class PriceRetriever(object):
             self.price_list = pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
 
     def _flag_no_price(self):
-        no_price = self.price_list[~self.price_list.loc[:,'price'].apply(lambda x: False if x == 'None' else True)]
+        no_price = self.price_list[self.price_list.loc[:,'price'].isnull()]
         if len(no_price):
+            print(no_price)
             raise RuntimeError(no_price.to_string())
 
     def __str__(self):

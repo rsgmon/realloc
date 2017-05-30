@@ -1,5 +1,5 @@
 from unittest import TestCase
-from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever
+from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, TradeAllocator, SelectorSellMultipleAccounts
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio
@@ -69,19 +69,29 @@ class TestAllocation(TestCase):
 
 class TestTradeRequest(TestCase):
     def setUp(self):
-        # self.trade_request = TradeRequest(trade_requests['one_holding_zero_model'])
-        # with open('test_data\/Trade Request Example.xlsx') as xl:
-        self.trade_request_excel = TradeRequest(read_pickle('test_data\/excel_request.pkl'), 'test_data\/Trade Request Example.xlsx', test_prices_file_path='test_data\/prices.json')
-
-    def test_price_retriever(self):
-        self.assertRaises(RuntimeError,PriceRetriever(self.trade_request_excel.request_raw, file_name='test_data\/prices.json', test_array_index=0))
-        # self.assertGreater(price_retriever.price_list.sum().price, 1)
-
-
+        pass
+        self.raw_request = RawRequest(read_pickle('test_data\/excel_request.pkl'), 'test_data\/Trade Request Example.xlsx')
 
     def test_trade_request_attributes(self):
-        self.assertGreater(len(self.trade_request_excel.portfolio_request), 0)
-        self.assertGreater(len(self.trade_request_excel.model_request), 0)
+        trade_request = TradeRequest(self.raw_request)
+        self.assertGreater(len(trade_request.portfolio_request), 0)
+        self.assertGreater(len(trade_request.model_request), 0)
+
+class TestPriceRetriever(TestCase):
+    def setUp(self):
+        self.raw_request = RawRequest(read_pickle('test_data\/excel_request.pkl'),'test_data\/Trade Request Example.xlsx')
+
+    def test_flag_no_price(self):
+        pr = PriceRetriever(self.raw_request)
+        pr()
+        # self.assertRaises(RuntimeError, pr(file_name='test_data\/prices.json', test_array_index=0))
+
+    # def test_price_retriever(self):
+    #     pr = PriceRetriever(self.raw_request)
+    #     pr()
+    #     self.assertRaises(RuntimeError, pr, file_name = 'test_data\/prices.json', test_array_index = 1)
+        # self.assertGreater(pr.price_list.sum().price, 1)
+
 
 
 class TestPortfolio(TestCase):
