@@ -25,6 +25,7 @@ class TradeManager(object):
     def allocate_trades(self):
         pass #return TradeAllocator(self.portfolio, self.portfolio_trades)
 
+
 class RawRequest(object):
     def __init__(self, file_type_label, file_path):
         self.file_type_label = file_type_label
@@ -48,29 +49,30 @@ class RawRequest(object):
         else:
             return Exception
 
+
 class TradeRequest(object):
     def __init__(self, raw_request):
         """ Return a Trade Request.
         Args:
-        :param file_type_label: (str) has the extension which identifies file type
-        :param file_path: (str) path to file (in production becomes the file itself)
-        :param test_prices_file_path: (str) for testing only 
+        :param raw_request: (RawRequest)
         """
         self.raw_request = raw_request.raw_request
         self.error = []
         self._set_trade_request()
 
+    # todo we need to add method _get_accounts_from_AccountStore and incorporate
+
     def _set_portfolio_request(self):
         try:
-            # todo we need to add _get_accounts_from_brokers and incorporate
             self.portfolio_request = self.raw_request.loc[self.raw_request['account'] != 'model', ['account','symbol', 'shares', 'restrictions']]
-
+            self.portfolio_request = self.portfolio_request.loc[self.portfolio_request.symbol != "AccountStore"]
         except KeyError as error:
             raise RuntimeError('Trade request must contain a portfolio request object. Yours did not') from error
 
     def _set_model_request(self):
         try:
             self.model_request = self.raw_request.loc[self.raw_request['account'] == 'model', ['symbol', 'weight']].set_index(['symbol'])
+            self.model_request.columns = ['model_weight']
         except KeyError as error:
             raise RuntimeError('Trade request must contain a model request object. Yours did not') from error
 
@@ -103,7 +105,6 @@ class TradeRequest(object):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
-
 class Model(object):
     def __init__(self, model_request=None):
         if model_request:
@@ -111,9 +112,11 @@ class Model(object):
             self.model_positions = self.get_raw_model_positions(self.model_request)
 
     def get_raw_model_positions(self, model_request):
+        print(model_request)
         if not model_request['raw_model']['model_positions']:
             model_request['raw_model']['model_positions'].append({'symbol': 'placeholder', 'model_weight': 0})
         model_positions =  pd.DataFrame(model_request['raw_model']['model_positions'])
+
         model_positions.set_index('symbol', inplace=True)
         if 'cash' in model_positions.index:
             model_positions.drop('cash', inplace=True)
@@ -126,9 +129,8 @@ class Model(object):
 class PriceRetriever(object):
     def __init__(self, raw_request):
         """
-        Returns PriceRetriever object. If everything worked, .price_list contains the symbols and prices. If not returns an error.
-        :param trade_request: object contains all symbols 
-        :param file_name: (testing only) string pointing to file holding prices
+        Returns empty PriceRetriever object.
+        :param raw_request: pandas dataframe object contains all symbols
         """
         self.error = []
         self.raw_request = raw_request.raw_request
@@ -149,46 +151,43 @@ class PriceRetriever(object):
         :return: none
         """
         symbols_only = self.raw_request[self.raw_request.loc[:,'symbol'].notnull()].copy()
+        symbols_only = symbols_only[symbols_only.loc[:,'price'].isnull()]
         symbols_only['symbol'] = symbols_only.loc[:,'symbol'].astype(str)
-        symbols_only = symbols_only[~symbols_only.loc[:,'symbol'].str.contains('account_cash', case=False) & symbols_only.loc[:,'price'].isnull()]
-        self.price_retrieval_list = symbols_only
-
-    def _combine_local_remote_prices(self):
-        """        
-        :return: none 
-        """
-        local = self.raw_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
-        self.price_list = pd.concat([self.price_list, local])
+        symbols_only = symbols_only[~symbols_only.loc[:,'symbol'].str.contains('accountstore', case=False)]
+        symbols_only = symbols_only[~symbols_only.loc[:, 'symbol'].str.contains('account_cash', case=False)]
+        self.prices = pd.DataFrame(index=symbols_only['symbol'].unique(), columns=['price'])
 
     def _set_remote_prices(self):
-        prices = []
-
-        for symbol in self.price_retrieval_list:
+        for symbol in self.prices.index:
             try:
                 yahoo = Share(symbol=symbol)
                 price = yahoo.get_price()
-                prices.append(price)
+                self.prices.set_value(symbol, 'price', price)
             except (AttributeError, TypeError) as e:
                 self.error.append( {symbol, 'Invalid symbol. Check for spaces or other non-alphanumeric characters'})
-        self.price_list = pd.DataFrame(prices, index=self.price_retrieval_list, columns=['price']).apply(pd.to_numeric)
 
-    def _test_set_remote_prices(self, file_name, test_array_index):
+    def _test_set_remote_prices(self, file_name, test_array_index=0):
         """
-         
+        For testing only.
         :param file_name: string, path to file
         :param test_array_index: int, position of test data in the array test data objects
         :return: none
         """
         import json
-
         with open(file_name, 'r') as ob:
             test_object = json.load(ob)
-            self.price_list = pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
+            self.prices = pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
+
+    def _combine_local_remote_prices(self):
+        """
+        :return: none
+        """
+        local = self.raw_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
+        self.prices = pd.concat([self.prices, local]).astype(float)
 
     def _flag_no_price(self):
-        no_price = self.price_list[self.price_list.loc[:,'price'].isnull()]
+        no_price = self.prices.loc[self.prices['price'].isnull()]
         if len(no_price):
-            print(no_price)
             raise RuntimeError(no_price.to_string())
 
     def __str__(self):

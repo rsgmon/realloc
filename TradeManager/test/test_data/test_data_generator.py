@@ -6,28 +6,32 @@ import TradeManager.trade_manager as trade_manage
 import pickle
 
 def pickle_trade_request():
-    mocks = trade_manage.TradeRequest(read_pickle('excel_request.pkl'), 'Trade Request Example.xlsx', test_prices_file_path='prices.json')
+    mocks = trade_manage.TradeRequest(trade_manage.RawRequest(read_pickle('excel_request.pkl'), 'Trade Request Example.xlsx'))
     with open('request.pkl', 'wb') as myfile:
         pickle.dump(mocks, myfile)
 
+def pickle_prices():
+    prices = trade_manage.PriceRetriever(trade_manage.RawRequest(read_pickle('excel_request.pkl'), 'Trade Request Example.xlsx'))
+    prices()
+    with open('prices.pkl', 'wb') as myprices:
+        pickle.dump(prices, myprices)
+
 def pickle_portfolios_models():
-    # trade_requests = [trade_manage.TradeRequest(test_data.trade_requests[value]) for value in test_data.trade_requests]
-    mocks = {}
-    for request in test_data.trade_requests:
-        mock = {}
-        mock['request'] = trade_manage.TradeRequest(test_data.trade_requests[request])
-        mock['portfolio'] = portfolio.Portfolio(mock['request'].portfolio_request)
-        mock['model'] = trade_manage.Model(mock['request'].model_request)
-        mocks[request] = mock
-    with open('mocks.pkl', 'wb') as myfile:
-        pickle.dump(mocks, myfile)
+    treq = read_pickle('request.pkl')
+    prices = read_pickle('prices.pkl')
+    port = portfolio.Portfolio(treq.portfolio_request, prices.prices)
+
+    with open('portfolio.pkl', 'wb') as myfile:
+        pickle.dump(port, myfile)
 
 def pickle_trade_calculator():
-    mocks = read_pickle('mocks.pkl')
-    for mock in mocks:
-        mocks[mock]['trade_calculator'] = tc.TradeCalculator(mocks[mock]['portfolio'], mocks[mock]['model'])
-    with open('mocks.pkl', 'wb') as myfile:
-        pickle.dump(mocks, myfile)
+    portfolio = read_pickle('portfolio.pkl')
+    trade_request = read_pickle('request.pkl')
+    prices = read_pickle('prices.pkl')
+    model = trade_request.model_request
+    trade_calculator = tc.TradeCalculator(portfolio, model, prices)
+    with open('trade_list.pkl', 'wb') as myfile:
+        pickle.dump(trade_calculator, myfile)
 
 def read_pickle(file):
     with open(file, 'rb') as afile:
@@ -35,8 +39,10 @@ def read_pickle(file):
     return apickle
 
 # pickle_trade_request()
+# pickle_prices()
 # pickle_portfolios_models()
 # pickle_trade_calculator()
-# a = read_pickle('mocks.pkl')
+# a = read_pickle('portfolio.pkl')
+# print(a)
 # for b in a:
 #     print(b)

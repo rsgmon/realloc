@@ -2,23 +2,24 @@ import pandas as pd
 from TradeManager.test.test_data.test_data import prices
 
 class TradeCalculator(object):
-    def __init__(self, portfolio, model):
+    def __init__(self, portfolio, model, prices):
         self.model = model
         self.portfolio = portfolio
+        self.prices = prices
         self.portfolio_trade_list = self._add_share_trades()
         # self.buy_trades = self._split_trade_list()
 
     def _get_dollar_trades(self, portfolio, model):
-        portfolio_model_weights = pd.concat([model.model_positions, self.portfolio.portfolio_positions['portfolio_weight']], axis=1).fillna(0)
-        portfolio_trade_list = (portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value
-        portfolio_trade_list.name = 'dollar_trades'
-        return pd.DataFrame(portfolio_trade_list)
+        portfolio_model_weights = pd.concat([model, self.portfolio.portfolio_positions['portfolio_weight']], axis=1).fillna(0)
+        portfolio_model_weights['price'] = self.prices.prices
+        portfolio_model_weights['dollar_trades'] = (portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value
+        return portfolio_model_weights
 
     def _add_share_trades(self):
         trade_list = self._get_dollar_trades(self.portfolio, self.model)
-        combined_trade_list_portfolio_prices = pd.concat([trade_list, self.request_prices()], axis=1).dropna()
-        combined_trade_list_portfolio_prices['shares'] = (combined_trade_list_portfolio_prices['dollar_trades']/combined_trade_list_portfolio_prices['price']).round()
-        return combined_trade_list_portfolio_prices
+        trade_list['shares'] = (trade_list['dollar_trades']/trade_list['price']).round()
+
+        return trade_list
 
     def _split_trade_list(self, type='Buy'):
         if type == 'Buy':

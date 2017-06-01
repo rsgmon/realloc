@@ -16,49 +16,46 @@ class Portfolio(object):
         self.account_numbers = self.portfolio_request['account'].unique()
         self._assemble_accounts()
         self.set_portfolio_positions_and_value()
-        # self._account_matrix = self.create_account_matrix(self.portfolio_request)
-        # self._cash_matrix = self.set_cash_matrix()
-        # self._account_position_matrix = self._account_matrix.drop('cash')
+        self._account_matrix = self.create_account_matrix()
 
     def _assemble_accounts(self):
         """
-            :param portfolio_request: dict that is usually a member of a TradeRequest object.
+            sets self.accounts to list of account objects.
         """
         self.accounts = []
         for account in self.account_numbers:
             self.accounts.append(Account(self.portfolio_request[self.portfolio_request.loc[:, 'account'] == account]))
 
     def _aggregate_share_positions(self):
+        """
+        Creates a single dataframe of account positions grouped by symbol.
+        :return: dataframe
+        """
         portfolio_concatenated_positions = pd.DataFrame()
         for account in self.accounts:
             portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, account.account_positions])
         return portfolio_concatenated_positions.groupby(portfolio_concatenated_positions.index).agg(np.sum)
 
     def set_portfolio_positions_and_value(self):
-        self.portfolio_positions = pd.concat([self._aggregate_share_positions(), self.prices], axis=1)
+        """
+        Sets attribute portfolio_positions to have aggregated positions
+        :return: none
+        """
+        self.portfolio_positions = self._aggregate_share_positions()
+        self.portfolio_positions['price'] = self.prices
         self.portfolio_positions['position'] = self.portfolio_positions['shares']* self.portfolio_positions['price']
+        self.portfolio_value = round(self.portfolio_positions['position'].sum(),2)
         self.portfolio_positions['portfolio_weight'] = self.portfolio_positions['position']/self.portfolio_positions['position'].sum()
 
-    def set_cash_matrix(self):
-        return pd.DataFrame(self._account_matrix.loc['cash',:])
 
-    def create_account_matrix(self, portfolio_request):
-        accounts = self._assemble_accounts(portfolio_request)
+    def create_account_matrix(self):
         account_matrix = pd.DataFrame()
-        for account in accounts:
-            pdaccount = pd.DataFrame(account['account_positions']).set_index('symbol')
-            pdaccount.rename(columns={'shares': account['account_number']}, inplace=True, )
-            account_matrix = pd.concat([account_matrix, pdaccount], axis=1)
-        del account_matrix['price']
+        for account in self.accounts:
+            account_copy = account.account_positions.copy()
+            account_copy.columns=account.account_number
+            account_matrix = pd.concat([account_matrix, account_copy], axis=1)
         return account_matrix.fillna(0)
 
-
-
-
-
-    @property
-    def portfolio_value(self):
-        return self._portfolio_value
 
     @property
     def account_matrix(self):
