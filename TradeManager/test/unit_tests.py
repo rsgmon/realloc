@@ -3,15 +3,8 @@ from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceR
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, TradeAllocator, SelectorSellMultipleAccounts
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio
-from TradeManager.test.test_data.test_data import raw_model, acc_inst_no_model, acc_inst_two_models, blank, no_port_raw_model, trade_requests, trade_requests_keys
 from TradeManager.test.test_data.test_data_generator import read_pickle
-import pickle
 
-
-"""one_holding_one_position
-one_holding_zero_model
-one_holding_two_holding_zero_model
-one_holding_equal_weighted, one_holding_two_holding_two_position"""
 
 class TestAllocation(TestCase):
     def setUp(self):

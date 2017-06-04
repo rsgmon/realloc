@@ -1,8 +1,5 @@
 import pandas as pd
 import numpy as np
-import json
-from TradeManager.test.test_data.test_data import prices
-
 
 class Portfolio(object):
     def __init__(self, portfolio_request, prices):
@@ -16,7 +13,8 @@ class Portfolio(object):
         self.account_numbers = self.portfolio_request['account'].unique()
         self._assemble_accounts()
         self.set_portfolio_positions_and_value()
-        self._account_matrix = self.create_account_matrix()
+        self._account_position_matrix = self.create_account_matrix()
+        self.create_cash_matrix()
 
     def _assemble_accounts(self):
         """
@@ -46,6 +44,12 @@ class Portfolio(object):
         self.portfolio_positions['position'] = self.portfolio_positions['shares']* self.portfolio_positions['price']
         self.portfolio_value = round(self.portfolio_positions['position'].sum(),2)
         self.portfolio_positions['portfolio_weight'] = self.portfolio_positions['position']/self.portfolio_positions['position'].sum()
+
+    def create_cash_matrix(self):
+        self._cash_matrix = pd.DataFrame()
+        for account in self.accounts:
+            self._cash_matrix = pd.concat([self._cash_matrix, pd.DataFrame([account.account_cash.loc['account_cash',:]['shares']], index=account.account_number)])
+        self._cash_matrix.columns=['cash']
 
 
     def create_account_matrix(self):
