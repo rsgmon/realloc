@@ -10,15 +10,19 @@ class TradeCalculator(object):
         # self.buy_trades = self._split_trade_list()
 
     def _get_dollar_trades(self, portfolio, model):
-        portfolio_model_weights = pd.concat([model, self.portfolio.portfolio_positions['portfolio_weight']], axis=1).fillna(0)
+        portfolio_model_weights = pd.concat([model, self.portfolio.portfolio_positions['portfolio_weight'], self.portfolio.portfolio_positions['shares']], axis=1).fillna(0)
         portfolio_model_weights['price'] = self.prices.prices
-        portfolio_model_weights['dollar_trades'] = (portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value
+        portfolio_model_weights['dollar_trades'] = ((portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value).round(2)
         return portfolio_model_weights
 
     def _add_share_trades(self):
+        def share_trade(row):
+            if row.model_weight == 0:
+                return row.shares if row.shares <0 else row.shares * -1
+            else:
+                return (row.dollar_trades/row.price).round() if row.dollar_trades >0 else (row.dollar_trades/row.price * -1).round()
         trade_list = self._get_dollar_trades(self.portfolio, self.model)
-        trade_list['shares'] = (trade_list['dollar_trades']/trade_list['price']).round()
-
+        trade_list['shares'] = trade_list.apply(share_trade, axis=1)
         return trade_list
 
     def _split_trade_list(self, type='Buy'):
@@ -26,10 +30,6 @@ class TradeCalculator(object):
             return self.portfolio_trade_list[self.portfolio_trade_list['shares'] < 0]
         else:
             return self.portfolio_trade_list[self.portfolio_trade_list['shares'] > 0]
-
-    def request_prices(self):
-        """Need to update this to fetch portfolio and model prices only."""
-        return pd.DataFrame(prices).set_index('symbol')
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])

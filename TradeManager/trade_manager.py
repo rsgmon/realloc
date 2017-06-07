@@ -39,13 +39,16 @@ class RawRequest(object):
         if 'xl' in self.file_type_label:
             self.raw_request = pd.read_excel(self.file_path, engine='xlrd')
             # self.raw_request['symbol'].astype("int")
-        elif 'csv' in 'csv':
+        elif 'csv' in self.file_type_label:
             self.raw_request = pd.read_csv(self.file_path)
-        elif 'json' in 'json':
+        elif 'json' in self.file_type_label:
             self.raw_request = pd.read_json(self.file_path)
             # todo must transform into pandas
-        elif 'txt' in 'txt':
+        elif 'txt' in self.file_type_label:
             pass  # todo
+        elif 'test' in self.file_type_label:
+            # FOR TESTING ONLY
+            self.raw_request = pd.DataFrame(self.file_path)
         else:
             return Exception
 
@@ -61,6 +64,7 @@ class TradeRequest(object):
         self._set_trade_request()
 
     # todo we need to add method _get_accounts_from_AccountStore and incorporate
+    # todo check every account has 'account_cash' plug
 
     def _set_portfolio_request(self):
         try:
@@ -112,7 +116,6 @@ class Model(object):
             self.model_positions = self.get_raw_model_positions(self.model_request)
 
     def get_raw_model_positions(self, model_request):
-        print(model_request)
         if not model_request['raw_model']['model_positions']:
             model_request['raw_model']['model_positions'].append({'symbol': 'placeholder', 'model_weight': 0})
         model_positions =  pd.DataFrame(model_request['raw_model']['model_positions'])
@@ -135,15 +138,32 @@ class PriceRetriever(object):
         self.error = []
         self.raw_request = raw_request.raw_request
 
-    def __call__(self, file_name=None, test_array_index=0):
+    def __call__(self, test=False, file_name=None, test_array_index=0):
+        self._prices_are_numbers()
+        self._check_duplicate_user_input_prices()
         self._set_symbol_retrieval_list()
-        if file_name:
-            self._test_set_remote_prices(file_name, test_array_index)
+        if test:
+            if file_name:
+                self._test_set_remote_prices(file_name, test_array_index)
+            else:
+                self._test_set_remote_prices()
         else:
             self._set_remote_prices()
         self._combine_local_remote_prices()
         self._flag_no_price()
 
+    def _check_duplicate_user_input_prices(self):
+        duplicates = self.raw_request[self.raw_request.duplicated(['symbol'], keep=False)].dropna(subset=['price'])
+        dup_price_error = pd.DataFrame()
+        for name, group in duplicates.groupby('symbol'):
+            if len(group) > 1:
+                dup_price_error = dup_price_error.append(group, ignore_index=True)
+        if len(dup_price_error) > 0:
+            raise ValueError(dup_price_error.to_string())
+
+    def _prices_are_numbers(self):
+        if self.raw_request['price'].fillna(0).dtype == 'object':
+            raise ValueError('Non numeric price entered.')
 
     def _set_symbol_retrieval_list(self):
         """
@@ -151,11 +171,17 @@ class PriceRetriever(object):
         :return: none
         """
         symbols_only = self.raw_request[self.raw_request.loc[:,'symbol'].notnull()].copy()
-        symbols_only = symbols_only[symbols_only.loc[:,'price'].isnull()]
         symbols_only['symbol'] = symbols_only.loc[:,'symbol'].astype(str)
         symbols_only = symbols_only[~symbols_only.loc[:,'symbol'].str.contains('accountstore', case=False)]
         symbols_only = symbols_only[~symbols_only.loc[:, 'symbol'].str.contains('account_cash', case=False)]
-        self.prices = pd.DataFrame(index=symbols_only['symbol'].unique(), columns=['price'])
+        grouped_symbols = symbols_only.groupby('symbol')
+        for_retrieval = pd.DataFrame()
+        for name, group in grouped_symbols:
+            if len(group) == 1:
+                for_retrieval = for_retrieval.append(group[group.loc[:,'price'].isnull()])
+            elif group.loc[:, 'price'].isnull().all():
+                for_retrieval = for_retrieval.append(group.drop_duplicates(['symbol']))
+        self.prices = pd.DataFrame(index=for_retrieval['symbol'].unique(), columns=['price'])
 
     def _set_remote_prices(self):
         for symbol in self.prices.index:
@@ -166,17 +192,22 @@ class PriceRetriever(object):
             except (AttributeError, TypeError) as e:
                 self.error.append( {symbol, 'Invalid symbol. Check for spaces or other non-alphanumeric characters'})
 
-    def _test_set_remote_prices(self, file_name, test_array_index=0):
+    def _test_set_remote_prices(self, file_name=None, test_array_index=0):
         """
         For testing only.
         :param file_name: string, path to file
         :param test_array_index: int, position of test data in the array test data objects
         :return: none
         """
-        import json
-        with open(file_name, 'r') as ob:
-            test_object = json.load(ob)
-            self.prices = pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
+        if file_name:
+            import json
+            with open(file_name, 'r') as ob:
+                test_object = json.load(ob)
+                self.prices = pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
+        else:
+            for symbol in self.prices.index:
+                self.prices.set_value(symbol, 'price', 50)
+
 
     def _combine_local_remote_prices(self):
         """

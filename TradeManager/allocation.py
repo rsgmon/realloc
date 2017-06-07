@@ -59,16 +59,29 @@ class TradeAccountMatrix(object):
             self.trade_account_matrix[number] = final
 
     def _update_cash(self, trade):
-        def cash_from_trades(row, account_numbers):
-            for number in account_numbers:
-                if row[number] != 0:
-                    return {number: row[number]*-1 * row['price']}
-        updated_cash = trade.apply(cash_from_trades, args=[self.portfolio.account_numbers], axis=1).values
-        updated_cash_grid = pd.DataFrame()
-        for account in updated_cash:
-            updated_cash_grid = pd.concat([updated_cash_grid, pd.Series(account)])
-        updated_cash_grid['cash'] = updated_cash_grid[0]
-        self.cash['cash'] += updated_cash_grid['cash']
+        # print(trade)
+        change = trade.loc[:,['trade_account', 'size', 'price']]
+        change['cash'] = change.apply(lambda x: round(x['price'] * x['size'],2) if x['size'] > 0 else round(x['price'] * x['size']* -1, 2), axis=1)
+        for name, account in change.groupby(['trade_account']):
+            account_cash_change = account.loc[:,'cash'].sum()
+            self.cash.set_value(name, 'cash', self.cash.loc[name, 'cash'] + account_cash_change)
+        print(self.cash)
+
+
+        # def cash_from_trades(row, account_numbers):
+        #     for number in account_numbers:
+        #         if row[number] != 0:
+        #             return [number, row[number]*-1 * row['price']]
+        # updated_cash = trade.apply(cash_from_trades, args=[self.portfolio.account_numbers], axis=1).values
+        # updated_cash_grid = pd.DataFrame()
+        # for account in updated_cash:
+        #     updated_cash_grid = pd.concat([updated_cash_grid, pd.Series(account)])
+        # updated_cash_grid.columns=['cash']
+        # print(updated_cash_grid)
+        # print(self.cash)
+        # print(updated_cash_grid.groupby(['account']).sum())
+        # updated_cash_grid['cash'] = updated_cash_grid[0]
+        # self.cash['cash'] += updated_cash_grid['cash']
 
 
     def update_tam(self, trade):
