@@ -63,6 +63,7 @@ class TradeRequest(object):
         self.error = []
         self._set_trade_request()
 
+
     # todo we need to add method _get_accounts_from_AccountStore and incorporate
     # todo check every account has 'account_cash' plug
 

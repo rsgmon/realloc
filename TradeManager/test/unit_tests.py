@@ -21,6 +21,7 @@ class TestAllocation(TestCase):
                                                      self.portfolio.account_numbers)
         trade_instructions = TradeInstructions()
         tam_sell_only.update_tam(trades)
+        # print(trades)
         # self.assertGreater(len(tam_sell_only.trade_account_matrix), 0)
 
     # def test_update_sells_only_trade_account_matrix(self):
@@ -61,24 +62,31 @@ class TestCalculator(TestCase):
         self.model = self.trade_request.model_request
 
     def test_trade_calculator(self):
+
         trade_calculator = TradeCalculator(self.portfolio, self.model, self.prices)
+
+    def test_buy_only(self):
+        portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
+        trade_request = read_pickle('.\/test_data\/buysOnly\/request.pkl')
+        prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
+        model = self.trade_request.model_request
+        trade_calculator = TradeCalculator(portfolio, model, prices)
+        # print(trade_calculator)
 
 
 class TestTradeRequest(TestCase):
     def setUp(self):
-        self.raw_request_sell_only = RawRequest(read_pickle('test_data\/excel_request.pkl'),
-                                                'test_data\/sellsOnly\/TradeRequest.xlsx')
-        self.raw_request = RawRequest(read_pickle('test_data\/excel_request.pkl'),
-                                      'test_data\/Trade Request Example.xlsx')
+        self.raw_request_sell_only = RawRequest('xl', 'test_data\/sellsOnly\/TradeRequest.xlsx')
+        self.raw_request_buy_only = RawRequest('xl', 'test_data\/buysOnly\/BuyOnlyRequest.xlsx')
 
     def test_sells_only(self):
         trade_request = TradeRequest(self.raw_request_sell_only)
-        print(trade_request)
+        self.assertEqual(len(trade))
 
-    def test_trade_request_attributes(self):
-        trade_request = TradeRequest(self.raw_request)
-        self.assertGreater(len(trade_request.portfolio_request), 0)
-        self.assertGreater(len(trade_request.model_request), 0)
+    # def test_trade_request_attributes(self):
+    #     trade_request = TradeRequest(self.raw_request)
+    #     self.assertGreater(len(trade_request.portfolio_request), 0)
+    #     self.assertGreater(len(trade_request.model_request), 0)
 
 
 class TestPriceRetriever(TestCase):
@@ -129,19 +137,26 @@ class TestPriceRetriever(TestCase):
 
 class TestPortfolio(TestCase):
     def setUp(self):
-        self.portfolio_request = read_pickle('test_data\/sellsOnly\/request.pkl')
-        self.prices = read_pickle('test_data\/sellsOnly\/prices.pkl')
-        self.portfolio = Portfolio(self.portfolio_request.portfolio_request, self.prices.prices)
+        pass
+        # self.portfolio_request = read_pickle('test_data\/sellsOnly\/request.pkl')
+        # self.prices = read_pickle('test_data\/sellsOnly\/prices.pkl')
+        # self.portfolio = Portfolio(self.portfolio_request.portfolio_request, self.prices.prices)
 
-    def test_print_portfolio_details(self):
-        print(self.portfolio)
+    # def test_print_portfolio_details(self):
+    #     print(self.portfolio)
+
+    def test_buys_Only(self):
+        portfolio_request = read_pickle('test_data\/buysOnly\/request.pkl')
+
+        prices = read_pickle('test_data\/buysOnly\/prices.pkl')
+        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
 
 
         # def test_portfolio_attributes(self):
         #     for portfolio in self.portfolios:
         #         self.assertGreater(len(portfolio.portfolio_positions),0)
         #         self.assertGreater(portfolio.portfolio_value, 0)
-        #
+
         # def test_create_account_matrix(self):
         #     portfolio = Portfolio(self.trade_request_dict['one_holding_zero_model'].portfolio_request)
         #     self.assertGreater(len(portfolio.account_matrix), 0)

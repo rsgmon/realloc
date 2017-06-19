@@ -34,16 +34,27 @@ class Portfolio(object):
             portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, account.account_positions])
         return portfolio_concatenated_positions.groupby(portfolio_concatenated_positions.index).agg(np.sum)
 
+    def set_portfolio_cash(self):
+        self.portfolio_cash = 0
+        for account in self.accounts:
+            self.portfolio_cash +=(account.account_cash.loc['account_cash', 'shares'])
+
+
     def set_portfolio_positions_and_value(self):
         """
         Sets attribute portfolio_positions to have aggregated positions
         :return: none
         """
         self.portfolio_positions = self._aggregate_share_positions()
-        self.portfolio_positions['price'] = self.prices
-        self.portfolio_positions['position'] = self.portfolio_positions['shares']* self.portfolio_positions['price']
-        self.portfolio_value = round(self.portfolio_positions['position'].sum(),2)
-        self.portfolio_positions['portfolio_weight'] = self.portfolio_positions['position']/self.portfolio_positions['position'].sum()
+        self.set_portfolio_cash()
+        if len(self.portfolio_positions) > 0:
+            self.portfolio_positions['price'] = self.prices
+            self.portfolio_positions['position'] = self.portfolio_positions['shares']* self.portfolio_positions['price']
+            self.portfolio_value = round(self.portfolio_positions['position'].sum() + self.portfolio_cash, 2)
+            self.portfolio_positions['portfolio_weight'] = self.portfolio_positions['position']/self.portfolio_value
+        else:
+            self.portfolio_positions= pd.DataFrame(columns=['shares', 'price','position', 'portfolio_weight'])
+            self.portfolio_value = self.portfolio_cash
 
     def create_cash_matrix(self):
         self._cash_matrix = pd.DataFrame()

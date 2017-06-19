@@ -1,5 +1,4 @@
 import pandas as pd
-from TradeManager.test.test_data.test_data import prices
 
 class TradeCalculator(object):
     def __init__(self, portfolio, model, prices):
@@ -11,7 +10,7 @@ class TradeCalculator(object):
 
     def _get_dollar_trades(self, portfolio, model):
         portfolio_model_weights = pd.concat([model, self.portfolio.portfolio_positions['portfolio_weight'], self.portfolio.portfolio_positions['shares']], axis=1).fillna(0)
-        portfolio_model_weights['price'] = self.prices.prices
+        portfolio_model_weights['price'] = self.prices
         portfolio_model_weights['dollar_trades'] = ((portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value).round(2)
         return portfolio_model_weights
 
