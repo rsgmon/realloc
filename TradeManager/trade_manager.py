@@ -2,12 +2,15 @@ import pandas as pd
 import numpy as np
 from TradeManager.portfolio import Portfolio
 from TradeManager.trade_calculator import TradeCalculator
-import sys
+import math
 from yahoo_finance import Share
+from numbers import Number
+
 
 class TradeManager(object):
     def __init__(self, trade_request=None):
         self.trade_request = TradeRequest(trade_request)
+        self.prices = PriceRetriever(trade_request)
         self.model = self.get_model()
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
@@ -31,6 +34,10 @@ class RawRequest(object):
         self.file_type_label = file_type_label
         self.file_path = file_path
         self._route_trade_request_type()
+        if 'test' in self.file_type_label:
+            pass
+        else:
+            self._validate_raw_request()
 
     def _route_trade_request_type(self):
         """
@@ -47,10 +54,92 @@ class RawRequest(object):
         elif 'txt' in self.file_type_label:
             pass  # todo
         elif 'test' in self.file_type_label:
-            # FOR TESTING ONLY
-            self.raw_request = pd.DataFrame(self.file_path)
+            # FOR TESTING ONLY, Must be object that can make a dataframe.
+            # structure {data: {'symbol': 'abs'}, 'index': ['model']}
+            if 'index' in self.file_path:
+                self.raw_request = pd.DataFrame(self.file_path['data'], index=self.file_path['index'])
+            else: self.raw_request = pd.DataFrame(self.file_path['data'])
         else:
             return Exception
+
+    def _validate_raw_request(self):
+        self._empty_request()
+        self._missing_required_columns()
+        self._no_accounts()
+        self._model_rows_validation()
+        self._account_rows_validation()
+
+    def _empty_request(self):
+        if self.raw_request.empty:
+            raise RuntimeError('Your request was had no data.')
+
+    def _missing_required_columns(self):
+        required_columns = ['price', 'account_number', 'symbol', 'model_weight', 'shares', 'restrictions']
+        error = []
+        for label in required_columns:
+            if label not in self.raw_request.columns:
+                error.append(label)
+        if len(error) > 0:
+            raise RuntimeError('The following columns were missing: {}'.format(error))
+
+    def _no_accounts(self):
+        if len(self.raw_request.loc[self.raw_request['account_number'] != 'model']) < 1:
+            raise RuntimeError('No accounts were found in your request.')
+
+    def _model_rows_validation(self):
+        def weights(row):
+            runerror = RuntimeError("Model Row Error")
+            if not row.model_weight:
+                runerror.test_error_code = "BlankWeight"
+                raise runerror
+            if isinstance(row.model_weight, str):
+                if not row.model_weight.isnumeric():
+                    runerror.test_error_code = "NonNumericWeight"
+                    raise runerror
+            if isinstance(row.shares, Number):
+                if not math.isnan(row.shares):
+                    runerror.test_error_code = "ShareQuantityOnModelLine"
+                    raise runerror
+            if isinstance(row.shares, str):
+                if row.shares.isnumeric():
+                    runerror.test_error_code = "ShareQuantityOnModelLine"
+                    raise runerror
+                try:
+                    float(row.shares)
+                    runerror.test_error_code = "ShareQuantityOnModelLine"
+                    raise runerror
+                except ValueError:
+                    pass
+        self.raw_request[self.raw_request.loc[:,'account_number'] == 'model'].apply(weights, axis=1)
+
+    def _account_rows_validation(self):
+        def shares(row):
+            runerror = RuntimeError("Account Row Error")
+            if not row.shares:
+                runerror.test_error_code = "BlankShares"
+                raise runerror
+            if isinstance(row.shares, str):
+                if not row.shares.isnumeric():
+                    runerror.test_error_code = "NonNumericShares"
+                    raise runerror
+            if isinstance(row.model_weight, Number):
+                if not math.isnan(row.model_weight):
+                    runerror.test_error_code = "WeightOnAccountLine"
+                    raise runerror
+            if isinstance(row.model_weight, str):
+                if row.model_weight.isnumeric():
+                    runerror.test_error_code = "WeightOnAccountLine"
+                    raise runerror
+                try:
+                    float(row.model_weight)
+                    runerror.test_error_code = "WeightOnAccountLine"
+                    raise runerror
+                except ValueError:
+                    pass
+        self.raw_request[self.raw_request.loc[:,'account_number'] != 'model'].apply(shares, axis=1)
+
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
 class TradeRequest(object):
@@ -65,31 +154,22 @@ class TradeRequest(object):
 
 
     # todo we need to add method _get_accounts_from_AccountStore and incorporate
-    # todo check every account has 'account_cash' plug
+    # todo check every account has 'account_cash' plug. Another idea is to allow the user to specify 'cash' or some other token in the restrictions column. Unfortunately either way this hobbles user from being able to copy and paste holdings into an upload sheet and send. Or we keep a list of cash vehicle names. But if they don't provide cash then we assume its zero.
 
     def _set_portfolio_request(self):
         try:
-            self.portfolio_request = self.raw_request.loc[self.raw_request['account'] != 'model', ['account','symbol', 'shares', 'restrictions']]
+            self.portfolio_request = self.raw_request.loc[self.raw_request['account_number'] != 'model', ['account_number','symbol', 'shares', 'restrictions']]
             self.portfolio_request = self.portfolio_request.loc[self.portfolio_request.symbol != "AccountStore"]
         except KeyError as error:
             raise RuntimeError('Trade request must contain a portfolio request object. Yours did not') from error
 
     def _set_model_request(self):
-        try:
-            self.model_request = self.raw_request.loc[self.raw_request['account'] == 'model', ['symbol', 'weight']].set_index(['symbol'])
+        if self.raw_request.loc[self.raw_request['account_number'] == 'model'].empty:
+            self.model_request = pd.DataFrame({"symbol": "account_cash", "model_weight": 1}, index=['account_cash'])
+            self.model_request.set_index(['symbol'], inplace=True)
+        else:
+            self.model_request = self.raw_request.loc[self.raw_request['account_number'] == 'model', ['symbol', 'model_weight']].set_index(['symbol'])
             self.model_request.columns = ['model_weight']
-        except KeyError as error:
-            raise RuntimeError('Trade request must contain a model request object. Yours did not') from error
-
-    def _validate_fields(self, validation_request, instruction, raw):
-        if instruction not in validation_request and raw not in validation_request:
-            raise Exception('No model provided. You must provide instructions or a raw model.')
-        if instruction in validation_request and raw in validation_request:
-            if validation_request[instruction] != None and validation_request[raw] != None:
-                raise Exception ('You must enter either model instructions or a model but not both.')
-        if instruction in validation_request:
-            if validation_request[instruction]:
-                return validation_request[instruction] # we need to implement the retrieve_model_from_database method
 
     def _set_trade_request(self):
         self._set_portfolio_request()

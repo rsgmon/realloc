@@ -10,7 +10,7 @@ class Portfolio(object):
         """
         self.portfolio_request = portfolio_request
         self.prices = prices
-        self.account_numbers = self.portfolio_request['account'].unique()
+        self.account_numbers = self.portfolio_request['account_number'].unique()
         self._assemble_accounts()
         self.set_portfolio_positions_and_value()
         self._account_position_matrix = self.create_account_matrix()
@@ -22,7 +22,7 @@ class Portfolio(object):
         """
         self.accounts = []
         for account in self.account_numbers:
-            self.accounts.append(Account(self.portfolio_request[self.portfolio_request.loc[:, 'account'] == account]))
+            self.accounts.append(Account(self.portfolio_request[self.portfolio_request.loc[:, 'account_number'] == account]))
 
     def _aggregate_share_positions(self):
         """
@@ -86,11 +86,11 @@ class Portfolio(object):
 class Account(object):
     def __init__(self, request):
         self.account_raw = request
-        self.account_number = self.account_raw['account'].unique()
-        self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions', 'account'], 1).set_index(
+        self.account_number = self.account_raw['account_number'].unique()
+        self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions', 'account_number'], 1).set_index(
             ['symbol'])
         self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(
-            subset=['symbol']).drop(['restrictions', 'account'], 1).set_index(
+            subset=['symbol']).drop(['restrictions', 'account_number'], 1).set_index(
             ['symbol'])
         self.account_level_restrictions = self.account_raw.dropna(subset=['restrictions']).drop(['symbol', 'shares'], 1)
 

@@ -67,8 +67,10 @@ if __name__ == "__main__":
     request = pickle_trade_request(source, destination)
     prices = pickle_prices(source, destination)
     portfolio = pickle_portfolios_models(request.portfolio_request, prices.prices, destination)
-    # pickle_trade_calculator(portfolio, request.model_request, prices.prices, destination)
-    # a = read_pickle('.\/buysOnly\/request.pkl')
+    pickle_trade_calculator(portfolio, request.model_request, prices.prices, destination)
+    # print(os.getcwd())
+    # a = read_pickle('prices.pkl')
+    # print(a)
     # print(a)
     # for acc in a.accounts:
     #     print(acc)

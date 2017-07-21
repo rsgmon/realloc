@@ -2,6 +2,11 @@ import pandas as pd
 
 class TradeCalculator(object):
     def __init__(self, portfolio, model, prices):
+        """
+        :param portfolio: portfolio object
+        :param model: model_request attribute of trade_request object
+        :param prices: prices attribute of prices object
+        """
         self.model = model
         self.portfolio = portfolio
         self.prices = prices
