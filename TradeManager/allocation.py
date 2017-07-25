@@ -7,13 +7,13 @@ class AllocationController(object):
         self.portfolio_trade_list = trade_calculator.portfolio_trade_list
         self.trade_instructions = TradeInstructions()
 
-    def _select_trade_selector(self):
+    def allocate_trades(self):
         if len(self.portfolio.account_numbers) == 1:
             self.trade_selector = SingleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
-            trades = self.trade_selector.create_trades()
+            return self.trade_selector.get_trades()
         else:
-            self.trade_selector = trades = MultipleAccountTradeSelector()
-        return trades
+            self.trade_selector = MultipleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
+            return self.trade_selector
 
     def _deep_copy_object(self):
         pass
@@ -26,19 +26,13 @@ class TradeSelector(object):
     def __init__(self, portfolio, trade_list):
         self.tam = TradeAccountMatrix(portfolio, trade_list)
         self.trade_instructions = TradeInstructions()
+        self.account_numbers = portfolio.account_numbers
 
-    def get_trades(self, trade_account_matrix, account_numbers):
-        selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
-        selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
-        return selected_accounts.apply(self._prepare_for_tam_update, args=[account_numbers], axis=1)
-
-    def _size_trade(self, selected_trades, account_numbers):
-        def size_trade(row, account_numbers):
-            for number in account_numbers:
-                if row[number] > row['shares']:
-                    return row['shares']
-                else: return row[number]
-        return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
+    def get_trades(self):
+        selected_accounts = self._select_accounts()
+        # selected_accounts['size'] = self._size_trade(selected_accounts, self.account_numbers)
+        # return selected_accounts.apply(self._prepare_for_tam_update, args=[self.account_numbers], axis=1)
+        return selected_accounts
 
     def _prepare_for_tam_update(self, row, account_numbers ):
         for number in account_numbers:
@@ -46,29 +40,25 @@ class TradeSelector(object):
                 row[number] = row['size']
         return row
 
+    def _has_buys(self):
+        return (self.tam.portfolio_trade_list.drop('account_cash')['dollar_trades'] > 0).any()
+
+
+    def _has_sells(self):
+        return (self.tam.portfolio_trade_list.drop('account_cash')['dollar_trades'] < 0).any()
+
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
 class SingleAccountTradeSelector(TradeSelector):
-    def create_trades(self):
-        trade_library = TradeLibrary()
+    def _select_accounts(self):
+        account_selection_library = AccountSelectionLibrary()
         if self._has_sells:
-            self.trade_instructions.tradea = trade_library.single_account_sell(self.tam)
-        if self._has_buys():
-            self._create_buys()
+            self.trade_instructions.trades = account_selection_library.single_account_sell(self.tam, self.account_numbers)
+        if self._has_buys(): pass
+            # self._create_buys()
 
-    def _has_buys(self):
-        return True
-
-    def _has_sells(self):
-        return True
-
-    def _create_sells(self):
-        print("single account sells")
-
-    def _create_buys(self):
-        print("single account buys")
 
 class MultipleAccountTradeSelector(TradeSelector):
     pass
@@ -126,7 +116,7 @@ class TradeAccountMatrix(object):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
-class TradeLibrary(object):
+class AccountSelectionLibrary(object):
     """This method select accounts for trades with the following constraints. For selling, portfolio has multiple accounts, sell symbols are complete sells that exist in one account."""
     def _select_accounts(self, trade_account_matrix, account_numbers):
         tam = trade_account_matrix.trade_account_matrix.copy()
@@ -145,8 +135,20 @@ class TradeLibrary(object):
 
         return tam[tam.loc[:,'trade_account'] !=0]
 
-    def single_account_sell(self, tam):
-        return 10
+    def single_account_sell(self, tam, account_numbers):
+        pass
+        # print(tam, account_numbers)
+
+class AccountSizingLibrary(object):
+    def _size_trade(self, selected_trades, account_numbers):
+        def size_trade(row, account_numbers):
+            for number in account_numbers:
+                if row[number] > row['shares']:
+                    return row['shares']
+                else: return row[number]
+        return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
+
+
 
 
 

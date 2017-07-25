@@ -7,11 +7,6 @@ from TradeManager.portfolio import Portfolio
 from TradeManager.test.test_data_generator import read_pickle
 
 
-
-
-
-
-
 class TestTradeRequest(TestCase):
     def test_trade_request_validation(self):
         with self.assertRaises(RuntimeError) as cm:
@@ -166,6 +161,7 @@ class TestPortfolio(TestCase):
         self.assertEqual(portfolio.portfolio_cash, 5687.22)
         self.assertEqual(len(portfolio.portfolio_positions), 3)
 
+
 class TestCalculator(TestCase):
     def test_buy_only(self):
         portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
@@ -175,11 +171,12 @@ class TestCalculator(TestCase):
         trade_calculator = TradeCalculator(portfolio, model, prices.prices)
         self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].shares, 71)
 
+
 class TestAllocation(TestCase):
     def setUp(self):
         self.sell_only_trade_list = read_pickle('.\/test_data\/sellsOnly\/\/sellsOnlySingle\/trade_list.pkl')
         self.sell_only_portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
 
-    def test_AllocationController(self):
-        allocation_controller = AllocationController(self.sell_only_portfolio, self.sell_only_trade_list)
-        allocation_controller._select_trade_selector()
+    def test_TradeSelector(self):
+        trade_selector = TradeSelector(self.sell_only_portfolio, self.sell_only_trade_list.portfolio_trade_list)
+        print(trade_selector._has_buys())
