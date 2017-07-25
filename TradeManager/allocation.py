@@ -1,38 +1,83 @@
 import pandas as pd
 import numpy as np
 
-class TradeAllocator(object):
+class AllocationController(object):
     def __init__(self, portfolio, trade_calculator):
         self.portfolio = portfolio
-        self.trade_calculator = trade_calculator
-        self._tam = TradeAccountMatrix(self.portfolio, self.trade_calculator)
+        self.portfolio_trade_list = trade_calculator.portfolio_trade_list
+        self.trade_instructions = TradeInstructions()
 
-    def allocate_trades(self):
-        trade_selector = TradeSelector()
-        # The algorithm is right now unimportant. we could attempt to identify trades in the data
-        # Or go through a specific algorithm to identify trade types.
-        # while tam_has trades
-            # trade = trade_selector
-            # store trades
-            # update_tam
-        trade = trade_selector.get_trades(self._tam, self.portfolio.account_numbers)
-        trade_instructions = TradeInstructions()
-        trade_instructions.trades = trade
-        # save new trades (need a persistant object and the trades)
-        self._tam.update_tam(trade)
-        if self._tam.trades_remaining:
-            print('yes')
-        else: print('no')
-        #if _tam.has_trades then repeat or go to next step.
-        # We could (haven't decided) return the trades only or more info like updated portfolio.
+    def _select_trade_selector(self):
+        if len(self.portfolio.account_numbers) == 1:
+            self.trade_selector = SingleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
+            trades = self.trade_selector.create_trades()
+        else:
+            self.trade_selector = trades = MultipleAccountTradeSelector()
+        return trades
 
+    def _deep_copy_object(self):
+        pass
+
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
+
+
+class TradeSelector(object):
+    def __init__(self, portfolio, trade_list):
+        self.tam = TradeAccountMatrix(portfolio, trade_list)
+        self.trade_instructions = TradeInstructions()
+
+    def get_trades(self, trade_account_matrix, account_numbers):
+        selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
+        selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
+        return selected_accounts.apply(self._prepare_for_tam_update, args=[account_numbers], axis=1)
+
+    def _size_trade(self, selected_trades, account_numbers):
+        def size_trade(row, account_numbers):
+            for number in account_numbers:
+                if row[number] > row['shares']:
+                    return row['shares']
+                else: return row[number]
+        return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
+
+    def _prepare_for_tam_update(self, row, account_numbers ):
+        for number in account_numbers:
+            if row[number] > 0:
+                row[number] = row['size']
+        return row
+
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
+
+
+class SingleAccountTradeSelector(TradeSelector):
+    def create_trades(self):
+        trade_library = TradeLibrary()
+        if self._has_sells:
+            self.trade_instructions.tradea = trade_library.single_account_sell(self.tam)
+        if self._has_buys():
+            self._create_buys()
+
+    def _has_buys(self):
+        return True
+
+    def _has_sells(self):
+        return True
+
+    def _create_sells(self):
+        print("single account sells")
+
+    def _create_buys(self):
+        print("single account buys")
+
+class MultipleAccountTradeSelector(TradeSelector):
+    pass
 
 class TradeAccountMatrix(object):
-    def __init__(self, portfolio, trade_calculator):
-        self.portfolio = portfolio
-        self.trade_calculator = trade_calculator
+    def __init__(self, portfolio, portfolio_trade_list):
+        self.portfolio_trade_list = portfolio_trade_list
         self.cash = portfolio.cash_matrix.copy()
-        self.trade_account_matrix = self._construct_account_trade_matrix(self.portfolio.account_matrix, self.trade_calculator.portfolio_trade_list)
+        self.trade_account_matrix = self._construct_account_trade_matrix(portfolio.account_matrix, self.portfolio_trade_list)
 
     def _construct_account_trade_matrix(self, account_matrix, trade_list):
         # del trade_list['dollar_trades']
@@ -81,10 +126,10 @@ class TradeAccountMatrix(object):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
-class TradeSelector(object):
+class TradeLibrary(object):
+    """This method select accounts for trades with the following constraints. For selling, portfolio has multiple accounts, sell symbols are complete sells that exist in one account."""
     def _select_accounts(self, trade_account_matrix, account_numbers):
         tam = trade_account_matrix.trade_account_matrix.copy()
-
         def my_test(row, account_numbers):
             count = 0
             if row['shares'] < 0:
@@ -100,27 +145,9 @@ class TradeSelector(object):
 
         return tam[tam.loc[:,'trade_account'] !=0]
 
-    def _size_trade(self, selected_trades, account_numbers):
-        def size_trade(row, account_numbers):
-            for number in account_numbers:
-                if row[number] > row['shares']:
-                    return row['shares']
-                else: return row[number]
-        return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
+    def single_account_sell(self, tam):
+        return 10
 
-    def _prepare_for_tam_update(self, row, account_numbers ):
-        for number in account_numbers:
-            if row[number] > 0:
-                row[number] = row['size']
-        return row
-
-    def get_trades(self, trade_account_matrix, account_numbers):
-        selected_accounts = self._select_accounts(trade_account_matrix, account_numbers)
-        selected_accounts['size'] = self._size_trade(selected_accounts, account_numbers)
-        return selected_accounts.apply(self._prepare_for_tam_update, args=[account_numbers], axis=1)
-
-    def __str__(self):
-            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
 class SelectorSellMultipleAccounts(TradeSelector):
@@ -153,4 +180,5 @@ class TradeInstructions(object):
 
     @trades.setter
     def trades(self, new_trade):
-        self._trades = pd.concat([self._trades, new_trade])
+        print("new trades added")
+        # self._trades = pd.concat([self._trades, new_trade])
