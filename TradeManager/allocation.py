@@ -27,6 +27,7 @@ class TradeSelector(object):
         self.tam = TradeAccountMatrix(portfolio, trade_list)
         self.trade_instructions = TradeInstructions()
         self.account_numbers = portfolio.account_numbers
+        self.account_selection_library = AccountSelectionLibrary()
 
     def get_trades(self):
         selected_accounts = self._select_accounts()
@@ -53,11 +54,12 @@ class TradeSelector(object):
 
 class SingleAccountTradeSelector(TradeSelector):
     def _select_accounts(self):
-        account_selection_library = AccountSelectionLibrary()
         if self._has_sells:
-            self.trade_instructions.trades = account_selection_library.single_account_sell(self.tam, self.account_numbers)
-        if self._has_buys(): pass
-            # self._create_buys()
+            sell_trades = self.account_selection_library.single_account_sell(self.tam.trade_account_matrix.copy(), self.account_numbers)
+            self.trade_instructions.trades = sell_trades
+        if self._has_buys():
+            buy_trades = self.account_selection_library.single_account_sell(self.tam.trade_account_matrix.copy(), self.account_numbers)
+            self.trade_instructions.trades = buy_trades
 
 
 class MultipleAccountTradeSelector(TradeSelector):
@@ -67,11 +69,10 @@ class TradeAccountMatrix(object):
     def __init__(self, portfolio, portfolio_trade_list):
         self.portfolio_trade_list = portfolio_trade_list
         self.cash = portfolio.cash_matrix.copy()
-        self.trade_account_matrix = self._construct_account_trade_matrix(portfolio.account_matrix, self.portfolio_trade_list)
+        self.trade_account_matrix = self._construct_trade_account_matrix(portfolio.account_matrix, self.portfolio_trade_list)
 
-    def _construct_account_trade_matrix(self, account_matrix, trade_list):
-        # del trade_list['dollar_trades']
-        trade_account_matrix = pd.concat([account_matrix, trade_list], axis=1)
+    def _construct_trade_account_matrix(self, account_matrix, trade_list):
+        trade_account_matrix = pd.concat([account_matrix, trade_list], axis=1).drop('account_cash')
         return trade_account_matrix.fillna(0)
 
     def _remove_trades(self, trade):
@@ -132,12 +133,17 @@ class AccountSelectionLibrary(object):
                 return acc_number
             else: return 0
         tam['trade_account'] = tam.apply(my_test, args=[account_numbers], axis=1)
-
         return tam[tam.loc[:,'trade_account'] !=0]
 
     def single_account_sell(self, tam, account_numbers):
-        pass
-        # print(tam, account_numbers)
+        tam['account'] = account_numbers[0]
+        return tam[tam.loc[:,'dollar_trades'] < 0].loc[:,['shares', 'account']]
+
+    def single_account_buy(self, tam, account_numbers):
+        tam['account'] = account_numbers[0]
+        return tam[tam.loc[:,'dollar_trades'] > 0].loc[:,['shares', 'account']]
+
+
 
 class AccountSizingLibrary(object):
     def _size_trade(self, selected_trades, account_numbers):
@@ -147,9 +153,6 @@ class AccountSizingLibrary(object):
                     return row['shares']
                 else: return row[number]
         return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
-
-
-
 
 
 class SelectorSellMultipleAccounts(TradeSelector):
@@ -182,5 +185,5 @@ class TradeInstructions(object):
 
     @trades.setter
     def trades(self, new_trade):
-        print("new trades added")
-        # self._trades = pd.concat([self._trades, new_trade])
+        self._trades = self._trades.append(new_trade)
+

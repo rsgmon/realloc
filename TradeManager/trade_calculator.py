@@ -11,10 +11,10 @@ class TradeCalculator(object):
         self.portfolio = portfolio
         self.prices = prices
         self.portfolio_trade_list = self._add_share_trades()
-        # self.buy_trades = self._split_trade_list()
 
-    def _get_dollar_trades(self, portfolio, model):
-        portfolio_model_weights = pd.concat([model, self.portfolio.portfolio_positions['portfolio_weight'], self.portfolio.portfolio_positions['shares']], axis=1).fillna(0)
+
+    def _get_dollar_trades(self, portfolio, model_positions):
+        portfolio_model_weights = pd.concat([model_positions, portfolio.portfolio_positions['portfolio_weight'], portfolio.portfolio_positions['shares']], axis=1).fillna(0)
         portfolio_model_weights['price'] = self.prices
         portfolio_model_weights['dollar_trades'] = ((portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value).round(2)
         return portfolio_model_weights
@@ -25,15 +25,9 @@ class TradeCalculator(object):
                 return row.shares if row.shares <0 else row.shares * -1
             else:
                 return (row.dollar_trades/row.price).round() if row.dollar_trades >0 else (row.dollar_trades/row.price * -1).round()
-        trade_list = self._get_dollar_trades(self.portfolio, self.model)
+        trade_list = self._get_dollar_trades(self.portfolio, self.model.model_positions)
         trade_list['shares'] = trade_list.apply(share_trade, axis=1)
         return trade_list
-
-    def _split_trade_list(self, type='Buy'):
-        if type == 'Buy':
-            return self.portfolio_trade_list[self.portfolio_trade_list['shares'] < 0]
-        else:
-            return self.portfolio_trade_list[self.portfolio_trade_list['shares'] > 0]
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])

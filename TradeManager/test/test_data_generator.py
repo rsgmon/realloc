@@ -28,13 +28,16 @@ def pickle_prices(source, destination, test_prices=True, **myargs):
     return prices
 
 def pickle_portfolios_models(trade_request, prices, destination):
-    port = portfolio.Portfolio(trade_request, prices)
+    port = portfolio.Portfolio(trade_request.portfolio_request, prices)
     with open(destination + '\/portfolio.pkl', 'wb') as myfile:
         pickle.dump(port, myfile)
-    return port
+    model = trade_manage.Model(trade_request.model_request)
+    with open(destination + '\/model.pkl', 'wb') as modelfile:
+        pickle.dump(model, modelfile)
+    return port, model
 
-def pickle_trade_calculator(portfolio, model_request, prices, destination):
-    trade_calculator = tc.TradeCalculator(portfolio, model_request, prices)
+def pickle_trade_calculator(portfolio, model, prices, destination):
+    trade_calculator = tc.TradeCalculator(portfolio, model, prices)
     with open(destination + 'trade_list.pkl', 'wb') as myfile:
         pickle.dump(trade_calculator, myfile)
     return trade_calculator
@@ -66,8 +69,8 @@ if __name__ == "__main__":
     destination = path + destination
     request = pickle_trade_request(source, destination)
     prices = pickle_prices(source, destination)
-    portfolio = pickle_portfolios_models(request.portfolio_request, prices.prices, destination)
-    pickle_trade_calculator(portfolio, request.model_request, prices.prices, destination)
+    portfolio, model = pickle_portfolios_models(request, prices.prices, destination)
+    pickle_trade_calculator(portfolio, model, prices.prices, destination)
     # print(os.getcwd())
     # a = read_pickle('prices.pkl')
     # print(a)

@@ -1,7 +1,8 @@
 from unittest import TestCase
 from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, AllocationController, \
-    SelectorSellMultipleAccounts
+    SelectorSellMultipleAccounts,\
+    SingleAccountTradeSelector
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio
 from TradeManager.test.test_data_generator import read_pickle
@@ -88,7 +89,6 @@ class TestTradeRequest(TestCase):
         #     self.assertEqual(len(TradeRequest(self.raw_request_buy_only).model_request), 2)
 
     def test_model_request_setup_when_no_model_specified(self):
-        request_from_excel = read_pickle('test_data\/sellsOnly\/request.pkl')
         request = RawRequest('test', {
             "data": {"symbol": ["BHI", "FB", "ABC"],"account_number": ["45-33", "45-33", "45-33"],  "model_weight": [float('NaN'), float('NaN'), float('NaN')],"shares": [352,92,74.5], "price": [55, float('NaN'), float('NaN')],
                      "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
@@ -161,22 +161,114 @@ class TestPortfolio(TestCase):
         self.assertEqual(portfolio.portfolio_cash, 5687.22)
         self.assertEqual(len(portfolio.portfolio_positions), 3)
 
+class TestModel(TestCase):
+
+
+    def test_empty_model(self):
+        request = RawRequest('test', {
+            "data": {"symbol": ["BHI", "FB", "ABC"], "account_number": ["45-33", "45-33", "45-33"],
+                     "model_weight": [float('NaN'), float('NaN'), float('NaN')], "shares": [float('NaN'), 92, 74.5],
+                     "price": [float('NaN'), float('NaN'), float('NaN')],
+                     "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
+        request._validate_raw_request()
+        tradeRequest = TradeRequest(request)
+        model = Model(tradeRequest.model_request, 'test')
+        model._set_model_positions()
+        self.assertEqual(len(model.model_positions), 0)
+
+    def test_model_with_position_no_account_cash(self):
+        request = RawRequest('test', {
+            "data": {"symbol": ["BHI", "FB", "ABC"], "account_number": ["model", "45-33", "45-33"],
+                     "model_weight": [0.10, float('NaN'), float('NaN')], "shares": [float('NaN'), 92, 74.5],
+                     "price": [float('NaN'), float('NaN'), float('NaN')],
+                     "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
+        request._validate_raw_request()
+        trade_request = TradeRequest(request)
+        model = Model(trade_request.model_request, 'test')
+        model._set_model_positions()
+        self.assertEqual(len(model.model_positions), 1)
+
+    def test_model_no_position_with_account_cash(self):
+        request = RawRequest('test', {
+            "data": {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "45-33", "45-33"],
+                     "model_weight": [0.10, float('NaN'), float('NaN')], "shares": [float('NaN'), 92, 74.5],
+                     "price": [float('NaN'), float('NaN'), float('NaN')],
+                     "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
+        request._validate_raw_request()
+        trade_request = TradeRequest(request)
+        model = Model(trade_request.model_request, 'test')
+        model._set_model_positions()
+        self.assertEqual(len(model.model_positions), 0)
+
+    def test_model_with_position_with_account_cash(self):
+        request = RawRequest('test', {
+            "data": {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"],
+                     "model_weight": [0.10, 0.15, float('NaN')], "shares": [float('NaN'), float('NaN'), 74.5],
+                     "price": [float('NaN'), float('NaN'), float('NaN')],
+                     "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
+        request._validate_raw_request()
+        trade_request = TradeRequest(request)
+        model = Model(trade_request.model_request, 'test')
+        model._set_model_positions()
+        self.assertEqual(len(model.model_positions), 1)
+
 
 class TestCalculator(TestCase):
-    def test_buy_only(self):
-        portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
-        trade_request = read_pickle('.\/test_data\/buysOnly\/request.pkl')
-        prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
-        model = trade_request.model_request
+    # def test_buy_only(self):
+    #     portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
+    #     trade_request = read_pickle('.\/test_data\/buysOnly\/request.pkl')
+    #     prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
+    #     model = trade_request.model_request
+    #     trade_calculator = TradeCalculator(portfolio, model, prices.prices)
+    #     self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].shares, 71)
+
+    def test_single_sell_only(self):
+        portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
+        trade_request = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/request.pkl')
+
+        prices = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/prices.pkl')
+        model = Model(trade_request.model_request)
         trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-        self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].shares, 71)
+        self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
+
+    def test_single_buy_and_sell(self):
+        portfolio = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
+        trade_request = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/request.pkl')
+        prices = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/prices.pkl')
+        model = Model(trade_request.model_request)
+        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
+        self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
+
+    def test_sell_only(self):
+        portfolio = read_pickle('.\/test_data\/sellsOnly\/portfolio.pkl')
+        prices = read_pickle('.\/test_data\/sellsOnly\/prices.pkl')
+        model = read_pickle('.\/test_data\/sellsOnly\/model.pkl')
+        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
+        self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
 
 
 class TestAllocation(TestCase):
     def setUp(self):
-        self.sell_only_trade_list = read_pickle('.\/test_data\/sellsOnly\/\/sellsOnlySingle\/trade_list.pkl')
-        self.sell_only_portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
+        self.sell_only_single_trade_list = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/trade_list.pkl')
+        self.sell_only_single_portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
+        self.sell_only_multiple_trade_list = read_pickle('.\/test_data\/sellsOnly\/trade_list.pkl')
+        self.sell_only_multiple_portfolio = read_pickle('.\/test_data\/sellsOnly\/portfolio.pkl')
+        self.single_buy_sell_trade_list = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/trade_list.pkl')
+        self.single_buy_sell_portfolio = read_pickle(            '.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
 
     def test_TradeSelector(self):
-        trade_selector = TradeSelector(self.sell_only_portfolio, self.sell_only_trade_list.portfolio_trade_list)
-        print(trade_selector._has_buys())
+        trade_selector = TradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
+        self.assertEqual(trade_selector._has_buys(), False)
+
+    def test_SingleAccountTradeSelector(self):
+        trade_selector = SingleAccountTradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
+        trade_selector._select_accounts()
+
+    def test_MultipleSellOnly(self):
+        trade_selector = TradeSelector(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
+        self.assertEqual(len(trade_selector.tam.trade_account_matrix), 3)
+
+    def test_SingleBuySell(self):
+        trade_selector = SingleAccountTradeSelector(self.single_buy_sell_portfolio, self.single_buy_sell_trade_list.portfolio_trade_list)
+        # trades = trade_selector._select_accounts()
+        # print(trades)

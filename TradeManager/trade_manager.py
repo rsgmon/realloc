@@ -136,6 +136,9 @@ class RawRequest(object):
                     raise runerror
                 except ValueError:
                     pass
+
+        # todo check if duplicate symbols for an account exist
+
         self.raw_request[self.raw_request.loc[:,'account_number'] != 'model'].apply(shares, axis=1)
 
     def __str__(self):
@@ -159,14 +162,12 @@ class TradeRequest(object):
     def _set_portfolio_request(self):
         try:
             self.portfolio_request = self.raw_request.loc[self.raw_request['account_number'] != 'model', ['account_number','symbol', 'shares', 'restrictions']]
-            self.portfolio_request = self.portfolio_request.loc[self.portfolio_request.symbol != "AccountStore"]
         except KeyError as error:
             raise RuntimeError('Trade request must contain a portfolio request object. Yours did not') from error
 
     def _set_model_request(self):
         if self.raw_request.loc[self.raw_request['account_number'] == 'model'].empty:
-            self.model_request = pd.DataFrame({"symbol": "account_cash", "model_weight": 1}, index=['account_cash'])
-            self.model_request.set_index(['symbol'], inplace=True)
+            self.model_request = pd.DataFrame()
         else:
             self.model_request = self.raw_request.loc[self.raw_request['account_number'] == 'model', ['symbol', 'model_weight']].set_index(['symbol'])
             self.model_request.columns = ['model_weight']
@@ -191,23 +192,26 @@ class TradeRequest(object):
 
 
 class Model(object):
-    def __init__(self, model_request=None):
-        if model_request:
+    def __init__(self, model_request=None, *args):
             self.model_request = model_request
-            self.model_positions = self.get_raw_model_positions(self.model_request)
+            if args:
+                if args[0] != 'test':
+                    pass
+            else:
+                self._set_model_positions()
 
-    def get_raw_model_positions(self, model_request):
-        if not model_request['raw_model']['model_positions']:
-            model_request['raw_model']['model_positions'].append({'symbol': 'placeholder', 'model_weight': 0})
-        model_positions =  pd.DataFrame(model_request['raw_model']['model_positions'])
+    def _set_model_positions(self):
+        if self.model_request.empty:
+            self.model_positions = pd.DataFrame({"symbol": 'placeholder', "model_weight": 0}, index=['account_cash'])
+            self.model_positions.set_index(['symbol'], inplace=True)
+            self.model_positions.drop(['placeholder'], inplace=True)
+        else:
+            self.model_positions = self.model_request
+            if self.model_positions.index.isin(['account_cash']).any():
+                self.model_positions.drop(['account_cash'], inplace=True)
 
-        model_positions.set_index('symbol', inplace=True)
-        if 'cash' in model_positions.index:
-            model_positions.drop('cash', inplace=True)
-        return model_positions
-
-    def retrieve_model_from_database(self):
-        pass
+    def __str__(self):
+            return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
 class PriceRetriever(object):
