@@ -146,9 +146,9 @@ class TestPriceRetriever(TestCase):
 class TestPortfolio(TestCase):
 
     def test_buys_Only(self):
-        portfolio_request = read_pickle('test_data\/buysOnly\/request.pkl')
+        trade_request = read_pickle('test_data\/buysOnly\/request.pkl')
         prices = read_pickle('test_data\/buysOnly\/prices.pkl')
-        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
+        portfolio = Portfolio(trade_request.portfolio_request, prices.prices)
         self.assertEqual(portfolio.portfolio_value, 18187.21)
         self.assertEqual(portfolio.portfolio_cash, 15687.21)
         self.assertEqual(len(portfolio.portfolio_positions), 1)

@@ -13,10 +13,7 @@ class AllocationController(object):
             return self.trade_selector.get_trades()
         else:
             self.trade_selector = MultipleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
-            return self.trade_selector
-
-    def _deep_copy_object(self):
-        pass
+            return self.trade_selector.get_trades()
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
@@ -30,10 +27,10 @@ class TradeSelector(object):
         self.account_selection_library = AccountSelectionLibrary()
 
     def get_trades(self):
-        selected_accounts = self._select_accounts()
+        self._select_accounts()
         # selected_accounts['size'] = self._size_trade(selected_accounts, self.account_numbers)
         # return selected_accounts.apply(self._prepare_for_tam_update, args=[self.account_numbers], axis=1)
-        return selected_accounts
+        return self.trade_instructions.trades
 
     def _prepare_for_tam_update(self, row, account_numbers ):
         for number in account_numbers:
@@ -43,7 +40,6 @@ class TradeSelector(object):
 
     def _has_buys(self):
         return (self.tam.portfolio_trade_list['dollar_trades'] > 0).any()
-
 
     def _has_sells(self):
         return (self.tam.portfolio_trade_list['dollar_trades'] < 0).any()

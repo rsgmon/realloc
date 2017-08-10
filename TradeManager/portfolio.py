@@ -39,7 +39,6 @@ class Portfolio(object):
         for account in self.accounts:
             self.portfolio_cash +=(account.account_cash.loc['account_cash', 'shares'])
 
-
     def set_portfolio_positions_and_value(self):
         """
         Sets attribute portfolio_positions to have aggregated positions

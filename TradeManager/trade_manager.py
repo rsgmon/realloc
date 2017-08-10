@@ -1,32 +1,40 @@
 import pandas as pd
-import numpy as np
+import os
 from TradeManager.portfolio import Portfolio
 from TradeManager.trade_calculator import TradeCalculator
+from TradeManager.allocation import AllocationController
 import math
 from yahoo_finance import Share
 from numbers import Number
 
 
 class TradeManager(object):
-    def __init__(self, trade_request=None):
-        self.trade_request = TradeRequest(trade_request)
-        self.prices = PriceRetriever(trade_request)
-        self.model = self.get_model()
+    def __init__(self, file_type, path):
+        self.raw_request = RawRequest(file_type, path)
+        self.trade_request = TradeRequest(self.raw_request)
+        self.prices = self.get_prices()
+        self.model = Model(self.trade_request.model_request)
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
-        # self.trades_by_account = self.allocate_trades()
+        self.trade_instructions = self.allocate_trades()
 
     def get_model(self):
         return Model(self.trade_request.model_request)
 
     def get_portfolio(self):
-        return Portfolio(self.trade_request.portfolio_request)
+        return Portfolio(self.trade_request.portfolio_request, self.prices.prices)
 
     def get_portfolio_trades(self):
-        return TradeCalculator(self.portfolio, self.model)
+        return TradeCalculator(self.portfolio, self.model, self.prices.prices)
+
+    def get_prices(self):
+        prices = PriceRetriever(self.raw_request)
+        prices()
+        return prices
 
     def allocate_trades(self):
-        pass #return TradeAllocator(self.portfolio, self.portfolio_trades)
+        allocation_controller = AllocationController(self.portfolio, self.portfolio_trades)
+        return allocation_controller.allocate_trades()
 
 
 class RawRequest(object):
@@ -308,3 +316,9 @@ class PriceRetriever(object):
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
+
+if __name__ == "__main__":
+    file_type = 'xl'
+    path = '.\/test\/test_data\/buysOnly\/singleAccount\/TradeRequest.xlsx'
+    trade_manager = TradeManager(file_type, path)
+    print(trade_manager.trade_instructions)
