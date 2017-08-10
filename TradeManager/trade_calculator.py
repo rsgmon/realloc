@@ -24,8 +24,10 @@ class TradeCalculator(object):
             if row.model_weight == 0:
                 return row.shares if row.shares <0 else row.shares * -1
             else:
-                return (row.dollar_trades/row.price).round() if row.dollar_trades >0 else (row.dollar_trades/row.price * -1).round()
+                return (row.dollar_trades/row.price).round()
+
         trade_list = self._get_dollar_trades(self.portfolio, self.model.model_positions)
+
         trade_list['shares'] = trade_list.apply(share_trade, axis=1)
         return trade_list
 

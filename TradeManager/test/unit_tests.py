@@ -161,6 +161,7 @@ class TestPortfolio(TestCase):
         self.assertEqual(portfolio.portfolio_cash, 5687.22)
         self.assertEqual(len(portfolio.portfolio_positions), 3)
 
+
 class TestModel(TestCase):
 
 
@@ -214,13 +215,13 @@ class TestModel(TestCase):
 
 
 class TestCalculator(TestCase):
-    # def test_buy_only(self):
-    #     portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
-    #     trade_request = read_pickle('.\/test_data\/buysOnly\/request.pkl')
-    #     prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
-    #     model = trade_request.model_request
-    #     trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-    #     self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].shares, 71)
+    def test_buy_only(self):
+        portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
+        trade_request = read_pickle('.\/test_data\/buysOnly\/request.pkl')
+        prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
+        model = Model(trade_request.model_request)
+        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
+        self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].shares, 71)
 
     def test_single_sell_only(self):
         portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
@@ -238,6 +239,8 @@ class TestCalculator(TestCase):
         model = Model(trade_request.model_request)
         trade_calculator = TradeCalculator(portfolio, model, prices.prices)
         self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
+        self.assertEqual(trade_calculator.portfolio_trade_list['shares'][0], -352.0)
+        self.assertEqual(trade_calculator.portfolio_trade_list['shares'][1], -47.0)
 
     def test_sell_only(self):
         portfolio = read_pickle('.\/test_data\/sellsOnly\/portfolio.pkl')
@@ -249,6 +252,8 @@ class TestCalculator(TestCase):
 
 class TestAllocation(TestCase):
     def setUp(self):
+        self.single_buy_only_trade_list = read_pickle('.\/test_data\/buysOnly\/singleAccount\/trade_list.pkl')
+        self.single_buy_only_portfolio = read_pickle('.\/test_data\/buysOnly\/singleAccount\/portfolio.pkl')
         self.sell_only_single_trade_list = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/trade_list.pkl')
         self.sell_only_single_portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
         self.sell_only_multiple_trade_list = read_pickle('.\/test_data\/sellsOnly\/trade_list.pkl')
@@ -260,15 +265,21 @@ class TestAllocation(TestCase):
         trade_selector = TradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
         self.assertEqual(trade_selector._has_buys(), False)
 
+    def test_single_buy_only(self):
+        trade_selector = SingleAccountTradeSelector(self.single_buy_only_portfolio, self.single_buy_only_trade_list.portfolio_trade_list)
+        trade_selector._select_accounts()
+        self.assertEqual(len(trade_selector.trade_instructions.trades), 2)
+
     def test_SingleAccountTradeSelector(self):
         trade_selector = SingleAccountTradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
         trade_selector._select_accounts()
+        self.assertEqual(len(trade_selector.trade_instructions.trades),3 )
 
     def test_MultipleSellOnly(self):
         trade_selector = TradeSelector(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
-        self.assertEqual(len(trade_selector.tam.trade_account_matrix), 3)
+        self.assertEqual(len(trade_selector.trade_instructions.trades), 0)
 
     def test_SingleBuySell(self):
         trade_selector = SingleAccountTradeSelector(self.single_buy_sell_portfolio, self.single_buy_sell_trade_list.portfolio_trade_list)
-        # trades = trade_selector._select_accounts()
-        # print(trades)
+        trade_selector._select_accounts()
+        self.assertEqual(len(trade_selector.trade_instructions.trades), 3)

@@ -42,11 +42,11 @@ class TradeSelector(object):
         return row
 
     def _has_buys(self):
-        return (self.tam.portfolio_trade_list.drop('account_cash')['dollar_trades'] > 0).any()
+        return (self.tam.portfolio_trade_list['dollar_trades'] > 0).any()
 
 
     def _has_sells(self):
-        return (self.tam.portfolio_trade_list.drop('account_cash')['dollar_trades'] < 0).any()
+        return (self.tam.portfolio_trade_list['dollar_trades'] < 0).any()
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
@@ -58,12 +58,13 @@ class SingleAccountTradeSelector(TradeSelector):
             sell_trades = self.account_selection_library.single_account_sell(self.tam.trade_account_matrix.copy(), self.account_numbers)
             self.trade_instructions.trades = sell_trades
         if self._has_buys():
-            buy_trades = self.account_selection_library.single_account_sell(self.tam.trade_account_matrix.copy(), self.account_numbers)
+            buy_trades = self.account_selection_library.single_account_buy(self.tam.trade_account_matrix.copy(), self.account_numbers)
             self.trade_instructions.trades = buy_trades
 
 
 class MultipleAccountTradeSelector(TradeSelector):
     pass
+
 
 class TradeAccountMatrix(object):
     def __init__(self, portfolio, portfolio_trade_list):
@@ -72,7 +73,7 @@ class TradeAccountMatrix(object):
         self.trade_account_matrix = self._construct_trade_account_matrix(portfolio.account_matrix, self.portfolio_trade_list)
 
     def _construct_trade_account_matrix(self, account_matrix, trade_list):
-        trade_account_matrix = pd.concat([account_matrix, trade_list], axis=1).drop('account_cash')
+        trade_account_matrix = pd.concat([account_matrix, trade_list], axis=1)
         return trade_account_matrix.fillna(0)
 
     def _remove_trades(self, trade):
@@ -142,7 +143,6 @@ class AccountSelectionLibrary(object):
     def single_account_buy(self, tam, account_numbers):
         tam['account'] = account_numbers[0]
         return tam[tam.loc[:,'dollar_trades'] > 0].loc[:,['shares', 'account']]
-
 
 
 class AccountSizingLibrary(object):
