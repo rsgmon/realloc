@@ -4,7 +4,7 @@ from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInst
     SelectorSellMultipleAccounts,\
     SingleAccountTradeSelector
 from TradeManager.trade_calculator import TradeCalculator
-from TradeManager.portfolio import Portfolio
+from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from TradeManager.test.test_data_generator import read_pickle
 
 
@@ -157,9 +157,18 @@ class TestPortfolio(TestCase):
         portfolio_request = read_pickle('test_data\/sellsOnly\/request.pkl')
         prices = read_pickle('test_data\/sellsOnly\/prices.pkl')
         portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
-        self.assertEqual(portfolio.portfolio_value, 57440.6)
+        self.assertEqual(portfolio.portfolio_value, 29991.22)
         self.assertEqual(portfolio.portfolio_cash, 5687.22)
         self.assertEqual(len(portfolio.portfolio_positions), 3)
+
+    def test_post_trade_portfolio(self):
+        portfolio_request = read_pickle('test_data\/buysOnly\/singleAccount\/request.pkl')
+        prices = read_pickle('test_data\/buysOnly\/singleAccount\/prices.pkl')
+        allocation = read_pickle('test_data\/buysOnly\/singleAccount\/allocation.pkl')
+        pre = Portfolio(portfolio_request.portfolio_request,prices.prices)
+        post = PostTradePortfolio(allocation, portfolio_request.portfolio_request,prices.prices)
+        self.assertEqual(pre.portfolio_value, post.portfolio_value)
+
 
 
 class TestModel(TestCase):

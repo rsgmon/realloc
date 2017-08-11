@@ -2,6 +2,7 @@
 import TradeManager.portfolio as portfolio
 import TradeManager.trade_calculator as tc
 import TradeManager.trade_manager as trade_manage
+import TradeManager.allocation as al
 import pickle
 import argparse
 import sys
@@ -42,6 +43,13 @@ def pickle_trade_calculator(portfolio, model, prices, destination):
         pickle.dump(trade_calculator, myfile)
     return trade_calculator
 
+def pickle_allocation(portfolio, trade_calculator):
+    allocation_controller = al.AllocationController(portfolio, trade_calculator)
+    allocated_trades = allocation_controller.allocate_trades()
+    with open(destination + 'allocation.pkl', 'wb') as myfile:
+        pickle.dump(allocated_trades, myfile)
+    return allocated_trades
+
 def read_pickle(file):
     with open(file, 'rb') as afile:
         apickle = pickle.load(afile)
@@ -70,7 +78,8 @@ if __name__ == "__main__":
     request = pickle_trade_request(source, destination)
     prices = pickle_prices(source, destination)
     portfolio, model = pickle_portfolios_models(request, prices.prices, destination)
-    pickle_trade_calculator(portfolio, model, prices.prices, destination)
+    trade_calculator = pickle_trade_calculator(portfolio, model, prices.prices, destination)
+    pickle_allocation(portfolio, trade_calculator)
     # print(os.getcwd())
     # a = read_pickle('prices.pkl')
     # print(a)

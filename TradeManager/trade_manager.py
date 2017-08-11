@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from TradeManager.portfolio import Portfolio
+from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.allocation import AllocationController
 import math
@@ -36,6 +36,8 @@ class TradeManager(object):
         allocation_controller = AllocationController(self.portfolio, self.portfolio_trades)
         return allocation_controller.allocate_trades()
 
+    def set_post_trade_portfolio(self):
+        print(PostTradePortfolio(self.trade_instructions.trade_request.portfolio_request, self.prices.prices))
 
 class RawRequest(object):
     def __init__(self, file_type_label, file_path):
