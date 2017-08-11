@@ -17,6 +17,7 @@ class TradeManager(object):
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
         self.trade_instructions = self.allocate_trades()
+        self.post_portfolio = self.set_post_trade_portfolio()
 
     def get_model(self):
         return Model(self.trade_request.model_request)
@@ -37,7 +38,7 @@ class TradeManager(object):
         return allocation_controller.allocate_trades()
 
     def set_post_trade_portfolio(self):
-        print(PostTradePortfolio(self.trade_instructions.trade_request.portfolio_request, self.prices.prices))
+        return PostTradePortfolio(self.trade_instructions, self.trade_request.portfolio_request, self.prices.prices)
 
 class RawRequest(object):
     def __init__(self, file_type_label, file_path):
@@ -321,6 +322,6 @@ class PriceRetriever(object):
 
 if __name__ == "__main__":
     file_type = 'xl'
-    path = '.\/test\/test_data\/buysOnly\/singleAccount\/TradeRequest.xlsx'
+    path = '.\/test\/test_data\/sellsOnly\/sellsOnlySingle\/SellOnlySingleAccount.xlsx'
     trade_manager = TradeManager(file_type, path)
     print(trade_manager.trade_instructions)

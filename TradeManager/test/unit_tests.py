@@ -1,7 +1,7 @@
 from unittest import TestCase
 from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, AllocationController, \
-    SelectorSellMultipleAccounts,\
+    DualAccountTradeSelector,\
     SingleAccountTradeSelector
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
@@ -169,8 +169,6 @@ class TestPortfolio(TestCase):
         post = PostTradePortfolio(allocation, portfolio_request.portfolio_request,prices.prices)
         self.assertEqual(pre.portfolio_value, post.portfolio_value)
 
-
-
 class TestModel(TestCase):
 
 
@@ -276,19 +274,20 @@ class TestAllocation(TestCase):
 
     def test_single_buy_only(self):
         trade_selector = SingleAccountTradeSelector(self.single_buy_only_portfolio, self.single_buy_only_trade_list.portfolio_trade_list)
-        trade_selector._select_accounts()
+        trade_selector.get_trades()
         self.assertEqual(len(trade_selector.trade_instructions.trades), 2)
 
     def test_SingleAccountTradeSelector(self):
         trade_selector = SingleAccountTradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
-        trade_selector._select_accounts()
+        trade_selector.get_trades()
         self.assertEqual(len(trade_selector.trade_instructions.trades),3 )
 
-    def test_MultipleSellOnly(self):
-        trade_selector = TradeSelector(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
-        self.assertEqual(len(trade_selector.trade_instructions.trades), 0)
+    def test_DualSellOnly(self):
+        trade_selector = DualAccountTradeSelector(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
+        trade_selector.get_trades()
+        # print(trade_selector.tam)
 
     def test_SingleBuySell(self):
         trade_selector = SingleAccountTradeSelector(self.single_buy_sell_portfolio, self.single_buy_sell_trade_list.portfolio_trade_list)
-        trade_selector._select_accounts()
+        trade_selector.get_trades()
         self.assertEqual(len(trade_selector.trade_instructions.trades), 3)

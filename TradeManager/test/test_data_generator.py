@@ -79,7 +79,7 @@ if __name__ == "__main__":
     prices = pickle_prices(source, destination)
     portfolio, model = pickle_portfolios_models(request, prices.prices, destination)
     trade_calculator = pickle_trade_calculator(portfolio, model, prices.prices, destination)
-    pickle_allocation(portfolio, trade_calculator)
+    # pickle_allocation(portfolio, trade_calculator)
     # print(os.getcwd())
     # a = read_pickle('prices.pkl')
     # print(a)
