@@ -135,6 +135,7 @@ class RawRequest(object):
                     raise runerror
             if isinstance(row.model_weight, Number):
                 if not math.isnan(row.model_weight):
+                    print(row.model_weight)
                     runerror.test_error_code = "WeightOnAccountLine"
                     raise runerror
             if isinstance(row.model_weight, str):
@@ -147,6 +148,7 @@ class RawRequest(object):
                     raise runerror
                 except ValueError:
                     pass
+
 
         # todo check if duplicate symbols for an account exist
 

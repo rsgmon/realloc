@@ -287,6 +287,12 @@ class TestAllocation(TestCase):
         trade_selector.get_trades()
         # print(trade_selector.tam)
 
+    def test_DualSellOnlyTwoHoldingTwoAccounts(self):
+        trade_selector = DualAccountTradeSelector(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/trade_list.pkl').portfolio_trade_list)
+        trade_selector.get_trades()
+        self.assertEqual(trade_selector.tam.trade_account_matrix.loc['ABC', '111-111'], 0)
+        self.assertEqual(trade_selector.tam.trade_account_matrix.loc['BHI', '45-33'], 0)
+
     def test_SingleBuySell(self):
         trade_selector = SingleAccountTradeSelector(self.single_buy_sell_portfolio, self.single_buy_sell_trade_list.portfolio_trade_list)
         trade_selector.get_trades()
