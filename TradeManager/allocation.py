@@ -143,7 +143,6 @@ class TradeSizingLibrary(object):
 
     def sell_something(self, selected_trades, account_numbers):
         def size_trade(row, account_numbers):
-
             for number in account_numbers:
                 print(row[number], row['shares'])
                 if row[number] > row['shares']:

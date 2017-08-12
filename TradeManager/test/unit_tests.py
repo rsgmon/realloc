@@ -77,24 +77,13 @@ class TestTradeRequest(TestCase):
             request._account_rows_validation()
         self.assertEqual('WeightOnAccountLine', cm.exception.test_error_code)
 
-
-        #
-        # def test_portfolio_request(self):
-        #     raw_request_sell_only = RawRequest('xl', 'test_data\/sellsOnly\/TradeRequest.xlsx')
-        #     self.assertEqual(len(TradeRequest(raw_request_sell_only).portfolio_request) , 6)
-        #     self.assertEqual(len(TradeRequest(self.raw_request_buy_only).model_request), 2)
-        #
-        # def test_model_request(self):
-        #     self.assertEqual(TradeRequest(self.raw_request_sell_only).model_request, None)
-        #     self.assertEqual(len(TradeRequest(self.raw_request_buy_only).model_request), 2)
-
-    def test_model_request_setup_when_no_model_specified(self):
+    def test_columns_stripped(self):
         request = RawRequest('test', {
-            "data": {"symbol": ["BHI", "FB", "ABC"],"account_number": ["45-33", "45-33", "45-33"],  "model_weight": [float('NaN'), float('NaN'), float('NaN')],"shares": [352,92,74.5], "price": [55, float('NaN'), float('NaN')],
-                     "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
+            "data": {"symbol": ["ABC "], "price": [10], "account_number": ["gh-67"], "shares": [50],
+                     "restrictions": [None], "model_weight": None}})
         request._validate_raw_request()
-        trade_request = TradeRequest(request)
-        self.assertEqual(trade_request.model_request.loc['account_cash'][0], 1)
+        self.assertEqual(len(request.raw_request['symbol'][0]),3)
+
 
 
 class TestPriceRetriever(TestCase):

@@ -6,6 +6,7 @@ from TradeManager.allocation import AllocationController
 import math
 from yahoo_finance import Share
 from numbers import Number
+from pandas.api.types import is_numeric_dtype
 
 
 class TradeManager(object):
@@ -76,9 +77,16 @@ class RawRequest(object):
     def _validate_raw_request(self):
         self._empty_request()
         self._missing_required_columns()
+        self.strip_all()
         self._no_accounts()
+        self.raw_request['account_number'] = self.raw_request['account_number'].str.strip()
         self._model_rows_validation()
         self._account_rows_validation()
+
+    def strip_all(self):
+        for column in self.raw_request:
+            if not is_numeric_dtype(self.raw_request[column]):
+                self.raw_request[column] = self.raw_request[column].str.strip()
 
     def _empty_request(self):
         if self.raw_request.empty:
@@ -135,7 +143,6 @@ class RawRequest(object):
                     raise runerror
             if isinstance(row.model_weight, Number):
                 if not math.isnan(row.model_weight):
-                    print(row.model_weight)
                     runerror.test_error_code = "WeightOnAccountLine"
                     raise runerror
             if isinstance(row.model_weight, str):
