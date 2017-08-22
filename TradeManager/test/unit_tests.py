@@ -1,11 +1,12 @@
 from unittest import TestCase
 from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, AllocationController, \
-    DualAccountTradeSelector,\
-    SingleAccountTradeSelector
+    AccountSelectionLibrary, TradeSizingLibrary, SingleAccountTradeSelector, DualAccountTradeSelector
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from TradeManager.test.test_data_generator import read_pickle
+import pandas as pd
+import numpy as np
 
 
 class TestTradeRequest(TestCase):
@@ -85,7 +86,6 @@ class TestTradeRequest(TestCase):
         self.assertEqual(len(request.raw_request['symbol'][0]),3)
 
 
-
 class TestPriceRetriever(TestCase):
     def setUp(self):
         self.raw_request_sell_only = RawRequest('xl',
@@ -115,6 +115,12 @@ class TestPriceRetriever(TestCase):
         pr = PriceRetriever(simple_request)
         self.assertRaises(ValueError, pr)
 
+    def test_sells_only_multiple_account_common_symbol(self):
+        raw_request = read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/request.pkl')
+        pr = PriceRetriever(raw_request)
+        pr()
+
+
 
 
 
@@ -124,12 +130,12 @@ class TestPriceRetriever(TestCase):
     #     pr()
     #     self.assertGreater(pr.prices.sum().price, 1)
 
-    def test_flag_no_price(self):
-        pr = PriceRetriever(RawRequest('xl',
-                                       'test_data\/Trade Request Example_missing_price.xlsx'))
-        self.assertRaises(RuntimeError, pr, test=True, file_name='test_data\/prices.json', test_array_index=1)
-        # 05/30/17 I've turned this test off for now as it calls yahoo. but as of date it worked.
-        # self.assertRaises(RuntimeError, pr)
+    # def test_flag_no_price(self):
+    #     pr = PriceRetriever(RawRequest('xl',
+    #                                    'test_data\/Trade Request Example_missing_price.xlsx'))
+    #     self.assertRaises(RuntimeError, pr, test=True, file_name='test_data\/prices.json', test_array_index=1)
+    #     # 05/30/17 I've turned this test off for now as it calls yahoo. but as of date it worked.
+    #     # self.assertRaises(RuntimeError, pr)
 
 
 class TestPortfolio(TestCase):
@@ -148,15 +154,21 @@ class TestPortfolio(TestCase):
         portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
         self.assertEqual(portfolio.portfolio_value, 29991.22)
         self.assertEqual(portfolio.portfolio_cash, 5687.22)
-        self.assertEqual(len(portfolio.portfolio_positions), 3)
+        self.assertEqual(portfolio.portfolio_positions['shares'].size, 3)
+        self.assertEqual(portfolio.account_matrix.loc['FB', '45-33']['shares'], 98.2)
+        self.assertEqual(portfolio.account_matrix['shares'].size, 4)
 
-    def test_post_trade_portfolio(self):
-        portfolio_request = read_pickle('test_data\/buysOnly\/singleAccount\/request.pkl')
-        prices = read_pickle('test_data\/buysOnly\/singleAccount\/prices.pkl')
-        allocation = read_pickle('test_data\/buysOnly\/singleAccount\/allocation.pkl')
-        pre = Portfolio(portfolio_request.portfolio_request,prices.prices)
-        post = PostTradePortfolio(allocation, portfolio_request.portfolio_request,prices.prices)
-        self.assertEqual(pre.portfolio_value, post.portfolio_value)
+
+    def test_create_position_matrix(self):
+        portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
+        prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
+        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
+        self.assertEqual(portfolio.portfolio_value, 39966.22)
+        self.assertEqual(portfolio.portfolio_cash, 5687.22)
+        self.assertEqual(portfolio.portfolio_positions['shares'].size, 5)
+        self.assertEqual(portfolio.account_matrix.loc['FB', '45-33']['shares'], 98.2)
+        self.assertEqual(portfolio.account_matrix['shares'].size, 6)
+
 
 class TestModel(TestCase):
 
@@ -248,6 +260,8 @@ class TestCalculator(TestCase):
 
 class TestAllocation(TestCase):
     def setUp(self):
+        self.account_selector = AccountSelectionLibrary()
+        self.trade_sizer = TradeSizingLibrary()
         self.single_buy_only_trade_list = read_pickle('.\/test_data\/buysOnly\/singleAccount\/trade_list.pkl')
         self.single_buy_only_portfolio = read_pickle('.\/test_data\/buysOnly\/singleAccount\/portfolio.pkl')
         self.sell_only_single_trade_list = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/trade_list.pkl')
@@ -256,6 +270,13 @@ class TestAllocation(TestCase):
         self.sell_only_multiple_portfolio = read_pickle('.\/test_data\/sellsOnly\/portfolio.pkl')
         self.single_buy_sell_trade_list = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/trade_list.pkl')
         self.single_buy_sell_portfolio = read_pickle(            '.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
+
+
+    def test_tam_creation(self):
+        tam = TradeAccountMatrix(self.single_buy_only_portfolio, self.single_buy_only_trade_list.portfolio_trade_list)
+        self.assertEqual(len(tam.trade_account_matrix), 2)
+        self.assertEqual(len(tam.trade_account_matrix.columns), 4)
+        self.assertEqual(tam.trade_account_matrix['shares'].sum(), 41)
 
     def test_TradeSelector(self):
         trade_selector = TradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
@@ -271,16 +292,41 @@ class TestAllocation(TestCase):
         trade_selector.get_trades()
         self.assertEqual(len(trade_selector.trade_instructions.trades),3 )
 
-    def test_DualSellOnly(self):
-        trade_selector = DualAccountTradeSelector(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
-        trade_selector.get_trades()
-        # print(trade_selector.tam)
+    def test_selectDualSell(self):
+        tam = TradeAccountMatrix(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
+        t = tam.working_trade_account_matrix
+        t['trade_account'] = self.account_selector.sell_single_holding(tam.working_trade_account_matrix, tam.account_numbers)
+        self.assertEqual(t[t.loc[:,'trade_account']=='45-33']['trade_account'].size, 2)
+        sizer = self.trade_sizer.sell_single_holding(t)
+        self.assertEqual(sizer['size'].dropna().size, 2)
 
-    def test_DualSellOnlyTwoHoldingTwoAccounts(self):
-        trade_selector = DualAccountTradeSelector(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/trade_list.pkl').portfolio_trade_list)
-        trade_selector.get_trades()
-        self.assertEqual(trade_selector.tam.trade_account_matrix.loc['ABC', '111-111'], 0)
-        self.assertEqual(trade_selector.tam.trade_account_matrix.loc['BHI', '45-33'], 0)
+
+    def test_update_tam_dual_complete_sell_only(self):
+        raw_update = pd.DataFrame({'45-33': {'BHI': 352.0, 'FB': 98.200000000000003, 'GGG': 74.5}, 'size': {'BHI': -352.0, 'FB': -98.200000000000003, 'GGG': np.nan}, 'trade_account': {'BHI': '45-33', 'FB': '45-33', 'GGG': 0}, 'price': {'BHI': 55.0, 'FB': 20.0, 'GGG': 20.0}, 'dollar_trades': {'BHI': -19360.0, 'FB': -1964.0, 'GGG': -2980.0}, 'shares': {'BHI': -352.0, 'FB': -98.200000000000003, 'GGG': -149.0}, '111-111': {'BHI': 0.0, 'FB': 0.0, 'GGG': 74.5}})
+        tam = TradeAccountMatrix(self.sell_only_multiple_portfolio,self.sell_only_multiple_trade_list.portfolio_trade_list)
+        trades = tam._prepare_for_tam_update(raw_update)
+        self.assertEqual(trades.loc[:,'shares'].size, 2)
+        tam._update_trades(trades)
+        self.assertEqual(tam.trade_account_matrix.loc['BHI','shares'], 0)
+        self.assertEqual(tam.trade_account_matrix.loc['GGG', 'shares'], -149)
+        tam._update_holdings(trades)
+        self.assertEqual(tam.trade_account_matrix.loc['BHI', '45-33'], 0)
+        tam._update_cash(trades)
+        self.assertEqual(tam.cash.loc['45-33', 'cash'], 27011)
+
+
+    def test_dual_sell_only_complete_one_symbol(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/trade_list.pkl').portfolio_trade_list)
+        accounts = self.account_selector.sell_complete(tam.working_trade_account_matrix, tam.account_numbers)
+
+
+    def test_new_tam_creation(self):
+        portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/portfolio.pkl')
+        portfolio._set_position_matrix()
+        tam = TradeAccountMatrix(portfolio, read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/trade_list.pkl').portfolio_trade_list)
+        tam._construct_trade_account_matrix_2(portfolio.position_matrix, tam.portfolio_trade_list)
+
+
 
     def test_SingleBuySell(self):
         trade_selector = SingleAccountTradeSelector(self.single_buy_sell_portfolio, self.single_buy_sell_trade_list.portfolio_trade_list)

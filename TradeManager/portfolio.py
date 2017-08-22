@@ -2,19 +2,22 @@ import pandas as pd
 import numpy as np
 
 class Portfolio(object):
-    def __init__(self, portfolio_request, prices):
+    def __init__(self, portfolio_request, prices, *args):
         """
         Returns a portfolio object
         :param portfolio_request: dataframe containing accounts, positions, and restrictions.
-        :param prices: dataframe containing symbols and prices 
+        :param prices: dataframe containing symbols and prices
+        :param args: only for testing, can be any string and prevents some init
         """
         self.portfolio_request = portfolio_request
         self.prices = prices
         self.account_numbers = self.portfolio_request['account_number'].unique()
-        self._assemble_accounts()
-        self.set_portfolio_positions_and_value()
-        self._account_position_matrix = self.create_account_matrix()
-        self.create_cash_matrix()
+        if len(args) == 0:
+            self._assemble_accounts()
+            self.set_portfolio_positions_and_value()
+            self._account_position_matrix = self.create_account_matrix()
+            self.create_cash_matrix()
+
 
     def _assemble_accounts(self):
         """
@@ -32,7 +35,7 @@ class Portfolio(object):
         portfolio_concatenated_positions = pd.DataFrame()
         for account in self.accounts:
             portfolio_concatenated_positions = pd.concat([portfolio_concatenated_positions, account.account_positions])
-        return portfolio_concatenated_positions.groupby(portfolio_concatenated_positions.index).agg(np.sum)
+        return portfolio_concatenated_positions.groupby(level=0).sum()
 
     def set_portfolio_cash(self):
         self.portfolio_cash = 0
@@ -64,10 +67,9 @@ class Portfolio(object):
     def create_account_matrix(self):
         account_matrix = pd.DataFrame()
         for account in self.accounts:
-            account_copy = account.account_positions.copy()
-            account_copy.columns=account.account_number
-            account_matrix = pd.concat([account_matrix, account_copy], axis=1)
-        return account_matrix.fillna(0)
+            account_matrix = pd.concat([account_matrix, account.account_positions])
+
+        return account_matrix
 
     @property
     def account_matrix(self):
@@ -102,8 +104,7 @@ class Account(object):
     def __init__(self, request):
         self.account_raw = request
         self.account_number = self.account_raw['account_number'].unique()
-        self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions', 'account_number'], 1).set_index(
-            ['symbol'])
+        self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions'], 1).set_index(['symbol', 'account_number'])
         self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(
             subset=['symbol']).drop(['restrictions', 'account_number'], 1).set_index(
             ['symbol'])

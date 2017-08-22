@@ -243,18 +243,19 @@ class PriceRetriever(object):
         self.error = []
         self.raw_request = raw_request.raw_request
 
+
     def __call__(self, test=False, file_name=None, test_array_index=0):
         self._prices_are_numbers()
         self._check_duplicate_user_input_prices()
-        self._set_symbol_retrieval_list()
+        retrieval_list = self._set_symbol_retrieval_list()
         if test:
             if file_name:
-                self._test_set_remote_prices(file_name, test_array_index)
+                remote_prices = self._test_set_remote_prices(retrieval_list, file_name, test_array_index)
             else:
-                self._test_set_remote_prices()
+                remote_prices = self._test_set_remote_prices(retrieval_list)
         else:
-            self._set_remote_prices()
-        self._combine_local_remote_prices()
+            remote_prices = self._set_remote_prices(retrieval_list)
+        self._combine_local_remote_prices(remote_prices)
         self._flag_no_price()
 
     def _check_duplicate_user_input_prices(self):
@@ -286,18 +287,19 @@ class PriceRetriever(object):
                 for_retrieval = for_retrieval.append(group[group.loc[:,'price'].isnull()])
             elif group.loc[:, 'price'].isnull().all():
                 for_retrieval = for_retrieval.append(group.drop_duplicates(['symbol']))
-        self.prices = pd.DataFrame(index=for_retrieval['symbol'].unique(), columns=['price'])
+        return pd.DataFrame(index=for_retrieval['symbol'].unique(), columns=['price']) if for_retrieval.size != 0 else pd.DataFrame()
 
-    def _set_remote_prices(self):
-        for symbol in self.prices.index:
+    def _set_remote_prices(self, retrieval_list):
+        for symbol in retrieval_list:
             try:
                 yahoo = Share(symbol=symbol)
                 price = yahoo.get_price()
-                self.prices.set_value(symbol, 'price', price)
+                retrieval_list.set_value(symbol, 'price', price)
             except (AttributeError, TypeError) as e:
                 self.error.append( {symbol, 'Invalid symbol. Check for spaces or other non-alphanumeric characters'})
+        return retrieval_list
 
-    def _test_set_remote_prices(self, file_name=None, test_array_index=0):
+    def _test_set_remote_prices(self, retrieval_list, file_name=None, test_array_index=0):
         """
         For testing only.
         :param file_name: string, path to file
@@ -308,18 +310,18 @@ class PriceRetriever(object):
             import json
             with open(file_name, 'r') as ob:
                 test_object = json.load(ob)
-                self.prices = pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
+                return pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
         else:
-            for symbol in self.prices.index:
-                self.prices.set_value(symbol, 'price', 50)
+            for symbol in retrieval_list.index:
+                retrieval_list.set_value(symbol, 'price', 50)
+            return retrieval_list
 
-
-    def _combine_local_remote_prices(self):
+    def _combine_local_remote_prices(self, remote_prices):
         """
         :return: none
         """
         local = self.raw_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
-        self.prices = pd.concat([self.prices, local]).astype(float)
+        self.prices = pd.concat([remote_prices, local]).astype(float)
 
     def _flag_no_price(self):
         no_price = self.prices.loc[self.prices['price'].isnull()]
