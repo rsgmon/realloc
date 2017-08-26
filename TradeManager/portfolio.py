@@ -68,7 +68,6 @@ class Portfolio(object):
         account_matrix = pd.DataFrame()
         for account in self.accounts:
             account_matrix = pd.concat([account_matrix, account.account_positions])
-
         return account_matrix
 
     @property

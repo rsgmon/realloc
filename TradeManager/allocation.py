@@ -42,73 +42,67 @@ class TradeSelector(object):
 class SingleAccountTradeSelector(TradeSelector):
     def get_trades(self):
         if self._has_sells:
-            sell_trades = self.account_selection_library.single_account_sell(self.tam.working_trade_account_matrix, self.tam.account_numbers)
+            sell_trades = self.account_selection_library.single_account_sell(self.tam.trade_account_matrix, self.tam.account_numbers)
             self.trade_instructions.trades = sell_trades
         if self._has_buys():
-            buy_trades = self.account_selection_library.single_account_buy(self.tam.working_trade_account_matrix, self.tam.account_numbers)
+            buy_trades = self.account_selection_library.single_account_buy(self.tam.trade_account_matrix, self.tam.account_numbers)
             self.trade_instructions.trades = buy_trades
 
 
 class DualAccountTradeSelector(TradeSelector):
     def get_trades(self):
         if self._has_sells:
-            accounts = self.account_selection_library.sell_single_holding(self.tam.working_trade_account_matrix, self.tam.account_numbers)
+            accounts = self.account_selection_library.sell_single_holding(self.tam.trade_account_matrix, self.tam.account_numbers)
             sizes = self.trade_sizer.sell_single_holding(accounts)
             self.trade_instructions.trades = sizes
             self.tam.update_tam(sizes)
-            accounts = self.account_selection_library.sell_single_holding(self.tam.working_trade_account_matrix, self.tam.account_numbers)
+            accounts = self.account_selection_library.sell_single_holding(self.tam.trade_account_matrix, self.tam.account_numbers)
+
 
 class TradeAccountMatrix(object):
-    def __init__(self, portfolio, portfolio_trade_list):
+    def __init__(self, portfolio, portfolio_trade_list, *args):
         self.account_numbers = portfolio.account_numbers
+        self.account_matrix = portfolio.account_matrix
         self.portfolio_trade_list = portfolio_trade_list
         self.cash = portfolio.cash_matrix.copy()
-        self.trade_account_matrix = self._construct_trade_account_matrix(portfolio.account_matrix, self.portfolio_trade_list)
-        self.working_trade_account_matrix = self.trade_account_matrix.copy()
+
+        if len(args) == 0:
+            self.trade_account_matrix = self._construct_trade_account_matrix(self.account_matrix, self.portfolio_trade_list)
+            self.trade_account_matrix = self.trade_account_matrix.copy()
 
     def _construct_trade_account_matrix(self, account_matrix, trade_list):
-        trade_account_matrix = pd.concat([account_matrix, trade_list.loc[:,['shares', 'price', 'dollar_trades']]], axis=1).fillna(0)
-        return trade_account_matrix
+        tam = account_matrix.join(trade_list)
+        portfolio_symbols = pd.Series(account_matrix.index.get_level_values(0).values)
+        if not pd.Series(trade_list.index.values).isin(portfolio_symbols).all():
+            model_only = self._set_model_only_matrix(trade_list[~trade_list.index.isin(portfolio_symbols)])
+            tam = tam.append(model_only)
+        tam.drop(['portfolio_weight'], 1, inplace=True)
+        return tam
 
-    def _construct_trade_account_matrix_2(self, account_matrix, trade_list):
-        trade_list.index.name = 'symbol'
-        print(account_matrix.index, '\n\n\n', trade_list.index, '\n\n\n')
-        print(pd.DataFrame(account_matrix).join(trade_list))
+    def _set_model_only_matrix(self, trade_list):
+        model_only = trade_list.copy()
+        model_only['account_number'] = 'model'
+        model_only.set_index([model_only.index, 'account_number'], inplace=True)
+        return model_only
 
+    def _update_holdings(self):
+        self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] - self.trade_account_matrix['size']
 
-    def _prepare_for_tam_update(self, trade):
-        return trade[trade.loc[:,'trade_account'] != 0].copy()
-
-    def _update_trades(self, trade):
-        self.trade_account_matrix['shares'].update(self.trade_account_matrix['shares'] - trade['size'])
-
-    def _update_holdings(self, trade):
-        new_holding= pd.DataFrame()
-        def net_holdings(row):
-            if pd.isnull(row.iloc[1]):
-                return row.iloc[0]
-            if row.iloc[0] == abs(row.iloc[1]):
-                return 0
-            if row.iloc[0] > abs(row.iloc[1]):
-                return row.iloc[0] - abs(row.iloc[1])
-        for number in self.account_numbers:
-            update = pd.concat([self.trade_account_matrix[number],trade[number]], axis=1)
-            final = update.apply(net_holdings, axis=1)
-            self.trade_account_matrix[number] = final
-
-    def _update_cash(self, trade):
-        change = trade.loc[:,['trade_account', 'size', 'price']]
-        change['cash'] = change.apply(lambda x: round(x['price'] * x['size'],2) if x['size'] > 0 else round(x['price'] * x['size']* -1, 2), axis=1)
-        for name, account in change.groupby(['trade_account']):
-            account_cash_change = account.loc[:,'cash'].sum()
+    def _update_cash(self):
+        self.trade_account_matrix['cash'] = self.trade_account_matrix.apply(lambda x: round(x['price'] * x['size'],2) if x['size'] > 0 else round(x['price'] * x['size']* -1, 2), axis=1)
+        for name, account in self.trade_account_matrix.groupby(level=1):
+            account_cash_change = account['cash'].sum()
             self.cash.set_value(name, 'cash', round(self.cash.loc[name, 'cash'] + account_cash_change),2)
 
-    def update_tam(self, working_tam):
-        trade = self._prepare_for_tam_update(working_tam)
-        self._update_trades(trade)
-        self._update_holdings(trade)
-        self._update_cash(trade)
-        self.working_trade_account_matrix = self.trade_account_matrix.copy()
+    def _clean_tam(self):
+        self.trade_account_matrix.drop(['select', 'size', 'cash'],1, inplace=True)
+
+
+    def update_tam(self):
+        self.trade_account_matrix.fillna(0, inplace=True)
+        self._update_holdings()
+        self._update_cash()
+        self._clean_tam()
 
     @property
     def trades_remaining(self):
@@ -124,21 +118,10 @@ class TradeAccountMatrix(object):
 class AccountSelectionLibrary(object):
     """Other than single_account_sell and single_account_buy, all methods handle multiple accounts."""
 
-    def sell_single_holding(self, tam, ans):
-        def my_test(row, account_numbers):
-            count = 0
-            if row['shares'] < 0:
-                count +=1
-            for number in account_numbers:
-                if row[number] > 0:
-                    count += 1
-                    acc_number = number
-            if count == 2:
-                return acc_number
-            else: return 0
-        return tam.apply(my_test, args=[ans], axis=1)
-        # tam['trade_account'] = tam.apply(my_test, args=[ans], axis=1)
-        # return tam.loc[tam.loc[:,'trade_account'] !=0].copy()
+    def sell_single_holding(self, tam):
+        tam['row_count'] = tam['shares'].groupby(level=0).transform('count')
+        tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] < 0)
+        tam.drop(['row_count'], 1, inplace=True)
 
     def single_account_sell(self, tam, ans):
         tam['account'] = ans[0]
@@ -148,29 +131,38 @@ class AccountSelectionLibrary(object):
         tam['account'] = ans[0]
         return tam.loc[tam.loc[:,'dollar_trades'] > 0].loc[:,['shares', 'account']]
 
-    def sell_complete(self, tam, ans):
+    def sell_complete(self, tam):
         """
-        Select accounts where model weight is zero for all symbols.
+        Select in accounts where model weight is zero for all symbols.
         :param tam:
-        :param ans:
         :return:
         """
-        pass
+        tam['select'] = tam['model_weight'] == 0
+
+
+    def dual_sell(self, tam):
+
+        print(tam.index.get_level_values('account_number').unique())
+        # print(tam)
+
 
 
 class TradeSizingLibrary(object):
-    def sell_single_holding(self, selected_trades):
-        selected_trades['size'] = selected_trades[selected_trades['trade_account'] !=0]['shares']
-        return selected_trades
 
-    def sell_something(self, selected_trades, account_numbers):
-        def size_trade(row, account_numbers):
-            for number in account_numbers:
-                print(row[number], row['shares'])
-                if row[number] > row['shares']:
-                    return row['shares']
-                else: return row[number]
-        return selected_trades.apply(size_trade, args=[account_numbers], axis=1)
+    def sell_complete(self, tam):
+        tam['size'] = tam[tam['select']]['shares']
+        return tam
+
+class TradeSizeUpdateTamLibrary(object):
+
+    def sell_single_account(self, tam):
+        tam['share_trades'] = tam['share_trades'] + tam['size']
+        tam['dollar_trades'] = tam['dollar_trades'] + tam['size'] * tam['price']
+
+    def sell_complete(self, tam):
+        tam['share_trades'] = tam.apply(lambda x: 0 if x['select'] else x['share_trades'], axis=1)
+        tam['dollar_trades'] = tam.apply(lambda x: 0 if x['select'] else x['dollar_trades'], axis=1)
+
 
 
 class TradeInstructions(object):

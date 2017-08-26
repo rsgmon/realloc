@@ -17,6 +17,7 @@ class TradeCalculator(object):
         portfolio_model_weights = pd.concat([model_positions, portfolio.portfolio_positions['portfolio_weight'], portfolio.portfolio_positions['shares']], axis=1).fillna(0)
         portfolio_model_weights['price'] = self.prices
         portfolio_model_weights['dollar_trades'] = ((portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value).round(2)
+        portfolio_model_weights.index.name = 'symbol'
         return portfolio_model_weights
 
     def _add_share_trades(self):
@@ -28,7 +29,8 @@ class TradeCalculator(object):
 
         trade_list = self._get_dollar_trades(self.portfolio, self.model.model_positions)
 
-        trade_list['shares'] = trade_list.apply(share_trade, axis=1)
+        trade_list['share_trades'] = trade_list.apply(share_trade, axis=1)
+        trade_list.drop(['shares'], axis=1, inplace=True)
         return trade_list
 
     def __str__(self):
