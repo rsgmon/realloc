@@ -342,8 +342,10 @@ class TestAllocation(TestCase):
         tam.update_tam()
 
     def test_dual_sell_only_partial_one_share_symbol(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/trade_list.pkl').portfolio_trade_list)
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualaccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualaccounts\/trade_list.pkl').portfolio_trade_list)
         self.account_selector.dual_sell(tam.trade_account_matrix)
+        if tam.trade_account_matrix['select'].any():
+            pass
         # self.trade_sizer.sell_complete(tam.trade_account_matrix)
         # self.tam_trade_update.sell_complete(tam.trade_account_matrix)
         # tam.update_tam()

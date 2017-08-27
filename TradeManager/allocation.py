@@ -141,9 +141,19 @@ class AccountSelectionLibrary(object):
 
 
     def dual_sell(self, tam):
+        """
+        tam['accounts >1', tam['sells, tam['smallest holding assuming previous two columns are true, tam['any trues in the last column, tam['there are trues so select trades,
+        If tam['select move on the sizing
+        else return false
 
-        print(tam.index.get_level_values('account_number').unique())
-        # print(tam)
+        :param tam:
+        :return:
+        """
+        tam['select'] = ((tam['price'].groupby(level=0).transform('count') > 1) & (tam['share_trades'] < 0) & (tam['shares'] - tam['shares'].groupby(level=0).transform('min') != 0))
+
+
+
+
 
 
 
