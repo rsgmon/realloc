@@ -1,7 +1,7 @@
 from unittest import TestCase
 from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
 from TradeManager.allocation import TradeAccountMatrix, TradeSelector, TradeInstructions, AllocationController, \
-    AccountSelectionLibrary, TradeSizingLibrary, SingleAccountTradeSelector, DualAccountTradeSelector, TradeSizeUpdateTamLibrary
+    AccountSelectionLibrary, TradeSizingLibrary, SingleAccountTradeSelector, TradeSizeUpdateTamLibrary
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from TradeManager.test.test_data_generator import read_pickle
@@ -163,11 +163,19 @@ class TestPortfolio(TestCase):
         portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
         prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
         portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
-        self.assertEqual(portfolio.portfolio_value, 39966.22)
+        self.assertEqual(portfolio.portfolio_value, 39436.22)
         self.assertEqual(portfolio.portfolio_cash, 5687.22)
         self.assertEqual(portfolio.portfolio_positions['shares'].size, 5)
         self.assertEqual(portfolio.account_matrix.loc['FB', '45-33']['shares'], 98.2)
         self.assertEqual(portfolio.account_matrix['shares'].size, 6)
+
+    def test_account_setup(self):
+        portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
+        prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
+        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices, 'test')
+        portfolio._assemble_accounts()
+        self.assertEqual(portfolio.accounts[0].account_cash.loc['account_cash', 'shares'], 5687.21)
+
 
 
 class TestModel(TestCase):
@@ -229,6 +237,7 @@ class TestCalculator(TestCase):
         prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
         model = Model(trade_request.model_request)
         trade_calculator = TradeCalculator(portfolio, model, prices.prices)
+        print(trade_calculator)
         self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].share_trades, 71)
 
     def test_single_sell_only(self):
@@ -302,7 +311,7 @@ class TestAllocation(TestCase):
         trade_selector.get_trades()
         self.assertEqual(len(trade_selector.trade_instructions.trades),3 )
 
-    def test_selectDualSell(self):
+    def test_selectMultipleSell(self):
         tam = TradeAccountMatrix(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
         self.account_selector.sell_single_holding(tam.trade_account_matrix)
         self.trade_sizer.sell_complete(tam.trade_account_matrix)
@@ -326,29 +335,27 @@ class TestAllocation(TestCase):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/trade_list.pkl').portfolio_trade_list)
         self.account_selector.sell_complete(tam.trade_account_matrix)
         self.trade_sizer.sell_complete(tam.trade_account_matrix)
-        self.tam_trade_update.sell_complete(tam.trade_account_matrix)
-        raw_update = pd.DataFrame({'shares': {('GGG', '111-111'): 74.5, ('GGG', '45-33'): 74.5}, 'select': {('GGG', '111-111'): True, ('GGG', '45-33'): True}, 'model_weight': {('GGG', '111-111'): 0.0, ('GGG', '45-33'): 0.0}, 'price': {('GGG', '111-111'): 20.0, ('GGG', '45-33'): 20.0}, 'dollar_trades': {('GGG', '111-111'): 0, ('GGG', '45-33'): 0}, 'size': {('GGG', '111-111'): 74.5, ('GGG', '45-33'): 74.5}, 'share_trades': {('GGG', '111-111'): 0, ('GGG', '45-33'): 0}})
-        tam = TradeAccountMatrix(self.sell_only_multiple_portfolio,
-                                 self.sell_only_multiple_trade_list.portfolio_trade_list)
-        tam.trade_account_matrix = raw_update
-        tam.update_tam()
-        self.assertTrue(tam.trade_account_matrix['share_trades'].sum() == 0)
+        # self.tam_trade_update.sell_complete(tam.trade_account_matrix)
+        # raw_update = pd.DataFrame({'shares': {('GGG', '111-111'): 74.5, ('GGG', '45-33'): 74.5}, 'select': {('GGG', '111-111'): True, ('GGG', '45-33'): True}, 'model_weight': {('GGG', '111-111'): 0.0, ('GGG', '45-33'): 0.0}, 'price': {('GGG', '111-111'): 20.0, ('GGG', '45-33'): 20.0}, 'dollar_trades': {('GGG', '111-111'): 0, ('GGG', '45-33'): 0}, 'size': {('GGG', '111-111'): 74.5, ('GGG', '45-33'): 74.5}, 'share_trades': {('GGG', '111-111'): 0, ('GGG', '45-33'): 0}})
+        # tam = TradeAccountMatrix(self.sell_only_multiple_portfolio,
+        #                          self.sell_only_multiple_trade_list.portfolio_trade_list)
+        # tam.trade_account_matrix = raw_update
+        # tam.update_tam()
+        # self.assertTrue(tam.trade_account_matrix['share_trades'].sum() == 0)
 
     def test_dual_sell_only_complete_one_shared_symbol(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/trade_list.pkl').portfolio_trade_list)
         self.account_selector.sell_complete(tam.trade_account_matrix)
         self.trade_sizer.sell_complete(tam.trade_account_matrix)
-        self.tam_trade_update.sell_complete(tam.trade_account_matrix)
-        tam.update_tam()
+        # self.tam_trade_update.sell_complete(tam.trade_account_matrix)
+        # tam.update_tam()
 
     def test_dual_sell_only_partial_one_share_symbol(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualaccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualaccounts\/trade_list.pkl').portfolio_trade_list)
-        self.account_selector.dual_sell(tam.trade_account_matrix)
-        if tam.trade_account_matrix['select'].any():
-            pass
-        # self.trade_sizer.sell_complete(tam.trade_account_matrix)
-        # self.tam_trade_update.sell_complete(tam.trade_account_matrix)
-        # tam.update_tam()
+        if self.account_selector.sell_smallest_multiple(tam.trade_account_matrix):
+            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+        tam.update_tam()
+        # print(tam.trade_account_matrix)
 
 
 

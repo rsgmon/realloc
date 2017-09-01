@@ -49,7 +49,7 @@ class SingleAccountTradeSelector(TradeSelector):
             self.trade_instructions.trades = buy_trades
 
 
-class DualAccountTradeSelector(TradeSelector):
+class MultipleAccountTradeSelector(TradeSelector):
     def get_trades(self):
         if self._has_sells:
             accounts = self.account_selection_library.sell_single_holding(self.tam.trade_account_matrix, self.tam.account_numbers)
@@ -60,6 +60,7 @@ class DualAccountTradeSelector(TradeSelector):
 
 
 class TradeAccountMatrix(object):
+
     def __init__(self, portfolio, portfolio_trade_list, *args):
         self.account_numbers = portfolio.account_numbers
         self.account_matrix = portfolio.account_matrix
@@ -92,10 +93,12 @@ class TradeAccountMatrix(object):
         self.trade_account_matrix['cash'] = self.trade_account_matrix.apply(lambda x: round(x['price'] * x['size'],2) if x['size'] > 0 else round(x['price'] * x['size']* -1, 2), axis=1)
         for name, account in self.trade_account_matrix.groupby(level=1):
             account_cash_change = account['cash'].sum()
+            print(account)
             self.cash.set_value(name, 'cash', round(self.cash.loc[name, 'cash'] + account_cash_change),2)
 
+
     def _clean_tam(self):
-        self.trade_account_matrix.drop(['select', 'size', 'cash'],1, inplace=True)
+        self.trade_account_matrix.drop(['size'],1, inplace=True)
 
 
     def update_tam(self):
@@ -140,7 +143,7 @@ class AccountSelectionLibrary(object):
         tam['select'] = tam['model_weight'] == 0
 
 
-    def dual_sell(self, tam):
+    def sell_smallest_multiple(self, tam):
         """
         tam['accounts >1', tam['sells, tam['smallest holding assuming previous two columns are true, tam['any trues in the last column, tam['there are trues so select trades,
         If tam['select move on the sizing
@@ -149,12 +152,19 @@ class AccountSelectionLibrary(object):
         :param tam:
         :return:
         """
+
         tam['select'] = ((tam['price'].groupby(level=0).transform('count') > 1) & (tam['share_trades'] < 0) & (tam['shares'] - tam['shares'].groupby(level=0).transform('min') != 0))
-
-
-
-
-
+        if tam['select'].any():
+            tam['is_entire_holding'] = tam['select'] & (tam['shares'] + tam['share_trades'] < 0)
+            tam['entire_holding'] = tam.loc[tam['is_entire_holding'],'shares']
+            tam['entire_holding'].fillna(0, inplace=True)
+            tam['is_partial'] = tam['select'] & (tam['shares'] + tam['share_trades'] > 0)
+            tam['partial'] = tam.loc[tam['is_partial'],'shares'] + tam.loc[tam['is_partial'],'share_trades']
+            tam['partial'].fillna(0, inplace=True)
+            tam['size'] = tam['entire_holding'] + tam['partial']
+            tam.drop(['select', 'is_entire_holding', 'entire_holding', 'is_partial', 'partial'], axis=1, inplace=True)
+            return True
+        else: return False
 
 
 class TradeSizingLibrary(object):
@@ -163,15 +173,21 @@ class TradeSizingLibrary(object):
         tam['size'] = tam[tam['select']]['shares']
         return tam
 
+
 class TradeSizeUpdateTamLibrary(object):
 
     def sell_single_account(self, tam):
         tam['share_trades'] = tam['share_trades'] + tam['size']
         tam['dollar_trades'] = tam['dollar_trades'] + tam['size'] * tam['price']
 
-    def sell_complete(self, tam):
-        tam['share_trades'] = tam.apply(lambda x: 0 if x['select'] else x['share_trades'], axis=1)
-        tam['dollar_trades'] = tam.apply(lambda x: 0 if x['select'] else x['dollar_trades'], axis=1)
+    def multiple_update(self, tam):
+        # todo dollar trades
+        tam['port_trade_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() > 0 else 0)
+        tam['share_trades'] = tam['share_trades'] + tam['port_trade_size']
+        tam.drop(['port_trade_size'], 1, inplace=True)
+
+
+
 
 
 
