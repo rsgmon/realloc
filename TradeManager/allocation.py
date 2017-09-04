@@ -89,13 +89,12 @@ class TradeAccountMatrix(object):
         return model_only
 
     def _update_holdings(self):
-        self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] - self.trade_account_matrix['size']
+        self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] + self.trade_account_matrix['size']
 
     def _update_cash(self):
         self.trade_account_matrix['trade_cash'] = (self.trade_account_matrix['price'] * self.trade_account_matrix['size']).groupby(level=1).transform(lambda x: x.sum())
-        self.trade_account_matrix.account_cash = self.trade_account_matrix.account_cash + self.trade_account_matrix['trade_cash']
+        self.trade_account_matrix.account_cash = self.trade_account_matrix.account_cash - self.trade_account_matrix['trade_cash']
         self.trade_account_matrix.drop(['trade_cash'], 1, inplace=True)
-
 
     def _clean_tam(self):
         self.trade_account_matrix.drop(['size'],1, inplace=True)
@@ -167,8 +166,7 @@ class TradingLibrary(object):
             tam['single_min'] = tam.shares.groupby(level=0).transform(lambda x: (~x.duplicated(False)) & (x == x.min()))
             tam['min_all_equal'] = tam.shares.groupby(level=0).transform(lambda x: (x.reset_index().index == 0) & (x.min() == x))
             tam['select'] = (tam['over_one']) & (tam['single_min'] + tam['min_all_equal']) == 1
-
-                # We know we have either single minimium for that symbol or the first instance.
+                # Now we know we have either single minimium for that symbol or the first instance.
             tam['is_entire_holding'] = tam['select'] & (tam['shares'] + tam['share_trades'] < 0)
             tam['entire_holding'] = tam.loc[tam['is_entire_holding'],'shares'] * -1
             tam['entire_holding'].fillna(0, inplace=True)
@@ -189,9 +187,10 @@ class TradeSizeUpdateTamLibrary(object):
 
     def multiple_update(self, tam):
         # todo dollar trades
-        tam['port_share_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() > 0 else 0)
-        tam['share_trades'] = tam['share_trades'] + tam['port_share_size']
-        tam.drop(['port_share_size'], 1, inplace=True)
+        tam['port_buy_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() > 0 else 0)
+        tam['port_sell_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() < 0 else 0)
+        tam['share_trades'] = tam['share_trades'] + tam['port_buy_size'] - tam['port_sell_size']
+        tam.drop(['port_buy_size', 'port_sell_size'], 1, inplace=True)
 
 
 

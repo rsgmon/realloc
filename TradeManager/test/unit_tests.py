@@ -345,4 +345,9 @@ class TestDev(TestCase):
     def test_sell_smallest_multiple(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/trade_list.pkl').portfolio_trade_list)
         has_trades = self.trading_library.sell_smallest_multiple(tam.trade_account_matrix)
-        # self.assertTrue(has_trades)
+        self.assertTrue(has_trades)
+        if has_trades:
+            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+        self.assertEqual(tam.trade_account_matrix.loc[('HHH', '45-33'), 'size'], -100)
+        self.assertEqual(tam.trade_account_matrix.loc[('HHH', '45-33'), 'share_trades'], -163)
+        tam.update_tam()
