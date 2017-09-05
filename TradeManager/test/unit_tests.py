@@ -173,8 +173,15 @@ class TestPortfolio(TestCase):
         prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
         portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices, 'test')
         portfolio._assemble_accounts()
-        self.assertEqual(portfolio.accounts[0].account_cash.loc['account_cash', 'shares'], 5687.21)
 
+
+    def test_cash_setup(self):
+        portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
+        prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
+        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices, 'test')
+        portfolio._assemble_accounts()
+        portfolio.create_cash_matrix()
+        self.assertEqual(portfolio.accounts[0].account_cash.loc[('account_cash', '45-33'), 'shares'], 5687.21)
 
 
 class TestModel(TestCase):
@@ -277,7 +284,6 @@ class TestAllocation(TestCase):
         self.single_buy_sell_trade_list = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/trade_list.pkl')
         self.single_buy_sell_portfolio = read_pickle(            '.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
 
-
     def test_tam_create_buy_only(self):
         tam = TradeAccountMatrix(self.single_buy_only_portfolio, self.single_buy_only_trade_list.portfolio_trade_list)
         self.assertEqual(len(tam.trade_account_matrix), 2)
@@ -326,7 +332,7 @@ class TestAllocation(TestCase):
         tam.update_tam()
         self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), 0)
 
-    def test_sell_complete_then_single_sell(self):
+    def test_sell_single_account_then_single_sell(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/trade_list.pkl').portfolio_trade_list)
         self.trading_library.sell_complete(tam.trade_account_matrix)
         self.tam_trade_update.multiple_update(tam.trade_account_matrix)
@@ -335,19 +341,24 @@ class TestAllocation(TestCase):
         self.tam_trade_update.multiple_update(tam.trade_account_matrix)
         tam.update_tam()
         self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), 0)
-        self.assertEqual(tam.trade_account_matrix['shares'].sum(), 47)
+        self.assertEqual(tam.trade_account_matrix['shares'].sum(), 1262.4)
+
+    def test_sell_smallest_multiple(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/trade_list.pkl').portfolio_trade_list)
+        for i in [1,2,3]:
+            if self.trading_library.sell_single_holding(tam.trade_account_matrix):
+                self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+                tam.update_tam()
+            if self.trading_library.sell_smallest_multiple(tam.trade_account_matrix):
+                self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+                tam.update_tam()
+        self.assertEqual(tam.trade_account_matrix.loc[('HHH', '222-222'), 'share_trades'], -0)
+        self.assertEqual(tam.trade_account_matrix.loc[('GGG', '45-33'), 'account_cash'], 3000)
 
 class TestDev(TestCase):
     def setUp(self):
             self.trading_library = TradingLibrary()
             self.tam_trade_update = TradeSizeUpdateTamLibrary()
 
-    def test_sell_smallest_multiple(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/trade_list.pkl').portfolio_trade_list)
-        has_trades = self.trading_library.sell_smallest_multiple(tam.trade_account_matrix)
-        self.assertTrue(has_trades)
-        if has_trades:
-            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-        self.assertEqual(tam.trade_account_matrix.loc[('HHH', '45-33'), 'size'], -100)
-        self.assertEqual(tam.trade_account_matrix.loc[('HHH', '45-33'), 'share_trades'], -163)
-        tam.update_tam()
+
+

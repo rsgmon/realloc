@@ -97,8 +97,8 @@ class TradeAccountMatrix(object):
         self.trade_account_matrix.drop(['trade_cash'], 1, inplace=True)
 
     def _clean_tam(self):
+        self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['shares'] == 0].index, inplace=True)
         self.trade_account_matrix.drop(['size'],1, inplace=True)
-
 
     def update_tam(self):
         self.trade_account_matrix.fillna(0, inplace=True)
@@ -123,9 +123,15 @@ class TradingLibrary(object):
     def sell_single_holding(self, tam):
         tam['row_count'] = tam['shares'].groupby(level=0).transform('count')
         tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] < 0)
-        tam.drop(['row_count'], 1, inplace=True)
-        tam['size'] = tam[tam['select']]['share_trades']*-1
-        tam.drop(['select'], 1, inplace=True)
+        if tam['select'].any():
+            tam.drop(['row_count'], 1, inplace=True)
+            tam['size'] = tam[tam['select']]['share_trades']
+            tam.drop(['select'], 1, inplace=True)
+            return True
+
+        else:
+            tam.drop(['row_count', 'select'], 1, inplace=True)
+            return False
 
     def single_account_sell(self, tam, ans):
         tam['account'] = ans[0]
@@ -142,8 +148,11 @@ class TradingLibrary(object):
         :return:
         """
         tam['select'] = tam['model_weight'] == 0
-        tam['size'] = tam[tam['select']]['shares']
-        tam.drop(['select'],1,inplace=True)
+        if tam['select'].any():
+            tam['size'] = tam[tam['select']]['shares']
+            tam.drop(['select'], 1, inplace=True)
+            return True
+        else: return False
 
     def sell_smallest_multiple(self, tam):
         """
@@ -160,7 +169,6 @@ class TradingLibrary(object):
         :param tam:
         :return:
         """
-
         tam['over_one'] = ((tam['price'].groupby(level=0).transform('count') > 1) & (tam['share_trades'] < 0))
         if tam['over_one'].any():
             tam['single_min'] = tam.shares.groupby(level=0).transform(lambda x: (~x.duplicated(False)) & (x == x.min()))
@@ -176,7 +184,9 @@ class TradingLibrary(object):
             tam['size'] = tam['entire_holding'] + tam['partial']
             tam.drop(['min_all_equal','single_min','over_one','select', 'is_entire_holding', 'entire_holding', 'is_partial', 'partial'], axis=1, inplace=True)
             return True
-        else: return False
+        else:
+            tam.drop(['over_one'], axis=1, inplace=True)
+            return False
 
 
 class TradeSizeUpdateTamLibrary(object):
@@ -191,10 +201,6 @@ class TradeSizeUpdateTamLibrary(object):
         tam['port_sell_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() < 0 else 0)
         tam['share_trades'] = tam['share_trades'] + tam['port_buy_size'] - tam['port_sell_size']
         tam.drop(['port_buy_size', 'port_sell_size'], 1, inplace=True)
-
-
-
-
 
 
 class TradeInstructions(object):

@@ -45,7 +45,8 @@ class Portfolio(object):
     def set_portfolio_cash(self):
         self.portfolio_cash = 0
         for account in self.accounts:
-            self.portfolio_cash +=(account.account_cash.loc['account_cash', 'shares'])
+            self.portfolio_cash += account.account_cash.loc[('account_cash', account.account_number[0]),  'shares']
+
 
     def set_portfolio_positions_and_value(self):
         """
@@ -66,8 +67,7 @@ class Portfolio(object):
     def create_cash_matrix(self):
         self._cash_matrix = pd.DataFrame()
         for account in self.accounts:
-            self._cash_matrix = pd.concat([self._cash_matrix, pd.DataFrame([account.account_cash.loc['account_cash',:]['shares']], index=account.account_number)])
-        self._cash_matrix.columns=['cash']
+            self._cash_matrix = pd.concat([self._cash_matrix, account.account_cash])
 
     def create_account_matrix(self):
         account_matrix = pd.DataFrame()
@@ -110,8 +110,7 @@ class Account(object):
         self.account_number = self.account_raw['account_number'].unique()
         if len(args) == 0:
             self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions'], 1).set_index(['symbol', 'account_number'])
-            self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(subset=['symbol']).drop(['restrictions', 'account_number'], 1).set_index(['symbol'])
-            self.account_positions['account_cash'] = pd.Series(self.account_cash.loc['account_cash', 'shares'],index=self.account_positions.index)
+            self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(subset=['symbol']).drop(['restrictions'], 1).set_index(['symbol', 'account_number'])
             self.account_level_restrictions = self.account_raw.dropna(subset=['restrictions']).drop(['symbol', 'shares'], 1)
 
         # todo self.position_level_restrcitions
