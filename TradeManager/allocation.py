@@ -1,5 +1,5 @@
 import pandas as pd
-pd.set_option('display.width', 1000)
+pd.set_option('display.width', 300)
 import numpy as np
 
 class AllocationController(object):
@@ -92,9 +92,10 @@ class TradeAccountMatrix(object):
         self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] + self.trade_account_matrix['size']
 
     def _update_cash(self):
-        self.trade_account_matrix['trade_cash'] = (self.trade_account_matrix['price'] * self.trade_account_matrix['size']).groupby(level=1).transform(lambda x: x.sum())
-        self.trade_account_matrix.account_cash = self.trade_account_matrix.account_cash - self.trade_account_matrix['trade_cash']
-        self.trade_account_matrix.drop(['trade_cash'], 1, inplace=True)
+        trade_cash = pd.DataFrame((self.trade_account_matrix['price'] * self.trade_account_matrix['size']).groupby(level=1).sum(), columns=['shares'])
+        trade_cash['symbol'] = 'account_cash'
+        trade_cash.reset_index().set_index(['symbol', 'account_number'], inplace=True)
+        self.cash['shares'] = self.cash['shares'] - trade_cash['shares']
 
     def _clean_tam(self):
         self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['shares'] == 0].index, inplace=True)
@@ -188,6 +189,52 @@ class TradingLibrary(object):
             tam.drop(['over_one'], axis=1, inplace=True)
             return False
 
+    def buy_single_holding(self, tam, cash):
+        tam['row_count'] = tam['price'].groupby(level=0).transform('count')
+        tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] > 0)
+        if tam['select'].any():
+            tam['dollar_trade'] = tam['share_trades'] * tam['price'] * -1
+            tam['cash'] = tam['select'].groupby(level=1).transform(lambda x: cash.loc[x.name,:])
+            tam['has_cash'] = (tam['select']) & (tam['cash'] > tam['dollar_trade']*-1)
+            if tam['has_cash'].any():
+                tam['size'] = tam[tam['has_cash']]['share_trades']
+                tam.drop(['dollar_trade', 'cash', 'row_count', 'select', 'has_cash'], 1, inplace=True)
+                return True
+            else:
+                tam.drop(['dollar_trade', 'cash', 'row_count', 'select', 'has_cash'], 1, inplace=True)
+                return False
+        else:
+            tam.drop(['row_count', 'select'], 1, inplace=True)
+            return False
+
+    def buy_multiple_holding(self, tam, cash):
+        tam['row_count'] = tam['price'].groupby(level=0).transform('count')
+        tam['any_trades'] = (tam['row_count'] > 1) & (tam['share_trades'] > 0)
+        if tam['any_trades'].any():
+            tam['dollar_trade'] = tam['share_trades'] * tam['price']
+            tam['cash'] = tam['any_trades'].groupby(level=1).transform(lambda x: cash.loc[x.name, :])
+            account = tam.loc[tam.cash == tam.cash.max()].copy()
+            for name, testme in tam.groupby(level=1):
+
+            account['min_trade'] = account.loc[:,'dollar_trade'].min()
+            account['is_eligible'] = account.loc[:,'cash'] > account.loc[:,'min_trade']
+            if account['is_eligible'].any():
+                account['eligible'] = account[account['is_eligible']]['dollar_trade']
+                account['sum_trades'] = account['eligible'].sum()
+                account['sufficient'] = (account['sum_trades'] < account['cash'])
+                if ~account['sufficient'].any():
+                    account['is_eligible'] = account['eligible'] != account['eligible'].max()
+                    account['eligible'] = account[account['is_eligible']]['dollar_trade']
+                    account['sum_trades'] = account['eligible'].sum()
+                    account['sufficient'] = (account['sum_trades'] < account['cash'])
+                tam['select'] = account['is_eligible']
+                tam['select'].fillna(False, inplace=True)
+                tam['size'] = tam[tam['select']]['share_trades']
+                return True
+            return False
+        return False
+
+
 
 class TradeSizeUpdateTamLibrary(object):
 
@@ -199,7 +246,7 @@ class TradeSizeUpdateTamLibrary(object):
         # todo dollar trades
         tam['port_buy_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() > 0 else 0)
         tam['port_sell_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() < 0 else 0)
-        tam['share_trades'] = tam['share_trades'] + tam['port_buy_size'] - tam['port_sell_size']
+        tam['share_trades'] = tam['share_trades'] - tam['port_buy_size'] - tam['port_sell_size']
         tam.drop(['port_buy_size', 'port_sell_size'], 1, inplace=True)
 
 

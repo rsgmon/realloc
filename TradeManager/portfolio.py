@@ -45,7 +45,7 @@ class Portfolio(object):
     def set_portfolio_cash(self):
         self.portfolio_cash = 0
         for account in self.accounts:
-            self.portfolio_cash += account.account_cash.loc[('account_cash', account.account_number[0]),  'shares']
+            self.portfolio_cash += account.account_cash.loc[account.account_number[0],  'shares']
 
 
     def set_portfolio_positions_and_value(self):
@@ -110,7 +110,7 @@ class Account(object):
         self.account_number = self.account_raw['account_number'].unique()
         if len(args) == 0:
             self.account_positions = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] != 'account_cash'].dropna(subset=['symbol']).drop(['restrictions'], 1).set_index(['symbol', 'account_number'])
-            self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(subset=['symbol']).drop(['restrictions'], 1).set_index(['symbol', 'account_number'])
+            self.account_cash = self.account_raw.loc[self.account_raw.loc[:, 'symbol'] == 'account_cash'].dropna(subset=['symbol']).drop(['restrictions', 'symbol'], 1).set_index(['account_number'])
             self.account_level_restrictions = self.account_raw.dropna(subset=['restrictions']).drop(['symbol', 'shares'], 1)
 
         # todo self.position_level_restrcitions

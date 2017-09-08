@@ -181,7 +181,7 @@ class TestPortfolio(TestCase):
         portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices, 'test')
         portfolio._assemble_accounts()
         portfolio.create_cash_matrix()
-        self.assertEqual(portfolio.accounts[0].account_cash.loc[('account_cash', '45-33'), 'shares'], 5687.21)
+        self.assertEqual(portfolio.accounts[0].account_cash.loc['45-33', 'shares'], 5687.21)
 
 
 class TestModel(TestCase):
@@ -353,12 +353,21 @@ class TestAllocation(TestCase):
                 self.tam_trade_update.multiple_update(tam.trade_account_matrix)
                 tam.update_tam()
         self.assertEqual(tam.trade_account_matrix.loc[('HHH', '222-222'), 'share_trades'], -0)
-        self.assertEqual(tam.trade_account_matrix.loc[('GGG', '45-33'), 'account_cash'], 3000)
+        self.assertEqual(tam.cash.loc[('account_cash', '45-33'), 'shares'], 3000)
+
+    def test_buy_single_holding_has_enough_cash(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/portfolio.pkl'), read_pickle('.\/test_data\/buysOnly\/multiple\/trade_list.pkl').portfolio_trade_list)
+        if self.trading_library.buy_single_holding(tam.trade_account_matrix, tam.cash):
+            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+            tam.update_tam()
+        self.assertEqual(tam.cash.loc['45-33', 'shares'], 3100)
+        self.assertEqual(tam.trade_account_matrix.loc[('GGG','45-33'), 'shares'], 188)
 
 class TestDev(TestCase):
     def setUp(self):
             self.trading_library = TradingLibrary()
             self.tam_trade_update = TradeSizeUpdateTamLibrary()
 
-
-
+    def test_buy_multiple_lowest_cash(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/portfolio.pkl'),                                 read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/trade_list.pkl').portfolio_trade_list)
+        self.trading_library.buy_multiple_holding(tam.trade_account_matrix, tam.cash)
