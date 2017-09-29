@@ -363,11 +363,37 @@ class TestAllocation(TestCase):
         self.assertEqual(tam.cash.loc['45-33', 'shares'], 3100)
         self.assertEqual(tam.trade_account_matrix.loc[('GGG','45-33'), 'shares'], 188)
 
+    def test_buy_multiple_complete_highest_cash(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/portfolio.pkl'),  read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/trade_list.pkl').portfolio_trade_list)
+        if self.trading_library.buy_multiple_complete(tam.trade_account_matrix, tam.cash):
+            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+            tam.update_tam()
+        self.assertEqual(tam.cash.loc['45-33', 'shares'], 12200)
+        self.assertEqual(tam.trade_account_matrix.loc[('GGG', '45-33'), 'shares'], 416)
+
+    def test_buy_single_or_multiple_partial(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/portfolio.pkl'),
+                                 read_pickle(
+                                     '.\/test_data\/buysOnly\/multiple\/multiple_holding\/trade_list.pkl').portfolio_trade_list)
+        if self.trading_library.buy_multiple_partial(tam.trade_account_matrix, tam.cash):
+            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+            tam.update_tam()
+        self.assertEqual(tam.cash.loc['111-111', 'shares'], 0)
+
+    def test_buy_new(self):
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/portfolio.pkl'),read_pickle(                                     '.\/test_data\/buysOnly\/multiple\/trade_list.pkl').portfolio_trade_list)
+        if self.trading_library.buy_new_existing(tam.trade_account_matrix, tam.cash):
+            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
+            tam.update_tam()
+
 class TestDev(TestCase):
     def setUp(self):
             self.trading_library = TradingLibrary()
             self.tam_trade_update = TradeSizeUpdateTamLibrary()
 
-    def test_buy_multiple_lowest_cash(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/portfolio.pkl'),                                 read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/trade_list.pkl').portfolio_trade_list)
-        self.trading_library.buy_multiple_holding(tam.trade_account_matrix, tam.cash)
+    def test_buy_new_2(self):
+        tam = pd.DataFrame({'share_trades': {('HHH', 'model'): 70.0, ('GGG', '111-111'): 10.0}, 'model_weight': {('HHH', 'model'): 0.35, ('GGG', '111-111'): 0.55}, 'shares': {('HHH', 'model'): 0.0, ('GGG', '111-111'): 100.0}, 'price': {('HHH', 'model'): 10.0, ('GGG', '111-111'): 10.0}})
+        tam.index.names = ['symbol', 'account_number']
+        cash = pd.DataFrame({'shares': {'45-33': 1000.0, '111-111': 0.01}})
+        cash.index.names = ['account_number']
+        self.trading_library.buy_new_existing(tam, cash)
