@@ -91,7 +91,6 @@ class TestPriceRetriever(TestCase):
             'test_data\/sellsOnly\/TradeRequest.xlsx')
         self.raw_request = RawRequest('xl',
             'test_data\/Trade Request Example.xlsx')
-        self.buy_only_request = RawRequest('xl', 'test_data\/buysOnly\/BuyOnlyRequest.xlsx')
         self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
 
     def test_initiate_price_retriever(self):
@@ -390,10 +389,3 @@ class TestDev(TestCase):
     def setUp(self):
             self.trading_library = TradingLibrary()
             self.tam_trade_update = TradeSizeUpdateTamLibrary()
-
-    def test_buy_new_2(self):
-        tam = pd.DataFrame({'share_trades': {('HHH', 'model'): 70.0, ('GGG', '111-111'): 10.0}, 'model_weight': {('HHH', 'model'): 0.35, ('GGG', '111-111'): 0.55}, 'shares': {('HHH', 'model'): 0.0, ('GGG', '111-111'): 100.0}, 'price': {('HHH', 'model'): 10.0, ('GGG', '111-111'): 10.0}})
-        tam.index.names = ['symbol', 'account_number']
-        cash = pd.DataFrame({'shares': {'45-33': 1000.0, '111-111': 0.01}})
-        cash.index.names = ['account_number']
-        self.trading_library.buy_new_existing(tam, cash)
