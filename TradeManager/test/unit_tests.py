@@ -317,31 +317,6 @@ class TestAllocation(TestCase):
         trade_selector.get_trades()
         self.assertEqual(len(trade_selector.trade_instructions.trades), 3)
 
-    def test_sell_complete(self):
-        tam = TradeAccountMatrix(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
-        self.trading_library.sell_complete(tam.trade_account_matrix)
-        self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-        tam.update_tam()
-        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(),0)
-
-    def test_sell_only_complete_one_symbol(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/trade_list.pkl').portfolio_trade_list)
-        self.trading_library.sell_complete(tam.trade_account_matrix)
-        self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-        tam.update_tam()
-        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), 0)
-
-    def test_sell_single_account_then_single_sell(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/trade_list.pkl').portfolio_trade_list)
-        self.trading_library.sell_complete(tam.trade_account_matrix)
-        self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-        tam.update_tam()
-        self.trading_library.sell_single_holding(tam.trade_account_matrix)
-        self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-        tam.update_tam()
-        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), 0)
-        self.assertEqual(tam.trade_account_matrix['shares'].sum(), 1262.4)
-
     def test_sell_smallest_multiple(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/trade_list.pkl').portfolio_trade_list)
         for i in [1,2,3]:
@@ -385,7 +360,342 @@ class TestAllocation(TestCase):
             self.tam_trade_update.multiple_update(tam.trade_account_matrix)
             tam.update_tam()
 
-class TestDev(TestCase):
+
+class TestSellComplete(TestCase):
     def setUp(self):
-            self.trading_library = TradingLibrary()
-            self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.sell_complete
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_single_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_target_single_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_single_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_equal_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([2,5]))
+
+    def test_sell_only_multi_account_actual_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([4,5]))
+
+    def test_sell_only_multi_account_actual_single_target(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([6,5]))
+
+    def test_sell_only_multi_account_target_actual_equal(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([0,0]))
+
+
+class TestSellSmallestMultiple(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.sell_smallest_multiple
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_single_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_target_single_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_single_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_equal_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([1,5]))
+
+    def test_sell_only_multi_account_actual_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([1,5]))
+
+    def test_sell_only_multi_account_actual_single_target(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([1,5]))
+
+    def test_sell_only_multi_account_target_actual_equal(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
+        if self.test_method(tam.trade_account_matrix):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, tuple([1,5]))
+
+
+class BuySingleHolding(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_single_holding
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_single_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (1,5))
+
+    def test_buy_only_multi_account_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_target_single_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_single_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_equal_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_single_target(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_target_actual_equal(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+
+class BuyMultipleComplete(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_multiple_complete
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_single_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (8, 5))
+
+    def test_buy_only_multi_account_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (9,5))
+
+    def test_buy_only_multi_account_target_single_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_single_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_equal_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_single_target(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_target_actual_equal(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+
+class BuyMultiplePartial(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_multiple_partial
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_buy_only_multi_account_single_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (1, 5))
+
+    def test_buy_only_multi_account_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (8, 5))
+
+    def test_buy_only_multi_account_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (9,5))
+
+    def test_buy_only_multi_account_target_single_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_single_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_equal_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_single_target(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_target_actual_equal(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (6, 5))
+
+
+class BuyNewExisting(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_new_existing
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (1, 5))
+
+    def test_buy_only_multi_account_single_target_actual_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (1, 5))
+
+    def test_sell_only_multi_account_actual_equal_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_no_model(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_actual_single_target(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+    def test_sell_only_multi_account_target_actual_equal(self):
+        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (2, 5))
+
+
+class TestDev(TestCase): pass
+

@@ -54,7 +54,7 @@ def pickle_allocation(portfolio, trade_calculator):
 
 def pickle_tam(portfolio, trade_calculator):
     tam = al.TradeAccountMatrix(portfolio, trade_calculator.portfolio_trade_list)
-    with open(destination + 'tam.pkl', 'wb') as myfile:
+    with open(destination + file_output_name + '_tam.pkl', 'wb') as myfile:
         pickle.dump(tam, myfile)
 
 def read_pickle(file):
@@ -67,7 +67,9 @@ def _parse_args(args=None):
     parser = argparse.ArgumentParser(description='Path to the config file.')
     parser.add_argument('source_path', help='Path relative to ./test\/test_data.')
     parser.add_argument('source_name', help='Name of test data file.')
+    parser.add_argument('--file_name', help='Name of the test output file')
     parser.add_argument('destination_path', help='Example sellsOnly or sellsOnly\/singleSell')
+
     return parser.parse_args(args)
 
 def _build_paths(source_path, source_file, destination_path):
@@ -106,5 +108,6 @@ if __name__ == "__main__":
     source, destination = _build_paths(args.source_path, args.source_name, args.destination_path)
     source = path + source
     destination = path + destination
+    file_output_name = args.file_name
     # generate_with_all_pickles()
     generate_with_one_pickle()
