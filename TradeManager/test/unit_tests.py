@@ -5,8 +5,6 @@ from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from TradeManager.test.test_data_generator import read_pickle
 import pandas as pd
-import numpy as np
-
 
 class TestTradeRequest(TestCase):
     def test_trade_request_validation(self):
@@ -88,7 +86,7 @@ class TestTradeRequest(TestCase):
 class TestPriceRetriever(TestCase):
     def setUp(self):
         self.raw_request_sell_only = RawRequest('xl',
-            'test_data\/sellsOnly\/TradeRequest.xlsx')
+            'test_data\/sheets\/sell_only\/multi_account_target_actual_equal.xlsx')
         self.raw_request = RawRequest('xl',
             'test_data\/Trade Request Example.xlsx')
         self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
@@ -113,15 +111,6 @@ class TestPriceRetriever(TestCase):
         pr = PriceRetriever(simple_request)
         self.assertRaises(ValueError, pr)
 
-    def test_sells_only_multiple_account_common_symbol(self):
-        raw_request = read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/completedual\/request.pkl')
-        pr = PriceRetriever(raw_request)
-        pr()
-
-
-
-
-
     # 05/30/17 passes but calls yahoo so not running at this point
     # def test_price_retriever_add_prices_with_yahoo_prices(self):
     #     pr = PriceRetriever(self.raw_request)
@@ -139,53 +128,29 @@ class TestPriceRetriever(TestCase):
 class TestPortfolio(TestCase):
 
     def test_buys_Only(self):
-        trade_request = read_pickle('test_data\/buysOnly\/request.pkl')
-        prices = read_pickle('test_data\/buysOnly\/prices.pkl')
-        portfolio = Portfolio(trade_request.portfolio_request, prices.prices)
-        self.assertEqual(portfolio.portfolio_value, 18187.21)
-        self.assertEqual(portfolio.portfolio_cash, 15687.21)
+        portfolio = Portfolio(
+            read_pickle('.\/test_data\/trade_request_prices\/buy_only_multi_account_single_target_actual_request.pkl').portfolio_request,
+            read_pickle('.\/test_data\/trade_request_prices\/buy_only_multi_account_single_target_actual_prices.pkl').prices)
+        self.assertEqual(portfolio.portfolio_value, 2000.01)
+        self.assertEqual(portfolio.portfolio_cash, 1000.01)
         self.assertEqual(len(portfolio.portfolio_positions), 1)
 
     def test_sells_Only(self):
-        portfolio_request = read_pickle('test_data\/sellsOnly\/request.pkl')
-        prices = read_pickle('test_data\/sellsOnly\/prices.pkl')
+        portfolio_request = read_pickle('test_data\/trade_request_prices\/single_account_model_multi_target_request.pkl')
+        prices = read_pickle('test_data\/trade_request_prices\/single_account_model_multi_target_prices.pkl')
         portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
-        self.assertEqual(portfolio.portfolio_value, 29991.22)
-        self.assertEqual(portfolio.portfolio_cash, 5687.22)
+        self.assertEqual(portfolio.portfolio_value, 21672.82)
+        self.assertEqual(portfolio.portfolio_cash, 1258)
         self.assertEqual(portfolio.portfolio_positions['shares'].size, 3)
         self.assertEqual(portfolio.account_matrix.loc['FB', '45-33']['shares'], 98.2)
-        self.assertEqual(portfolio.account_matrix['shares'].size, 4)
+        self.assertEqual(portfolio.account_matrix['shares'].size, 3)
 
-
-    def test_create_position_matrix(self):
-        portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
-        prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
-        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices)
-        self.assertEqual(portfolio.portfolio_value, 39436.22)
-        self.assertEqual(portfolio.portfolio_cash, 5687.22)
-        self.assertEqual(portfolio.portfolio_positions['shares'].size, 5)
-        self.assertEqual(portfolio.account_matrix.loc['FB', '45-33']['shares'], 98.2)
-        self.assertEqual(portfolio.account_matrix['shares'].size, 6)
-
-    def test_account_setup(self):
-        portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
-        prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
-        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices, 'test')
-        portfolio._assemble_accounts()
-
-
-    def test_cash_setup(self):
-        portfolio_request = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/request.pkl')
-        prices = read_pickle('test_data\/sellsOnly\/sellsOnlyMultiple\/dualAccounts\/prices.pkl')
-        portfolio = Portfolio(portfolio_request.portfolio_request, prices.prices, 'test')
-        portfolio._assemble_accounts()
-        portfolio.create_cash_matrix()
-        self.assertEqual(portfolio.accounts[0].account_cash.loc['45-33', 'shares'], 5687.21)
-
+    def test_sells_buy(self):
+        portfolio_request = read_pickle(
+            'test_data\/trade_request_prices\/single_account_model_multi_target_request.pkl')
+        prices = read_pickle('test_data\/trade_request_prices\/single_account_model_multi_target_prices.pkl')
 
 class TestModel(TestCase):
-
-
     def test_empty_model(self):
         request = RawRequest('test', {
             "data": {"symbol": ["BHI", "FB", "ABC"], "account_number": ["45-33", "45-33", "45-33"],
@@ -237,131 +202,66 @@ class TestModel(TestCase):
 
 class TestCalculator(TestCase):
     def test_buy_only(self):
-        portfolio = read_pickle('.\/test_data\/buysOnly\/portfolio.pkl')
-        trade_request = read_pickle('.\/test_data\/buysOnly\/request.pkl')
-        prices = read_pickle('.\/test_data\/buysOnly\/prices.pkl')
-        model = Model(trade_request.model_request)
-        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-        self.assertEqual(trade_calculator.portfolio_trade_list.loc['AGG'].share_trades, 71)
+        trade_calculator = TradeCalculator(read_pickle('.\/test_data\/portfolio_model_prices\/multi_account_single_target_actual_portfolio.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/multi_account_single_target_actual_model.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/multi_account_single_target_actual_prices.pkl').prices)
+        self.assertEqual(trade_calculator.portfolio_trade_list.loc['GGG'].share_trades, 10)
 
-    def test_single_sell_only(self):
-        portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
-        trade_request = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/request.pkl')
-        prices = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/prices.pkl')
-        model = Model(trade_request.model_request)
-        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-        self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
+    def test_sell_only_single_target(self):
+        trade_calculator = TradeCalculator(read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_portfolio.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_model.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/multi_account_single_target_actual_prices.pkl').prices)
+        self.assertEqual(trade_calculator.portfolio_trade_list.loc['GGG'].share_trades, -122.5)
 
-    def test_single_buy_and_sell(self):
-        portfolio = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
-        trade_request = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/request.pkl')
-        prices = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/prices.pkl')
-        model = Model(trade_request.model_request)
-        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-        self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
-        self.assertEqual(trade_calculator.portfolio_trade_list['share_trades'][0], -352.0)
-        self.assertEqual(trade_calculator.portfolio_trade_list['share_trades'][1], -47.0)
+    # def test_single_buy_and_sell(self):
+    #     portfolio = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
+    #     trade_request = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/request.pkl')
+    #     prices = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/prices.pkl')
+    #     model = Model(trade_request.model_request)
+    #     trade_calculator = TradeCalculator(portfolio, model, prices.prices)
+    #     self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
+    #     self.assertEqual(trade_calculator.portfolio_trade_list['share_trades'][0], -352.0)
+    #     self.assertEqual(trade_calculator.portfolio_trade_list['share_trades'][1], -47.0)
 
     def test_sell_only(self):
-        portfolio = read_pickle('.\/test_data\/sellsOnly\/portfolio.pkl')
-        prices = read_pickle('.\/test_data\/sellsOnly\/prices.pkl')
-        model = read_pickle('.\/test_data\/sellsOnly\/model.pkl')
-        trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-        self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
+        trade_calculator = TradeCalculator(read_pickle(           '.\/test_data\/portfolio_model_prices/sell_only_multi_account_target_actual_equal_portfolio.pkl'), read_pickle(         '.\/test_data\/portfolio_model_prices\/sell_only_multi_account_target_actual_equal_model.pkl'), read_pickle(            '.\/test_data\/portfolio_model_prices\/sell_only_multi_account_target_actual_equal_prices.pkl').prices)
+        self.assertEqual(len(trade_calculator.portfolio_trade_list), 2)
 
 
-class TestAllocation(TestCase):
+class TAM(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
         self.tam_trade_update = TradeSizeUpdateTamLibrary()
-        self.single_buy_only_trade_list = read_pickle('.\/test_data\/buysOnly\/singleAccount\/trade_list.pkl')
-        self.single_buy_only_portfolio = read_pickle('.\/test_data\/buysOnly\/singleAccount\/portfolio.pkl')
-        self.sell_only_single_trade_list = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/trade_list.pkl')
-        self.sell_only_single_portfolio = read_pickle('.\/test_data\/sellsOnly\/sellsOnlySingle\/portfolio.pkl')
-        self.sell_only_multiple_trade_list = read_pickle('.\/test_data\/sellsOnly\/trade_list.pkl')
-        self.sell_only_multiple_portfolio = read_pickle('.\/test_data\/sellsOnly\/portfolio.pkl')
-        self.single_buy_sell_trade_list = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/trade_list.pkl')
-        self.single_buy_sell_portfolio = read_pickle(            '.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
 
     def test_tam_create_buy_only(self):
-        tam = TradeAccountMatrix(self.single_buy_only_portfolio, self.single_buy_only_trade_list.portfolio_trade_list)
-        self.assertEqual(len(tam.trade_account_matrix), 2)
-        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), 41)
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/multi_account_single_target_actual_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/multi_account_single_target_actual_trade_calculator.pkl').portfolio_trade_list)
+        self.assertEqual(len(tam.trade_account_matrix), 1)
+        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), 10)
 
     def test_tam_create_sell_only(self):
-        tam = TradeAccountMatrix(self.sell_only_multiple_portfolio, self.sell_only_multiple_trade_list.portfolio_trade_list)
-        self.assertEqual(len(tam.trade_account_matrix), 4)
-        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), -748.2)
+        tam = TradeAccountMatrix(read_pickle('.\/test_data\/portfolios_port_trade_lists\/sell_only\/multi_account_actual_equal_no_model_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/sell_only\/multi_account_actual_equal_no_model_trade_calculator.pkl').portfolio_trade_list)
+        self.assertEqual(len(tam.trade_account_matrix), 2)
+        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), -298.0)
 
-    def test_tam_create_buy_sell(self):
-        tam = TradeAccountMatrix(self.single_buy_sell_portfolio,self.single_buy_sell_trade_list.portfolio_trade_list)
-        self.assertEqual(len(tam.trade_account_matrix), 3)
-        self.assertEqual(tam.trade_account_matrix['share_trades'].sum(), -473.5)
+    def test_update_share_trades(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        tam.trade_account_matrix['size'] = pd.Series([0,-100,0,100,0,0,0,0], index=tam.trade_account_matrix.index)
+        tam._update_share_trades()
+        self.assertEqual(tam.trade_account_matrix.loc['GGG', '45-33']['share_trades'], 96)
+        self.assertEqual(tam.trade_account_matrix.loc['HHH', '45-33']['share_trades'], 400)
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        tam.trade_account_matrix['size'] = pd.Series([10], index=tam.trade_account_matrix.index)
+        tam._update_share_trades()
+        self.assertEqual(tam.trade_account_matrix.loc['GGG', '111-111']['share_trades'], 0)
 
-    def test_TradeSelector(self):
-        trade_selector = TradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
-        self.assertEqual(trade_selector._has_buys(), False)
-
-    def test_single_buy_only(self):
-        trade_selector = SingleAccountTradeSelector(self.single_buy_only_portfolio, self.single_buy_only_trade_list.portfolio_trade_list)
-        trade_selector.get_trades()
-        self.assertEqual(len(trade_selector.trade_instructions.trades), 2)
-
-    def test_SingleAccountTradeSelector(self):
-        trade_selector = SingleAccountTradeSelector(self.sell_only_single_portfolio, self.sell_only_single_trade_list.portfolio_trade_list)
-        trade_selector.get_trades()
-        self.assertEqual(len(trade_selector.trade_instructions.trades),3 )
-
-    def test_SingleBuySell(self):
-        trade_selector = SingleAccountTradeSelector(self.single_buy_sell_portfolio, self.single_buy_sell_trade_list.portfolio_trade_list)
-        trade_selector.get_trades()
-        self.assertEqual(len(trade_selector.trade_instructions.trades), 3)
-
-    def test_sell_smallest_multiple(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/portfolio.pkl'), read_pickle('.\/test_data\/sellsOnly\/sellsOnlyMultiple\/partialdual\/trade_list.pkl').portfolio_trade_list)
-        for i in [1,2,3]:
-            if self.trading_library.sell_single_holding(tam.trade_account_matrix):
-                self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-                tam.update_tam()
-            if self.trading_library.sell_smallest_multiple(tam.trade_account_matrix):
-                self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-                tam.update_tam()
-        self.assertEqual(tam.trade_account_matrix.loc[('HHH', '222-222'), 'share_trades'], -0)
-        self.assertEqual(tam.cash.loc[('account_cash', '45-33'), 'shares'], 3000)
-
-    def test_buy_single_holding_has_enough_cash(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/portfolio.pkl'), read_pickle('.\/test_data\/buysOnly\/multiple\/trade_list.pkl').portfolio_trade_list)
-        if self.trading_library.buy_single_holding(tam.trade_account_matrix, tam.cash):
-            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-            tam.update_tam()
-        self.assertEqual(tam.cash.loc['45-33', 'shares'], 3100)
-        self.assertEqual(tam.trade_account_matrix.loc[('GGG','45-33'), 'shares'], 188)
-
-    def test_buy_multiple_complete_highest_cash(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/portfolio.pkl'),  read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/trade_list.pkl').portfolio_trade_list)
-        if self.trading_library.buy_multiple_complete(tam.trade_account_matrix, tam.cash):
-            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-            tam.update_tam()
-        self.assertEqual(tam.cash.loc['45-33', 'shares'], 12200)
-        self.assertEqual(tam.trade_account_matrix.loc[('GGG', '45-33'), 'shares'], 416)
-
-    def test_buy_single_or_multiple_partial(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/multiple_holding\/portfolio.pkl'),
-                                 read_pickle(
-                                     '.\/test_data\/buysOnly\/multiple\/multiple_holding\/trade_list.pkl').portfolio_trade_list)
-        if self.trading_library.buy_multiple_partial(tam.trade_account_matrix, tam.cash):
-            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-            tam.update_tam()
-        self.assertEqual(tam.cash.loc['111-111', 'shares'], 0)
-
-    def test_buy_new(self):
-        tam = TradeAccountMatrix(read_pickle('.\/test_data\/buysOnly\/multiple\/portfolio.pkl'),read_pickle(                                     '.\/test_data\/buysOnly\/multiple\/trade_list.pkl').portfolio_trade_list)
-        if self.trading_library.buy_new_existing(tam.trade_account_matrix, tam.cash):
-            self.tam_trade_update.multiple_update(tam.trade_account_matrix)
-            tam.update_tam()
+    def test_update_cash(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
+        tam.trade_account_matrix['size'] = pd.Series([10], index=tam.trade_account_matrix.index)
+        tam._update_cash()
+        self.assertEqual(tam.cash.shares.sum(),900.01)
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
+        tam.trade_account_matrix['size'] = pd.Series([0, -100, 0, 100, 0, 0, 0, 0],index=tam.trade_account_matrix.index)
+        tam._update_cash()
+        self.assertEqual(tam.cash.shares.sum(), 36500)
 
 
-class TestSellComplete(TestCase):
+class SellComplete(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
         self.tam_trade_update = TradeSizeUpdateTamLibrary()
@@ -553,6 +453,10 @@ class BuyMultipleComplete(TestCase):
         if self.test_method(tam.trade_account_matrix, tam.cash):
             self.trade_instructions.trades = tam.trade_account_matrix
         self.assertEqual(self.trade_instructions.trades.shape, (8, 5))
+        tam.update_tam()
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (5, 5))
 
     def test_buy_only_multi_account_target_actual_02(self):
         tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_02_tam.pkl')
@@ -658,7 +562,7 @@ class BuyNewExisting(TestCase):
         self.trading_library = TradingLibrary()
         self.tam_trade_update = TradeSizeUpdateTamLibrary()
         self.trade_instructions = TradeInstructions()
-        self.test_method = self.trading_library.buy_new_existing
+        self.test_method = self.trading_library.buy_new_complete
 
     def test_buy_only_multi_account_single_target_actual(self):
         tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_tam.pkl')
@@ -672,30 +576,25 @@ class BuyNewExisting(TestCase):
             self.trade_instructions.trades = tam.trade_account_matrix
         self.assertEqual(self.trade_instructions.trades.shape, (1, 5))
 
-    def test_sell_only_multi_account_actual_equal_no_model(self):
-        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
+    def test_buy_only_multi_account_target_new_holding_only(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_new_holding_only_tam.pkl')
         if self.test_method(tam.trade_account_matrix, tam.cash):
             self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertTrue(self.trade_instructions.trades.empty)
+        self.assertEqual(self.trade_instructions.trades.shape, (1, 5))
 
-    def test_sell_only_multi_account_actual_no_model(self):
-        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_no_model_tam.pkl')
+    """Note that I did not include cases for sell_only or buy_sell. In fact I deleted them. See log and explantion given on 11/27/17."""
+
+class TestDev(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_new_complete
+
+    def test_buy_only_multi_account_target_new_holding_only(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_new_holding_only_sufficient_cash_in_one_account_for_all_new_trades_tam.pkl')
+        # multi_account_target_new_holding_only_sufficient_cash_one_complete_one_partial_tam
+        # multi_account_target_new_holding_only_sufficient_cash_in_one_account_for_all_new_trades_tam
         if self.test_method(tam.trade_account_matrix, tam.cash):
-            self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertTrue(self.trade_instructions.trades.empty)
-
-    def test_sell_only_multi_account_actual_single_target(self):
-        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_tam.pkl')
-        if self.test_method(tam.trade_account_matrix, tam.cash):
-            self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertTrue(self.trade_instructions.trades.empty)
-
-    def test_sell_only_multi_account_target_actual_equal(self):
-        tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_target_actual_equal_tam.pkl')
-        if self.test_method(tam.trade_account_matrix, tam.cash):
-            self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertEqual(self.trade_instructions.trades.shape, (2, 5))
-
-
-class TestDev(TestCase): pass
-
+            pass # self.trade_instructions.trades = tam.trade_account_matrix
+        # self.assertEqual(self.trade_instructions.trades.shape, (1, 5))

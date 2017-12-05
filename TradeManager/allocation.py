@@ -92,19 +92,29 @@ class TradeAccountMatrix(object):
     def _update_holdings(self):
         self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] + self.trade_account_matrix['size']
 
+    def _update_share_trades(self):
+        trades_only = self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']
+        trades_only.index = trades_only.index.droplevel(level=1)
+        self.trade_account_matrix['symbols_traded'] = pd.Series(self.trade_account_matrix.index.get_level_values(0)).map(trades_only).fillna(0).values
+        self.trade_account_matrix['share_trades'] = self.trade_account_matrix['share_trades'] - self.trade_account_matrix['symbols_traded']
+        self.trade_account_matrix.drop(['symbols_traded'], axis=1, inplace=True)
+
     def _update_cash(self):
-        trade_cash = pd.DataFrame((self.trade_account_matrix['price'] * self.trade_account_matrix['size']).groupby(level=1).sum(), columns=['shares'])
-        trade_cash['symbol'] = 'account_cash'
-        trade_cash.reset_index().set_index(['symbol', 'account_number'], inplace=True)
-        self.cash['shares'] = self.cash['shares'] - trade_cash['shares']
+        # print(self.cash)
+        trade_cash = pd.DataFrame((self.trade_account_matrix['price'] * self.trade_account_matrix['size']).groupby(level=1).sum(), columns=['shares']).round(decimals=2)
+        self.cash['update'] = trade_cash
+        self.cash.fillna(0, inplace=True)
+        self.cash['shares'] = self.cash['shares'] - self.cash['update']
+        self.cash.drop(['update'], axis=1, inplace=True)
 
     def _clean_tam(self):
-        self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['shares'] == 0].index, inplace=True)
+        self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['share_trades'] == 0].index, inplace=True)
         self.trade_account_matrix.drop(['size'],1, inplace=True)
 
     def update_tam(self):
         self.trade_account_matrix.fillna(0, inplace=True)
         self._update_holdings()
+        self._update_share_trades()
         self._update_cash()
         self._clean_tam()
 
@@ -229,20 +239,21 @@ class TradingLibrary(object):
             # we now know there are buys with mutliple accounts
             tam['dollar_trade'] = tam['share_trades'] * tam['price']
             self.utility_add_cash(tam, cash)
+            # We're not actually trying to loop through all the accounts. We loop until we find an account with a qualifying trade, execute, and return true.
             for name, account in tam.groupby(level=1):
                 account = account.copy()
                 account.drop(account[account.share_trades < 0].index, inplace=True)
                 account.loc[:,'min_trade'] = account['dollar_trade'].min()
                 account.loc[:,'is_eligible'] = (account.loc[:,'cash'] > account.loc[:,'min_trade']) & (account.share_trades > 0)
                 if account['is_eligible'].any():
-                    # We have an account that has enough cash for at least one trade.
+                    # We have an account that has enough cash for at least one trade. Other wise we return false and continue the for loop.
                     # So next we say every trade is eligible
                     account.loc[:,'eligible'] = account[account['is_eligible']]['dollar_trade']
                     # Sum the eligible trades
                     account.loc[:,'sum_trades'] = account['eligible'].sum()
                     # check if the account has enough cash to do all trades
                     account.loc[:,'sufficient'] = (account['sum_trades'] < account['cash'])
-                    # We start by checking if the account has enough cash to buy every existing account holding. If it doesn't we remove largest trade and continue.
+                    # We start by checking if the account has enough cash to buy every existing account holding. If it doesn't we remove largest trade and continue. See log 12/04/17.
                     while ~account['sufficient'].any():
                         account.loc[:,'is_eligible'] = ~(account['eligible'] == account['eligible'].max())
                         account.drop(account[~account.is_eligible].index, inplace=True)
@@ -303,7 +314,7 @@ class TradingLibrary(object):
         else:
             return False
 
-    def buy_new_existing(self, tam, cash):
+    def buy_new_complete(self, tam, cash):
         """
         Buys new holdings using the account with the highest cash.
         ASSUMPTION: All other possible trades have been instructed and removed from the TAM.
@@ -312,43 +323,37 @@ class TradingLibrary(object):
         :return:
         """
         if (tam['share_trades'] >0).any():
-            # Get highest cash and add to tam.
+            # Get highest cash and add that account number and cash balance to tam.
             self.utility_get_unique_max(cash, 'shares', output_field='max_cash')
             account_cash = cash.groupby(cash.index)
             for key, group in account_cash:
                 if group.max_cash.iloc[0]:
                     tam['account'] = account_number = key
-            cash.drop(['max_cash'], 1, inplace=True)
-            # create new account position
+                    tam['cash'] = group['shares'][0]
+            # Check smallest trade is greater than largest balance and return false if true as no trade possible. tam and cash cleanup included.
+            tam['dollar_trades'] = tam.price * tam.share_trades
+            self.utility_get_unique_min(tam, 'dollar_trades', output_field='min_trade')
             new_account = tam.reset_index().copy()
+            no_trade = (tam[tam.min_trade].cash < tam[tam.min_trade].dollar_trades).all()
+            tam.drop(['account', 'cash', 'dollar_trades', 'min_trade'], 1, inplace=True)
+            cash.drop(['max_cash'], 1, inplace=True)
+            if no_trade:
+                return False
+            # create dataframe with same index as tam
             new_account.drop_duplicates(inplace=True)
-            tam.drop(['account'], 1, inplace=True)
-            symbol_index = new_account.symbol.tolist()
-            account_index = new_account.account_number.tolist()
             new_account.drop(['account_number'], 1, inplace=True)
             new_account.rename(columns= {'account': 'account_number'}, inplace=True )
             new_account.set_index(['symbol', 'account_number'], inplace=True)
-            new_account['cash'] = cash.loc[account_number, 'shares']
             new_account['shares'] = 0
-            new_account['eligible'] = True
-            new_account['dollar_trades'] = new_account.share_trades * new_account.price
-            new_account['sum_trades'] = new_account['dollar_trades'].sum()
-            new_account['sufficient'] = (new_account['sum_trades'] < new_account['cash'])
-            while ~new_account['sufficient'].any():
-                new_account.loc[:, 'is_eligible'] = new_account['eligible'] != new_account['eligible'].max()
-                new_account.loc[:, 'eligible'] = new_account.loc[new_account['is_eligible']]['dollar_trades']
-                new_account.loc[:, 'sum_trades'] = new_account['eligible'].sum()
-                new_account.loc[:, 'sufficient'] = (new_account['sum_trades'] < new_account['cash'])
-            new_account.loc[:, 'size'] = new_account.loc[new_account.loc[:,'eligible'],'share_trades']
-            has_trade = (new_account.eligible).tolist()
-            new_account.drop(['cash', 'eligible', 'dollar_trades', 'sum_trades', 'sufficient'], 1, inplace=True)
-            tam['size'] = 0
-            for s in zip(symbol_index, account_index, has_trade):
-                if s[2]:
-                    if s[1] == 'model':
-                        tam.drop((s[0], s[1]), inplace=True)
-            for key, group in new_account.groupby(new_account.index):
-                tam.loc[key,:] = group.values.tolist()[0]
+            self.utility_get_unique_max(new_account, 'dollar_trades', output_field='max_trade')
+            new_account['enough_cash'] = (new_account['cash'] > new_account['dollar_trades'])
+            new_account.drop((new_account[~new_account.enough_cash].index), inplace=True)
+            new_account = new_account[new_account.max_trade]
+            symbol = new_account.index.get_level_values(0)[0]
+            new_account['size'] = new_account.share_trades
+            new_account.drop(['cash', 'dollar_trades', 'min_trade', 'max_trade', 'enough_cash'], 1, inplace=True)
+            tam = pd.concat([tam, new_account])
+            tam.drop([(symbol, 'model')], inplace=True)
             return True
         else: return False
 
