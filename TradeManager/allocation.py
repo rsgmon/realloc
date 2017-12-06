@@ -353,9 +353,9 @@ class TradingLibrary(object):
             account_number = new_account.index.get_level_values(1)[0]
             new_account['size'] = new_account.share_trades
             new_account.drop(['cash', 'dollar_trades', 'min_trade', 'max_trade', 'enough_cash'], 1, inplace=True)
-            print(new_account.to_dict())
-            # tam['HHH', '111-111'] = new_account
-            print(tam)
+            tam['size'] = np.nan
+            for key, group in new_account.groupby(new_account.index):
+                tam.loc[key,:] = group.values.tolist()[0]
             tam.drop([(symbol, 'model')], inplace=True)
             return True
         else: return False
