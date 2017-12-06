@@ -350,9 +350,12 @@ class TradingLibrary(object):
             new_account.drop((new_account[~new_account.enough_cash].index), inplace=True)
             new_account = new_account[new_account.max_trade]
             symbol = new_account.index.get_level_values(0)[0]
+            account_number = new_account.index.get_level_values(1)[0]
             new_account['size'] = new_account.share_trades
             new_account.drop(['cash', 'dollar_trades', 'min_trade', 'max_trade', 'enough_cash'], 1, inplace=True)
-            tam = pd.concat([tam, new_account])
+            print(new_account.to_dict())
+            # tam['HHH', '111-111'] = new_account
+            print(tam)
             tam.drop([(symbol, 'model')], inplace=True)
             return True
         else: return False

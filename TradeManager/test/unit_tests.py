@@ -596,5 +596,6 @@ class TestDev(TestCase):
         # multi_account_target_new_holding_only_sufficient_cash_one_complete_one_partial_tam
         # multi_account_target_new_holding_only_sufficient_cash_in_one_account_for_all_new_trades_tam
         if self.test_method(tam.trade_account_matrix, tam.cash):
-            pass # self.trade_instructions.trades = tam.trade_account_matrix
-        # self.assertEqual(self.trade_instructions.trades.shape, (1, 5))
+            print(tam.trade_account_matrix)
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertEqual(self.trade_instructions.trades.shape, (1, 2))
