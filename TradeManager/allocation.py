@@ -360,6 +360,39 @@ class TradingLibrary(object):
             return True
         else: return False
 
+    def buy_new_partial(self, tam, cash):
+        """
+                Buys new holdings using the account with the highest cash.
+                ASSUMPTION: All other possible trades have been instructed and removed from the TAM.
+                :param tam:
+                :param cash:
+                :return:
+                """
+        if (tam['share_trades'] > 0).any():
+
+            # Get highest cash and add that account number and cash balance to tam.
+            self.utility_get_unique_max(cash, 'shares', output_field='max_cash')
+            account_cash = cash.groupby(cash.index)
+            for key, group in account_cash:
+                if group.max_cash.iloc[0]:
+                    tam['account'] = account_number = key
+                    tam['cash'] = group['shares'][0]
+            # Check smallest trade is greater than largest balance and return false if true as no trade possible. tam and cash cleanup included.
+            tam['dollar_trades'] = tam.price * tam.share_trades
+            self.utility_get_unique_min(tam, 'dollar_trades', output_field='min_trade')
+            new_account = tam.reset_index().copy()
+            tam.drop(['account', 'cash', 'dollar_trades', 'min_trade'], 1, inplace=True)
+            cash.drop(['max_cash'], 1, inplace=True)
+            # create dataframe with same index as tam
+            new_account.drop_duplicates(inplace=True)
+            new_account.drop(['account_number'], 1, inplace=True)
+            new_account.rename(columns={'account': 'account_number'}, inplace=True)
+            new_account.set_index(['symbol', 'account_number'], inplace=True)
+            new_account['shares'] = 0
+            self.utility_get_unique_max(new_account, 'dollar_trades', output_field='max_trade')
+
+
+
     def utility_get_unique_max(self, df, input_field, output_field='eligible', index_level=0):
         dupe_counter = 0
         for name, symbol in df.groupby(level=index_level):
