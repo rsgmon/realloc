@@ -1,6 +1,7 @@
 import pandas as pd
 pd.set_option('display.width', 300)
 import numpy as np
+import math
 
 class AllocationController(object):
     def __init__(self, portfolio, trade_calculator):
@@ -14,7 +15,7 @@ class AllocationController(object):
             self.trade_selector.get_trades()
             return self.trade_selector.trade_instructions.trades
         else:
-            self.trade_selector = DualAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
+            self.trade_selector = MultipleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
             self.trade_selector.get_trades()
             return self.trade_selector.trade_instructions.trades
 
@@ -23,11 +24,10 @@ class AllocationController(object):
 
 
 class TradeSelector(object):
-    def __init__(self, portfolio, trade_list):
-        self.tam = TradeAccountMatrix(portfolio, trade_list)
+    def __init__(self, trade_account_matrix_object):
+        self.trade_account_matrix_object = trade_account_matrix_object
         self.trade_instructions = TradeInstructions()
         self.trading_library = TradingLibrary()
-
 
     def _has_buys(self):
         return (self.tam.portfolio_trade_list['share_trades'] > 0).any()
@@ -50,13 +50,27 @@ class SingleAccountTradeSelector(TradeSelector):
 
 
 class MultipleAccountTradeSelector(TradeSelector):
-    def get_trades(self):
-        if self._has_sells:
-            accounts = self.account_selection_library.sell_single_holding(self.tam.trade_account_matrix, self.tam.account_numbers)
-            sizes = self.trade_sizer.sell_single_holding(accounts)
-            self.trade_instructions.trades = sizes
-            self.tam.update_tam(sizes)
-            accounts = self.account_selection_library.sell_single_holding(self.tam.trade_account_matrix, self.tam.account_numbers)
+
+    def get_sell_trades(self):
+        tam = self.trade_account_matrix_object.trade_account_matrix
+        more_trades = True
+        # while more_trades:
+        if self.trading_library.sell_complete(tam):
+            print(tam.sort_index(0))
+            self.trade_account_matrix_object.update_tam()
+        if self.trading_library.sell_single_holding(tam):
+            print(tam.sort_index(0))
+            self.trade_account_matrix_object.update_tam()
+        if self.trading_library.sell_smallest_multiple(tam):
+            print(tam.sort_index(0))
+            self.trade_account_matrix_object.update_tam()
+        if (tam['share_trades'] < 0).any():
+            if self.trading_library.sell_smallest_multiple(tam):
+                print(tam.sort_index(0))
+                self.trade_account_matrix_object.update_tam()
+                print(tam.sort_index(0))
+            # more_trades = False
+
 
 
 class TradeAccountMatrix(object):
@@ -132,7 +146,20 @@ class TradeAccountMatrix(object):
 class TradingLibrary(object):
     """Other than single_account_sell and single_account_buy, all methods handle multiple accounts."""
 
+    def single_account_sell(self, tam, ans):
+        tam['account'] = ans[0]
+        return tam.loc[tam.loc[:, 'share_trades'] < 0].loc[:, ['shares', 'account']]
+
+    def single_account_buy(self, tam, ans):
+        tam['account'] = ans[0]
+        return tam.loc[tam.loc[:, 'share_trades'] > 0].loc[:, ['shares', 'account']]
+
     def sell_single_holding(self, tam):
+        """
+        Sells all where there is only one holding of that symbol in the account.
+        :param tam:
+        :return: bool
+        """
         tam['row_count'] = tam['shares'].groupby(level=0).transform('count')
         tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] < 0)
         if tam['select'].any():
@@ -140,18 +167,9 @@ class TradingLibrary(object):
             tam['size'] = tam[tam['select']]['share_trades']
             tam.drop(['select'], 1, inplace=True)
             return True
-
         else:
             tam.drop(['row_count', 'select'], 1, inplace=True)
             return False
-
-    def single_account_sell(self, tam, ans):
-        tam['account'] = ans[0]
-        return tam.loc[tam.loc[:,'share_trades'] < 0].loc[:,['shares', 'account']]
-
-    def single_account_buy(self, tam, ans):
-        tam['account'] = ans[0]
-        return tam.loc[tam.loc[:,'share_trades'] > 0].loc[:,['shares', 'account']]
 
     def sell_complete(self, tam):
         """
@@ -161,17 +179,13 @@ class TradingLibrary(object):
         """
         tam['select'] = tam['model_weight'] == 0
         if tam['select'].any():
-            tam['size'] = tam[tam['select']]['shares']
+            tam['size'] = tam[tam['select']]['shares']*-1
             tam.drop(['select'], 1, inplace=True)
             return True
         else: return False
 
     def sell_smallest_multiple(self, tam):
         """
-        for each symbol find the smallest holding.
-            edge case #1: holdings for a given symbol are equal
-                if this true use first account in the array
-            edge case #2: cash is same for each account (not implemented)
         Selects rows where row count by symbol >1 and share_trades < 0.
         if any rows meet those
             we have trades
@@ -187,7 +201,7 @@ class TradingLibrary(object):
             tam['min_all_equal'] = tam.shares.groupby(level=0).transform(lambda x: (x.reset_index().index == 0) & (x.min() == x))
             tam['select'] = (tam['over_one']) & (tam['single_min'] + tam['min_all_equal']) == 1
                 # Now we know we have either single minimium for that symbol or the first instance.
-            tam['is_entire_holding'] = tam['select'] & (tam['shares'] + tam['share_trades'] < 0)
+            tam['is_entire_holding'] = tam['select'] & (tam['shares'] + tam['share_trades'] <= 0)
             tam['entire_holding'] = tam.loc[tam['is_entire_holding'],'shares'] * -1
             tam['entire_holding'].fillna(0, inplace=True)
             tam['is_partial'] = tam['select'] & (tam['shares'] + tam['share_trades'] > 0)
@@ -350,7 +364,6 @@ class TradingLibrary(object):
             new_account.drop((new_account[~new_account.enough_cash].index), inplace=True)
             new_account = new_account[new_account.max_trade]
             symbol = new_account.index.get_level_values(0)[0]
-            account_number = new_account.index.get_level_values(1)[0]
             new_account['size'] = new_account.share_trades
             new_account.drop(['cash', 'dollar_trades', 'min_trade', 'max_trade', 'enough_cash'], 1, inplace=True)
             tam['size'] = np.nan
@@ -369,7 +382,6 @@ class TradingLibrary(object):
                 :return:
                 """
         if (tam['share_trades'] > 0).any():
-
             # Get highest cash and add that account number and cash balance to tam.
             self.utility_get_unique_max(cash, 'shares', output_field='max_cash')
             account_cash = cash.groupby(cash.index)
@@ -379,9 +391,8 @@ class TradingLibrary(object):
                     tam['cash'] = group['shares'][0]
             # Check smallest trade is greater than largest balance and return false if true as no trade possible. tam and cash cleanup included.
             tam['dollar_trades'] = tam.price * tam.share_trades
-            self.utility_get_unique_min(tam, 'dollar_trades', output_field='min_trade')
             new_account = tam.reset_index().copy()
-            tam.drop(['account', 'cash', 'dollar_trades', 'min_trade'], 1, inplace=True)
+            tam.drop(['account', 'cash', 'dollar_trades'], 1, inplace=True)
             cash.drop(['max_cash'], 1, inplace=True)
             # create dataframe with same index as tam
             new_account.drop_duplicates(inplace=True)
@@ -390,8 +401,16 @@ class TradingLibrary(object):
             new_account.set_index(['symbol', 'account_number'], inplace=True)
             new_account['shares'] = 0
             self.utility_get_unique_max(new_account, 'dollar_trades', output_field='max_trade')
-
-
+            new_account = new_account[new_account.max_trade]
+            symbol = new_account.index.get_level_values(0)[0]
+            new_account['size'] = (new_account.cash / new_account.price).apply(lambda x: math.trunc(x))
+            new_account.drop(['cash', 'dollar_trades', 'max_trade'], 1, inplace=True)
+            tam['size'] = np.nan
+            for key, group in new_account.groupby(new_account.index):
+                tam.loc[key, :] = group.values.tolist()[0]
+            return True
+        else:
+            return False
 
     def utility_get_unique_max(self, df, input_field, output_field='eligible', index_level=0):
         dupe_counter = 0
