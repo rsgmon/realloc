@@ -28,7 +28,8 @@
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_0.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_0
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_1.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_1
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_2.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_2
-python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods.xlsx tams\sell_only generate_with_one_pickle --file_name cover_all_sell_methods
+# python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods.xlsx tams\sell_only generate_with_one_pickle --file_name cover_all_sell_methods
+python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_expanded.xlsx tams\sell_only generate_with_one_pickle --file_name cover_all_sell_methods_expanded
 
 
 # ====== sell_buy

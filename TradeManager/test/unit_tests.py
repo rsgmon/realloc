@@ -533,10 +533,18 @@ class BuyNewPartial(TestCase):
 
     """Note that I did not include cases for sell_only or buy_sell. In fact I deleted them. See log and explantion given on 11/27/17."""
 
-
-class TestDev(TestCase):
+class SellAllMethods(TestCase):
     def test_MultipleAccountTradeSelector(self):
         tam = read_pickle(
             '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_tam.pkl')
         trade_selector = MultipleAccountTradeSelector(tam)
         trade_selector.get_sell_trades()
+
+    def test_MultipleAccountTradeSelector_2(self):
+        tam = read_pickle(
+            '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_expanded_tam.pkl')
+        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector.get_sell_trades()
+
+class TestDev(TestCase):
+    pass

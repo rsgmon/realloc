@@ -54,22 +54,23 @@ class MultipleAccountTradeSelector(TradeSelector):
     def get_sell_trades(self):
         tam = self.trade_account_matrix_object.trade_account_matrix
         more_trades = True
-        # while more_trades:
-        if self.trading_library.sell_complete(tam):
-            print(tam.sort_index(0))
-            self.trade_account_matrix_object.update_tam()
-        if self.trading_library.sell_single_holding(tam):
-            print(tam.sort_index(0))
-            self.trade_account_matrix_object.update_tam()
-        if self.trading_library.sell_smallest_multiple(tam):
-            print(tam.sort_index(0))
-            self.trade_account_matrix_object.update_tam()
-        if (tam['share_trades'] < 0).any():
-            if self.trading_library.sell_smallest_multiple(tam):
-                print(tam.sort_index(0))
+        while more_trades:
+            if self.trading_library.sell_complete(tam):
+                print(tam.sort_index(0), '\n', self.trade_account_matrix_object.cash)
+                self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
-                print(tam.sort_index(0))
-            # more_trades = False
+            if self.trading_library.sell_single_holding(tam):
+                print(tam.sort_index(0), '\n', self.trade_account_matrix_object.cash)
+                self.trade_account_matrix_object.update_tam()
+            if self.trading_library.sell_smallest_multiple(tam):
+                print(tam.sort_index(0), '\n', self.trade_account_matrix_object.cash)
+                self.trade_account_matrix_object.update_tam()
+            if ~(tam['share_trades'] < 0).any():
+                print(tam)
+                more_trades = False
+
+    def get_buy_trades(self):
+        pass
 
 
 
@@ -106,6 +107,7 @@ class TradeAccountMatrix(object):
     def _update_holdings(self):
         self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] + self.trade_account_matrix['size']
 
+
     def _update_share_trades(self):
         trades_only = self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']
         trades_only.index = trades_only.index.droplevel(level=1)
@@ -122,8 +124,10 @@ class TradeAccountMatrix(object):
         self.cash.drop(['update'], axis=1, inplace=True)
 
     def _clean_tam(self):
+        self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['shares'] == 0].index, inplace=True)
         self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['share_trades'] == 0].index, inplace=True)
         self.trade_account_matrix.drop(['size'],1, inplace=True)
+
 
     def update_tam(self):
         self.trade_account_matrix.fillna(0, inplace=True)
@@ -472,4 +476,6 @@ class TradeInstructions(object):
 
     @trades.setter
     def trades(self, tam):
+        for key, group in tam.groupby(tam.index):
+            self._trades.loc[key, :] = group.values.tolist()[0]
         self._trades = tam.loc[tam['size'] !=0]
