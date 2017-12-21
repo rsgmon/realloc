@@ -56,22 +56,19 @@ class MultipleAccountTradeSelector(TradeSelector):
         more_trades = True
         while more_trades:
             if self.trading_library.sell_complete(tam):
-                print(tam.sort_index(0), '\n', self.trade_account_matrix_object.cash)
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
             if self.trading_library.sell_single_holding(tam):
-                print(tam.sort_index(0), '\n', self.trade_account_matrix_object.cash)
+                self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
             if self.trading_library.sell_smallest_multiple(tam):
-                print(tam.sort_index(0), '\n', self.trade_account_matrix_object.cash)
+                self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
             if ~(tam['share_trades'] < 0).any():
-                print(tam)
                 more_trades = False
 
     def get_buy_trades(self):
         pass
-
 
 
 class TradeAccountMatrix(object):
@@ -469,13 +466,14 @@ class TradeInstructions(object):
     def __init__(self):
         self._trades = pd.DataFrame()
 
-
     @property
     def trades(self):
         return self._trades
 
     @trades.setter
     def trades(self, tam):
-        for key, group in tam.groupby(tam.index):
-            self._trades.loc[key, :] = group.values.tolist()[0]
-        self._trades = tam.loc[tam['size'] !=0]
+        if self._trades.empty:
+            self._trades = tam.loc[~tam['size'].isnull()]
+        else:
+            for key, group in tam.loc[~tam['size'].isnull()].groupby(tam.loc[~tam['size'].isnull()].index):
+                self._trades.loc[key, :] = group.values.tolist()[0]
