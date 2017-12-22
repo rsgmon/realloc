@@ -403,6 +403,21 @@ class BuySingleHolding(TestCase):
         self.assertTrue(self.trade_instructions.trades.empty)
 
 
+class BuyMultipleEntire(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_multiple_entire
+
+    def test_buy_only_multi_account_single_target_actual(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_tam.pkl')
+        if self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+        self.assertTrue(self.trade_instructions.trades.empty)
+
+
+
 class BuyMultipleComplete(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
@@ -533,18 +548,30 @@ class BuyNewPartial(TestCase):
 
     """Note that I did not include cases for sell_only or buy_sell. In fact I deleted them. See log and explantion given on 11/27/17."""
 
+
 class SellAllMethods(TestCase):
     def test_MultipleAccountTradeSelector(self):
         tam = read_pickle(
             '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_tam.pkl')
         trade_selector = MultipleAccountTradeSelector(tam)
         trade_selector.get_sell_trades()
+        trades = trade_selector.trade_instructions.trades
+        self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
+        self.assertEqual(trades.loc[('ABC', '56-66')]['size'], -690)
 
     def test_MultipleAccountTradeSelector_2(self):
         tam = read_pickle(
             '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_expanded_tam.pkl')
         trade_selector = MultipleAccountTradeSelector(tam)
         trade_selector.get_sell_trades()
+        trades = trade_selector.trade_instructions.trades
+        self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
+        self.assertEqual(trades.loc[('DEF', '111-111')]['size'], -412)
+        self.assertEqual(trades.loc[('DEF', '56-66')]['size'], -200)
 
 class TestDev(TestCase):
-    pass
+    def test_MultipleAccountTradeSelector(self):
+        tam = read_pickle(
+            '.\/test_data\/tams\/buy_only\/cover_all_buy_methods_tam.pkl')
+        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector.get_buy_trades()

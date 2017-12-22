@@ -68,8 +68,17 @@ class MultipleAccountTradeSelector(TradeSelector):
                 more_trades = False
 
     def get_buy_trades(self):
-        pass
-
+        tam = self.trade_account_matrix_object.trade_account_matrix
+        cash = self.trade_account_matrix_object.cash
+        print(cash)
+        if self.trading_library.buy_single_holding(tam, cash):
+            self.trade_instructions.trades = tam
+            self.trade_account_matrix_object.update_tam()
+            print(self.trade_instructions.trades, '\n', cash)
+        while self.trading_library.buy_multiple_complete(tam, cash):
+            self.trade_instructions.trades = tam
+            self.trade_account_matrix_object.update_tam()
+            print(self.trade_instructions.trades, '\n', cash)
 
 class TradeAccountMatrix(object):
 
@@ -241,9 +250,8 @@ class TradingLibrary(object):
             tam.drop(['row_count', 'select'], 1, inplace=True)
             return False
 
-    def buy_multiple_complete(self, tam, cash):
-        """
-        Instructs trades where buy is held in multiple accounts and at least one account has enough cash to complete the entire buy.
+    def buy_multiple_entire(self, tam, cash):
+        """This is an alternative to buy_multiple complete. It identifies the highest cash account instruct the largest trade it can.
         :param tam: dataframe
         :param cash: dataframe
         :return: bool
@@ -251,7 +259,40 @@ class TradingLibrary(object):
         tam['row_count'] = tam['price'].groupby(level=0).transform('count')
         tam['any_trades'] = (tam['row_count'] > 1) & (tam['share_trades'] > 0)
         if tam['any_trades'].any():
-            # we now know there are buys with mutliple accounts
+            tam.drop(['row_count', 'any_trades'], 1, inplace=True)
+            # we now know there are buys with multiple accounts
+            # now we get the account with the highest cash
+            self.utility_add_cash(tam, cash)
+            self.utility_get_unique_max(tam, 'cash', output_field='max_cash', index_level=1)
+            account = tam[tam['max_cash']].copy()
+            tam.drop(['max_cash'], 1, inplace=True)
+            account['dollar_trade'] = account['share_trades'] * account['price']
+            account.drop(account[account.share_trades < 0].index, inplace=True)
+            account.loc[:, 'min_trade'] = account['dollar_trade'].min()
+            account.loc[:, 'is_eligible'] = (account.loc[:, 'cash'] > account.loc[:, 'min_trade']) & (
+                account.share_trades > 0)
+            if account['is_eligible'].any():
+                account.drop(account[~account.is_eligible].index, inplace=True)
+                self.utility_get_unique_max(account, 'dollar_trade', output_field='max_trade')
+                account.drop(account[~account.max_trade].index, inplace=True)
+                account.drop(['max_cash', 'dollar_trade', 'min_trade', 'is_eligible', 'max_trade'], 1, inplace=True)
+                tam['size'] = account['share_trades']
+                return True
+            else: return False
+        else: return False
+
+
+    def buy_multiple_complete(self, tam, cash):
+        """
+        Instructs trades where buy is held in multiple accounts and at least one account has enough cash to complete the entire buy. See notes 12/04/17.
+        :param tam: dataframe
+        :param cash: dataframe
+        :return: bool
+        """
+        tam['row_count'] = tam['price'].groupby(level=0).transform('count')
+        tam['any_trades'] = (tam['row_count'] > 1) & (tam['share_trades'] > 0)
+        if tam['any_trades'].any():
+            # we now know there are buys with multiple accounts
             tam['dollar_trade'] = tam['share_trades'] * tam['price']
             self.utility_add_cash(tam, cash)
             # We're not actually trying to loop through all the accounts. We loop until we find an account with a qualifying trade, execute, and return true.
@@ -281,6 +322,7 @@ class TradingLibrary(object):
                     tam.drop(['row_count', 'any_trades', 'select', 'dollar_trade', 'cash'], 1, inplace=True)
                     return True
             tam.drop(['dollar_trade', 'cash'], 1, inplace=True)
+
         return False
 
     def buy_multiple_partial(self, tam, cash):
