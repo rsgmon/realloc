@@ -70,15 +70,37 @@ class MultipleAccountTradeSelector(TradeSelector):
     def get_buy_trades(self):
         tam = self.trade_account_matrix_object.trade_account_matrix
         cash = self.trade_account_matrix_object.cash
-        print(cash)
-        if self.trading_library.buy_single_holding(tam, cash):
-            self.trade_instructions.trades = tam
-            self.trade_account_matrix_object.update_tam()
-            print(self.trade_instructions.trades, '\n', cash)
-        while self.trading_library.buy_multiple_complete(tam, cash):
-            self.trade_instructions.trades = tam
-            self.trade_account_matrix_object.update_tam()
-            print(self.trade_instructions.trades, '\n', cash)
+        more_trades = True
+        while more_trades:
+            tam_before = tam.copy()
+        # for x in [0,1,2]:
+            if self.trading_library.buy_single_holding(tam, cash):
+                self.trade_instructions.trades = tam
+                self.trade_account_matrix_object.update_tam()
+                # print('single_holding', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
+            while self.trading_library.buy_multiple_entire(tam, cash):
+                self.trade_instructions.trades = tam
+                self.trade_account_matrix_object.update_tam()
+                # print('multi_entire', '\n',  tam.sort_index(),  '\n', self.trade_instructions.trades, '\n')
+            if self.trading_library.buy_multiple_partial_one_trade(tam, cash):
+                self.trade_instructions.trades = tam
+                self.trade_account_matrix_object.update_tam()
+                # print('multi_partial', '\n', tam.sort_index(),  '\n', self.trade_instructions.trades, '\n')
+            if (tam.equals(tam_before)):
+                more_trades = False
+        more_trades = True
+        while more_trades:
+            while self.trading_library.buy_new_complete(tam, cash):
+                self.trade_instructions.trades = tam
+                self.trade_account_matrix_object.update_tam()
+                # print('new_complete', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
+            if self.trading_library.buy_new_partial(tam, cash):
+                self.trade_instructions.trades = tam
+                self.trade_account_matrix_object.update_tam()
+                # print('new_partial', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
+            if tam.empty:
+                more_trades = False
+
 
 class TradeAccountMatrix(object):
 
@@ -117,7 +139,8 @@ class TradeAccountMatrix(object):
     def _update_share_trades(self):
         trades_only = self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']
         trades_only.index = trades_only.index.droplevel(level=1)
-        self.trade_account_matrix['symbols_traded'] = pd.Series(self.trade_account_matrix.index.get_level_values(0)).map(trades_only).fillna(0).values
+        self.trade_account_matrix['symbols_traded'] = pd.Series(self.trade_account_matrix.index.get_level_values(
+        0)).map(trades_only).fillna(0).values
         self.trade_account_matrix['share_trades'] = self.trade_account_matrix['share_trades'] - self.trade_account_matrix['symbols_traded']
         self.trade_account_matrix.drop(['symbols_traded'], axis=1, inplace=True)
 
@@ -130,7 +153,9 @@ class TradeAccountMatrix(object):
         self.cash.drop(['update'], axis=1, inplace=True)
 
     def _clean_tam(self):
-        self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['shares'] == 0].index, inplace=True)
+        self.trade_account_matrix['is_model'] = self.trade_account_matrix.index.get_level_values(level=1) != 'model'
+        self.trade_account_matrix.drop(self.trade_account_matrix[(self.trade_account_matrix['shares'] == 0) & self.trade_account_matrix.is_model].index, inplace=True)
+        self.trade_account_matrix.drop(['is_model'], 1, inplace=True)
         self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['share_trades'] == 0].index, inplace=True)
         self.trade_account_matrix.drop(['size'],1, inplace=True)
 
@@ -231,7 +256,6 @@ class TradingLibrary(object):
         :param cash: DataFrame
         :return: bool
         """
-
         tam['row_count'] = tam['price'].groupby(level=0).transform('count')
         tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] > 0)
         if tam['select'].any():
@@ -264,8 +288,9 @@ class TradingLibrary(object):
             # now we get the account with the highest cash
             self.utility_add_cash(tam, cash)
             self.utility_get_unique_max(tam, 'cash', output_field='max_cash', index_level=1)
+            # make a copy of the account with highest cash only
             account = tam[tam['max_cash']].copy()
-            tam.drop(['max_cash'], 1, inplace=True)
+            tam.drop(['cash', 'max_cash'], 1, inplace=True)
             account['dollar_trade'] = account['share_trades'] * account['price']
             account.drop(account[account.share_trades < 0].index, inplace=True)
             account.loc[:, 'min_trade'] = account['dollar_trade'].min()
@@ -275,12 +300,13 @@ class TradingLibrary(object):
                 account.drop(account[~account.is_eligible].index, inplace=True)
                 self.utility_get_unique_max(account, 'dollar_trade', output_field='max_trade')
                 account.drop(account[~account.max_trade].index, inplace=True)
-                account.drop(['max_cash', 'dollar_trade', 'min_trade', 'is_eligible', 'max_trade'], 1, inplace=True)
+                account.drop(['cash', 'max_cash', 'dollar_trade', 'min_trade', 'is_eligible', 'max_trade'], 1, inplace=True)
                 tam['size'] = account['share_trades']
                 return True
             else: return False
-        else: return False
-
+        else:
+            tam.drop(['row_count', 'any_trades'], 1, inplace=True)
+            return False
 
     def buy_multiple_complete(self, tam, cash):
         """
@@ -321,9 +347,12 @@ class TradingLibrary(object):
                     tam.loc[:,'size'] = tam[tam['select']]['share_trades']
                     tam.drop(['row_count', 'any_trades', 'select', 'dollar_trade', 'cash'], 1, inplace=True)
                     return True
-            tam.drop(['dollar_trade', 'cash'], 1, inplace=True)
-
-        return False
+                else:
+                    tam.drop(['dollar_trade', 'cash'], 1, inplace=True)
+                    return False
+        else:
+            tam.drop(['row_count', 'any_trades'], 1, inplace=True)
+            return False
 
     def buy_multiple_partial(self, tam, cash):
         """
@@ -332,6 +361,7 @@ class TradingLibrary(object):
         :param cash:
         :return:
         """
+        if tam.empty: return False
         tam['row_count'] = tam['share_trades'].groupby(level=0).transform(lambda x: x.sum() > 0)
         tam['row_count'] = tam['row_count'].astype(bool)
         tam['any_trades'] = (tam['row_count']) & (tam['share_trades'] > 0)
@@ -345,12 +375,13 @@ class TradingLibrary(object):
             trades = pd.Series()
             self.utility_get_unique_max(tam, 'cash_less_dollar', index_level=0)
             account = tam.loc[tam.loc[:,'eligible'],:].copy()
-
             # select account
             while True:
                 # set trade to instruct
                 self.utility_get_unique_max(account, 'cash', index_level=1)
-                trades = trades.append(round(account[account['eligible']]['cash'] / account[account['eligible']]['price'], 0))
+                if account[account['eligible']]['cash'][0] > account[account['eligible']]['dollar_trade'][0]:
+                    trades = trades.append(account[account['eligible']]['share_trades'])
+                else: trades = trades.append(round(account[account['eligible']]['cash'] / account[account['eligible']]['price'], 0))
                 # update portfolio trades
                 account.loc[:, 'share_change'] = trades[0]
                 account.share_change.fillna(0, inplace=True)
@@ -371,6 +402,34 @@ class TradingLibrary(object):
         else:
             return False
 
+    def buy_multiple_partial_one_trade(self, tam, cash):
+        """
+        This is an alternative to buy_multiple_partial. It instructs one partial buy at a time.
+        :param tam: dataframe
+        :param cash: dataframe
+        :return: bool
+        """
+        # tam['row_count'] = tam['price'].groupby(level=0).transform('count')
+        tam['any_trades'] =  (tam['share_trades'] > 0)
+        if tam['any_trades'].any():
+            tam.drop(['any_trades'], 1, inplace=True)
+            # we now know there are partial buys
+            # now we get the account with the highest cash
+            self.utility_add_cash(tam, cash)
+            self.utility_get_unique_max(tam, 'cash', output_field='max_cash', index_level=1)
+            # make a copy of the account with highest cash only
+            account = tam[tam['max_cash']].copy()
+            tam.drop(['cash', 'max_cash'], 1, inplace=True)
+            account['dollar_trade'] = account['share_trades'] * account['price']
+            account.drop(account[account.share_trades < 0].index, inplace=True)
+            self.utility_get_unique_max(account, 'dollar_trade', output_field='max_dollar_trade')
+            account.drop(account[~account.max_dollar_trade].index, inplace=True)
+            tam['size'] = account.cash/account.price
+            return True
+        else:
+            tam.drop([ 'any_trades'], 1, inplace=True)
+            return False
+
     def buy_new_complete(self, tam, cash):
         """
         Buys new holdings using the account with the highest cash.
@@ -379,7 +438,7 @@ class TradingLibrary(object):
         :param cash:
         :return:
         """
-        if (tam['share_trades'] >0).any():
+        if (tam['share_trades'] > 0).any():
             # Get highest cash and add that account number and cash balance to tam.
             self.utility_get_unique_max(cash, 'shares', output_field='max_cash')
             account_cash = cash.groupby(cash.index)
@@ -412,7 +471,8 @@ class TradingLibrary(object):
             tam['size'] = np.nan
             for key, group in new_account.groupby(new_account.index):
                 tam.loc[key,:] = group.values.tolist()[0]
-            tam.drop([(symbol, 'model')], inplace=True)
+            if new_account.index.get_level_values(level=0)[0] == 'model':
+                tam.drop([(symbol, 'model')], inplace=True)
             return True
         else: return False
 

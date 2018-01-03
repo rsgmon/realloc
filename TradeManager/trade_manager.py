@@ -56,6 +56,8 @@ class RawRequest(object):
         Determines what file type the trade request was received in and routes to the appropriate opener.
         """
         if 'xl' in self.file_type_label:
+            # todo add conditional that checks for model tab in sheet
+            # todo handle blank rows in between positions
             self.raw_request = pd.read_excel(self.file_path, engine='xlrd')
             # self.raw_request['symbol'].astype("int")
         elif 'csv' in self.file_type_label:
