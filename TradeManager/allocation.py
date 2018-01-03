@@ -409,10 +409,10 @@ class TradingLibrary(object):
         :param cash: dataframe
         :return: bool
         """
-        # tam['row_count'] = tam['price'].groupby(level=0).transform('count')
-        tam['any_trades'] =  (tam['share_trades'] > 0)
+        tam['row_count'] = tam['price'].groupby(level=0).transform('count')
+        tam['any_trades'] =  (tam['share_trades'] > 0) & (tam['row_count'] > 1)
         if tam['any_trades'].any():
-            tam.drop(['any_trades'], 1, inplace=True)
+            tam.drop(['any_trades', 'row_count'], 1, inplace=True)
             # we now know there are partial buys
             # now we get the account with the highest cash
             self.utility_add_cash(tam, cash)
@@ -427,7 +427,7 @@ class TradingLibrary(object):
             tam['size'] = account.cash/account.price
             return True
         else:
-            tam.drop([ 'any_trades'], 1, inplace=True)
+            tam.drop(['any_trades', 'row_count'], 1, inplace=True)
             return False
 
     def buy_new_complete(self, tam, cash):

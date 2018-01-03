@@ -614,13 +614,13 @@ class BuyAllMethods(TestCase):
         self.assertEqual(trades.loc[('GGG', '111-111')]['size'], 1086)
 
 
-    # def test_MultipleAccountTradeSelector_02(self):
-    #     tam = read_pickle(    '.\/test_data\/tams\/buy_only\/cover_all_buy_methods_2_tam.pkl')
-    #     trade_selector = MultipleAccountTradeSelector(tam)
-    #     trade_selector.get_buy_trades()
-    #     trades = trade_selector.trade_instructions.trades
-    #     self.assertEqual(trades.shape, (6, 5))
-    #     self.assertEqual(trades.loc[('GGG', '111-111')]['size'], 1086)
+    def test_MultipleAccountTradeSelector_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_2_tam.pkl')
+        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector.get_buy_trades()
+        trades = trade_selector.trade_instructions.trades
+        self.assertEqual(trades.shape, (7, 5))
+
 
 
 class TestDev(TestCase):
