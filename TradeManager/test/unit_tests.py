@@ -276,24 +276,6 @@ class SellComplete(TestCase):
             self.trade_instructions.trades = tam.trade_account_matrix
         self.assertTrue(self.trade_instructions.trades.empty)
 
-    def test_buy_only_multi_account_single_target_actual_02(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_single_target_actual_02_tam.pkl')
-        if self.test_method(tam.trade_account_matrix, tam.cash):
-            self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertTrue(self.trade_instructions.trades.empty)
-
-    def test_buy_only_multi_account_target_actual(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_actual_tam.pkl')
-        if self.test_method(tam.trade_account_matrix):
-            self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertTrue(self.trade_instructions.trades.empty)
-
-    def test_buy_only_multi_account_target_single_actual(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/multi_account_target_single_actual_tam.pkl')
-        if self.test_method(tam.trade_account_matrix):
-            self.trade_instructions.trades = tam.trade_account_matrix
-        self.assertTrue(self.trade_instructions.trades.empty)
-
     def test_sell_only_multi_account_actual_equal_no_model(self):
         tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_equal_no_model_tam.pkl')
         if self.test_method(tam.trade_account_matrix):
@@ -532,6 +514,35 @@ class BuyMultiplePartialOneTrade(TestCase):
             self.assertEqual(self.trade_instructions.trades.shape, (2, 5))
 
 
+class BuySinglePartial(TestCase):
+    def setUp(self):
+        self.trading_library = TradingLibrary()
+        self.tam_trade_update = TradeSizeUpdateTamLibrary()
+        self.trade_instructions = TradeInstructions()
+        self.test_method = self.trading_library.buy_single_partial
+
+    def test_01(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/buy_single_partial_01_tam.pkl')
+        rows = 1
+        while self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+            tam.update_tam()
+            self.assertEqual(self.trade_instructions.trades.shape, (rows, 5))
+            rows+=1
+
+    def test_02(self):
+        tam = read_pickle('.\/test_data\/tams\/buy_only\/buy_single_partial_02_tam.pkl')
+        rows = 1
+        while self.test_method(tam.trade_account_matrix, tam.cash):
+            self.trade_instructions.trades = tam.trade_account_matrix
+            tam.update_tam()
+            self.assertEqual(self.trade_instructions.trades.shape, (rows, 5))
+            rows+=1
+        else:
+            self.assertEqual(self.trade_instructions.trades.iloc[0]['size'], 40)
+
+
+
 class BuyNewComplete(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
@@ -583,6 +594,9 @@ class BuyNewPartial(TestCase):
     """Note that I did not include cases for sell_only or buy_sell. In fact I deleted them. See log and explantion given on 11/27/17."""
 
 
+
+
+
 class SellAllMethods(TestCase):
     def test_MultipleAccountTradeSelector(self):
         tam = read_pickle(
@@ -612,6 +626,7 @@ class BuyAllMethods(TestCase):
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (6, 5))
         self.assertEqual(trades.loc[('GGG', '111-111')]['size'], 1086)
+        print(trades)
 
 
     def test_MultipleAccountTradeSelector_02(self):
@@ -620,6 +635,7 @@ class BuyAllMethods(TestCase):
         trade_selector.get_buy_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (7, 5))
+        print(trades)
 
 
 

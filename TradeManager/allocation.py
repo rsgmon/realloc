@@ -54,10 +54,10 @@ class MultipleAccountTradeSelector(TradeSelector):
     def get_sell_trades(self):
         tam = self.trade_account_matrix_object.trade_account_matrix
         more_trades = True
+        if self.trading_library.sell_complete(tam):
+            self.trade_instructions.trades = tam
+            self.trade_account_matrix_object.update_tam()
         while more_trades:
-            if self.trading_library.sell_complete(tam):
-                self.trade_instructions.trades = tam
-                self.trade_account_matrix_object.update_tam()
             if self.trading_library.sell_single_holding(tam):
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
@@ -90,6 +90,10 @@ class MultipleAccountTradeSelector(TradeSelector):
                 more_trades = False
         more_trades = True
         while more_trades:
+            while self.trading_library.buy_single_partial(tam, cash):
+                self.trade_instructions.trades = tam
+                self.trade_account_matrix_object.update_tam()
+                # print('single_partial', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
             while self.trading_library.buy_new_complete(tam, cash):
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
@@ -430,6 +434,39 @@ class TradingLibrary(object):
             tam.drop(['any_trades', 'row_count'], 1, inplace=True)
             return False
 
+    def buy_single_partial(self, tam, cash):
+        """
+
+        :param tam:
+        :param cash:
+        :return:
+        """
+
+        tam['row_count'] = tam['price'].groupby(level=0).transform('count')
+        tam['any_trades'] = (tam['share_trades'] > 0) & (tam['row_count'] == 1)
+        if tam['any_trades'].any():
+
+            # we now know there are partial buys where only one account holds it but has insufficient cash
+            # now we get the account with the highest cash
+            self.utility_add_cash(tam, cash)
+            self.utility_get_unique_max(tam, 'cash', output_field='max_cash', index_level=1)
+            # make a copy of the account with highest cash only
+            account = tam[tam['max_cash'] & tam['any_trades']].copy()
+            if account.cash.sum() == 0:
+                tam.drop(['cash', 'max_cash', 'any_trades', 'row_count'], 1, inplace=True)
+                return False
+            tam.drop(['cash', 'max_cash', 'any_trades', 'row_count'], 1, inplace=True)
+            account['dollar_trade'] = account['share_trades'] * account['price']
+            account.drop(account[account.share_trades < 0].index, inplace=True)
+            if account.shape[0] > 1:
+                self.utility_get_unique_max(account, 'dollar_trade', output_field='max_dollar_trade')
+                account.drop(account[~account.max_dollar_trade].index, inplace=True)
+            tam['size'] = account.cash / account.price
+            return True
+        else:
+            tam.drop(['any_trades', 'row_count'], 1, inplace=True)
+            return False
+
     def buy_new_complete(self, tam, cash):
         """
         Buys new holdings using the account with the highest cash.
@@ -440,6 +477,7 @@ class TradingLibrary(object):
         """
         if (tam['share_trades'] > 0).any():
             # Get highest cash and add that account number and cash balance to tam.
+
             self.utility_get_unique_max(cash, 'shares', output_field='max_cash')
             account_cash = cash.groupby(cash.index)
             for key, group in account_cash:
@@ -449,6 +487,7 @@ class TradingLibrary(object):
             # Check smallest trade is greater than largest balance and return false if true as no trade possible. tam and cash cleanup included.
             tam['dollar_trades'] = tam.price * tam.share_trades
             self.utility_get_unique_min(tam, 'dollar_trades', output_field='min_trade')
+
             new_account = tam.reset_index().copy()
             no_trade = (tam[tam.min_trade].cash < tam[tam.min_trade].dollar_trades).all()
             tam.drop(['account', 'cash', 'dollar_trades', 'min_trade'], 1, inplace=True)
@@ -473,8 +512,10 @@ class TradingLibrary(object):
                 tam.loc[key,:] = group.values.tolist()[0]
             if new_account.index.get_level_values(level=0)[0] == 'model':
                 tam.drop([(symbol, 'model')], inplace=True)
+
             return True
-        else: return False
+        else:
+            return False
 
     def buy_new_partial(self, tam, cash):
         """
@@ -578,4 +619,5 @@ class TradeInstructions(object):
             self._trades = tam.loc[~tam['size'].isnull()]
         else:
             for key, group in tam.loc[~tam['size'].isnull()].groupby(tam.loc[~tam['size'].isnull()].index):
+
                 self._trades.loc[key, :] = group.values.tolist()[0]

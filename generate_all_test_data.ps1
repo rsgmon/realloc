@@ -15,7 +15,9 @@
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods.xlsx tams\buy_only generate_with_one_pickle --file_name cover_all_buy_methods
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_multiple_partial_one_trade_01.xlsx tams\buy_only generate_with_one_pickle --file_name buy_multiple_partial_one_trade_01
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_2.xlsx tams\buy_only generate_with_one_pickle --file_name cover_all_buy_methods_2
-python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_new_complete_01.xlsx tams\buy_only generate_with_one_pickle --file_name buy_new_complete_01
+# python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_new_complete_01.xlsx tams\buy_only generate_with_one_pickle --file_name buy_new_complete_01
+# python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_single_partial_01.xlsx tams\buy_only generate_with_one_pickle --file_name buy_single_partial_01
+python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_single_partial_02.xlsx tams\buy_only generate_with_one_pickle --file_name buy_single_partial_02
 
 
 
