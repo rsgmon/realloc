@@ -50,24 +50,33 @@ class SingleAccountTradeSelector(TradeSelector):
 
 
 class MultipleAccountTradeSelector(TradeSelector):
+    def get_trades(self):
+        # if self._has_sells:
+        self._get_sell_trades()
+        # if self._has_buys():
+        self._get_buy_trades()
 
-    def get_sell_trades(self):
+    def _get_sell_trades(self):
         tam = self.trade_account_matrix_object.trade_account_matrix
         more_trades = True
+
         if self.trading_library.sell_complete(tam):
             self.trade_instructions.trades = tam
             self.trade_account_matrix_object.update_tam()
+            print('complete_sell', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
         while more_trades:
             if self.trading_library.sell_single_holding(tam):
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
+                print('sell_single', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
             if self.trading_library.sell_smallest_multiple(tam):
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
+                print('sell_smallest', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
             if ~(tam['share_trades'] < 0).any():
                 more_trades = False
 
-    def get_buy_trades(self):
+    def _get_buy_trades(self):
         tam = self.trade_account_matrix_object.trade_account_matrix
         cash = self.trade_account_matrix_object.cash
         more_trades = True
@@ -200,7 +209,7 @@ class TradingLibrary(object):
         :return: bool
         """
         tam['row_count'] = tam['shares'].groupby(level=0).transform('count')
-        tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] < 0)
+        tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] < 0) & (tam['shares'] != 0)
         if tam['select'].any():
             tam.drop(['row_count'], 1, inplace=True)
             tam['size'] = tam[tam['select']]['share_trades']
@@ -489,6 +498,7 @@ class TradingLibrary(object):
             self.utility_get_unique_min(tam, 'dollar_trades', output_field='min_trade')
 
             new_account = tam.reset_index().copy()
+
             no_trade = (tam[tam.min_trade].cash < tam[tam.min_trade].dollar_trades).all()
             tam.drop(['account', 'cash', 'dollar_trades', 'min_trade'], 1, inplace=True)
             cash.drop(['max_cash'], 1, inplace=True)
@@ -502,9 +512,10 @@ class TradingLibrary(object):
             new_account['shares'] = 0
             self.utility_get_unique_max(new_account, 'dollar_trades', output_field='max_trade')
             new_account['enough_cash'] = (new_account['cash'] > new_account['dollar_trades'])
-            new_account.drop((new_account[~new_account.enough_cash].index), inplace=True)
+            if ~new_account.enough_cash.all():
+                return False
             new_account = new_account[new_account.max_trade]
-            symbol = new_account.index.get_level_values(0)[0]
+            symbol = new_account.index.get_level_values('symbol')[0]
             new_account['size'] = new_account.share_trades
             new_account.drop(['cash', 'dollar_trades', 'min_trade', 'max_trade', 'enough_cash'], 1, inplace=True)
             tam['size'] = np.nan
