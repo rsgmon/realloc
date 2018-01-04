@@ -18,7 +18,7 @@ class TradeManager(object):
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
         self.trade_instructions = self.allocate_trades()
-        self.post_portfolio = self.set_post_trade_portfolio()
+        # self.post_portfolio = self.set_post_trade_portfolio()
 
     def get_model(self):
         return Model(self.trade_request.model_request)
@@ -36,15 +36,21 @@ class TradeManager(object):
 
     def allocate_trades(self):
         allocation_controller = AllocationController(self.portfolio, self.portfolio_trades)
-        return allocation_controller.allocate_trades()
+        instructions = allocation_controller.allocate_trades()
+        return instructions
 
     def set_post_trade_portfolio(self):
         return PostTradePortfolio(self.trade_instructions, self.trade_request.portfolio_request, self.prices.prices)
+
 
 class RawRequest(object):
     def __init__(self, file_type_label, file_path):
         self.file_type_label = file_type_label
         self.file_path = file_path
+        # todo the next three lines are to get it to work at the console. need to fix
+        # print(os.getcwd() + file_path)
+        # print('C:\/Users\/Rye\/Projects\/Python\/PortMgr\/TradeManager\/test\/test_data\/sheets\/sell_buy\/all_methods_1.xlsx', '\n')
+        # self.file_path = 'C:\/Users\/Rye\/Projects\/Python\/PortMgr\/TradeManager\/test\/test_data\/sheets\/sell_buy\/all_methods_1.xlsx'
         self._route_trade_request_type()
         if 'test' in self.file_type_label:
             pass
@@ -58,7 +64,10 @@ class RawRequest(object):
         if 'xl' in self.file_type_label:
             # todo add conditional that checks for model tab in sheet
             # todo handle blank rows in between positions
+
             self.raw_request = pd.read_excel(self.file_path, engine='xlrd')
+
+
             # self.raw_request['symbol'].astype("int")
         elif 'csv' in self.file_type_label:
             self.raw_request = pd.read_csv(self.file_path)
@@ -335,6 +344,6 @@ class PriceRetriever(object):
 
 if __name__ == "__main__":
     file_type = 'xl'
-    path = '.\/test\/test_data\/sellsOnly\/sellsOnlySingle\/SellOnlySingleAccount.xlsx'
+    path = '\/test\/test_data\/sheets\/sell_buy\/all_methods_1.xlsx'
     trade_manager = TradeManager(file_type, path)
     print(trade_manager.trade_instructions)

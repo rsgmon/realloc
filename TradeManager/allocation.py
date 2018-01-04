@@ -24,8 +24,8 @@ class AllocationController(object):
 
 
 class TradeSelector(object):
-    def __init__(self, trade_account_matrix_object):
-        self.trade_account_matrix_object = trade_account_matrix_object
+    def __init__(self, portfolio, portfolio_trade_list):
+        self.trade_account_matrix_object = TradeAccountMatrix(portfolio, portfolio_trade_list)
         self.trade_instructions = TradeInstructions()
         self.trading_library = TradingLibrary()
 
@@ -147,7 +147,6 @@ class TradeAccountMatrix(object):
     def _update_holdings(self):
         self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] + self.trade_account_matrix['size']
 
-
     def _update_share_trades(self):
         trades_only = self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']
         trades_only.index = trades_only.index.droplevel(level=1)
@@ -171,20 +170,12 @@ class TradeAccountMatrix(object):
         self.trade_account_matrix.drop(self.trade_account_matrix[self.trade_account_matrix['share_trades'] == 0].index, inplace=True)
         self.trade_account_matrix.drop(['size'],1, inplace=True)
 
-
     def update_tam(self):
         self.trade_account_matrix.fillna(0, inplace=True)
         self._update_holdings()
         self._update_share_trades()
         self._update_cash()
         self._clean_tam()
-
-    @property
-    def trades_remaining(self):
-        if sum(self.trade_account_matrix['shares'].nonzero()[0]) == 0:
-            return False
-        else:
-            return True
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
@@ -598,20 +589,6 @@ class TradingLibrary(object):
         tam.set_index(['symbol', 'account_number'], inplace=True)
 
 
-class TradeSizeUpdateTamLibrary(object):
-
-    def sell_single_account(self, tam):
-        tam['share_trades'] = tam['share_trades'] + tam['size']
-        # tam['dollar_trades'] = tam['dollar_trades'] + tam['size'] * tam['price']
-
-    def multiple_update(self, tam):
-        # todo dollar trades
-        tam['port_buy_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() > 0 else 0)
-        tam['port_sell_size'] = tam['size'].groupby(level=0).transform(lambda x: x.sum() if x.sum() < 0 else 0)
-        tam['share_trades'] = tam['share_trades'] - tam['port_buy_size'] - tam['port_sell_size']
-        tam.drop(['port_buy_size', 'port_sell_size'], 1, inplace=True)
-
-
 class TradeInstructions(object):
     def __init__(self):
         self._trades = pd.DataFrame()
@@ -623,3 +600,6 @@ class TradeInstructions(object):
     @trades.setter
     def trades(self, tam):
         self._trades = pd.concat([self._trades, tam.loc[~tam['size'].isnull()]])
+
+    def clean_up_trades(self):
+        self._trades.drop(['shares'], inplace=True)
