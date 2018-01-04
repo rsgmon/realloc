@@ -308,12 +308,6 @@ class SellSmallestMultiple(TestCase):
         self.trade_instructions = TradeInstructions()
         self.test_method = self.trading_library.sell_smallest_multiple
 
-    # def test_sell_only_multi_account_single_target_actual(self):
-    #     tam = read_pickle('.\/test_data\/tams\/sell_only\/multi_account_actual_single_target_all_tam.pkl')
-    #     if self.test_method(tam.trade_account_matrix):
-    #         self.trade_instructions.trades = tam.trade_account_matrix
-    #         self.assertEqual(tam.trade_account_matrix.loc['DEF','45-33']['size'], -250)
-
     def test_0(self):
         tam_object = read_pickle('.\/test_data\/tams\/sell_only\/sell_smallest_multiple_0_tam.pkl')
         tam = tam_object.trade_account_matrix
@@ -322,8 +316,6 @@ class SellSmallestMultiple(TestCase):
             self.assertEqual(tam.loc['DEF', '45-33']['size'], -400)
         else:
             self.fail()
-        print()
-
 
     def test_1(self):
         tam_object = read_pickle('.\/test_data\/tams\/sell_only\/sell_smallest_multiple_1_tam.pkl')
@@ -346,6 +338,10 @@ class SellSmallestMultiple(TestCase):
             self.fail()
 
     def test_3(self):
+        """
+        Tests that rows with complete sells are ignored.
+        :return:
+        """
         tam_object = read_pickle('.\/test_data\/tams\/sell_only\/sell_smallest_multiple_3_tam.pkl')
         tam = tam_object.trade_account_matrix
         if self.test_method(tam):
@@ -356,14 +352,14 @@ class SellSmallestMultiple(TestCase):
             self.fail()
 
     def test_4(self):
-        tam_object = read_pickle('.\/test_data\/tams\/sell_only\/sell_smallest_multiple_3_tam.pkl')
+        tam_object = read_pickle('.\/test_data\/tams\/sell_only\/sell_smallest_multiple_4_tam.pkl')
         tam = tam_object.trade_account_matrix
-        if self.test_method(tam):
+        while self.test_method(tam):
             self.trade_instructions.trades = tam
-            self.assertEqual(tam.loc[tam['size'] < 0].shape, (2,5))
-            self.assertEqual(tam.loc['DEF', '45-33']['size'], -400)
+            tam_object.update_tam()
         else:
-            self.fail()
+            self.assertEqual(self.trade_instructions.trades.shape, (3,5))
+            self.assertEqual(self.trade_instructions.trades.loc['DEF', '45-33']['size'], -400)
 
 
 class BuySingleHolding(TestCase):
@@ -560,7 +556,7 @@ class BuyNewComplete(TestCase):
         self.trade_instructions = TradeInstructions()
         self.test_method = self.trading_library.buy_new_complete
 
-    """def test_buy_only_multi_account_target_new_holding_only(self):
+    def test_buy_only_multi_account_target_new_holding_only(self):
         tam = read_pickle('.\/test_data\/tams\/buy_only\/buy_new_complete_01_tam.pkl')
         while self.test_method(tam.trade_account_matrix, tam.cash):
             self.trade_instructions.trades = tam.trade_account_matrix
@@ -576,7 +572,7 @@ class BuyNewComplete(TestCase):
         else:
             self.fail()
 
-    def test_buy_only_multi_account_target_new_holding_sufficient_cash(self):
+    def test_buy_only_all_3(self):
         tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_3_tam.pkl')
         rows = 1
         while self.test_method(tam.trade_account_matrix, tam.cash):
@@ -585,7 +581,7 @@ class BuyNewComplete(TestCase):
             self.assertEqual(self.trade_instructions.trades.shape, (rows, 5))
             rows+=1
         else:
-            self.assertEqual(self.trade_instructions.trades.iloc[0]['size'], 488)"""
+            self.assertEqual(self.trade_instructions.trades.iloc[0]['size'], 488)
 
     def test_buy_new_complete_2(self):
         tam = read_pickle('.\/test_data\/tams\/buy_only\/buy_new_complete_2_tam.pkl')
@@ -631,7 +627,7 @@ class SellAllMethods(TestCase):
         tam = read_pickle(
             '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_tam.pkl')
         trade_selector = MultipleAccountTradeSelector(tam)
-        trade_selector.get_sell_trades()
+        trade_selector._get_sell_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
         self.assertEqual(trades.loc[('ABC', '56-66')]['size'], -690)
@@ -640,7 +636,7 @@ class SellAllMethods(TestCase):
         tam = read_pickle(
             '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_expanded_tam.pkl')
         trade_selector = MultipleAccountTradeSelector(tam)
-        trade_selector.get_sell_trades()
+        trade_selector._get_sell_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
         self.assertEqual(trades.loc[('DEF', '111-111')]['size'], -412)
@@ -692,7 +688,6 @@ class AllTradeMethods(TestCase):
         trade_selector.get_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (14, 5))
-        print(trades)
 
 
 class TestDev(TestCase):
