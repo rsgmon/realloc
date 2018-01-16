@@ -36,8 +36,9 @@ class TradeManager(object):
 
     def allocate_trades(self):
         allocation_controller = AllocationController(self.portfolio, self.portfolio_trades)
-        instructions = allocation_controller.allocate_trades()
-        return instructions
+        instructions_object = allocation_controller.allocate_trades()
+        instructions_object.prepare_for_transmission()
+        return instructions_object.instructions
 
     def set_post_trade_portfolio(self):
         return PostTradePortfolio(self.trade_instructions, self.trade_request.portfolio_request, self.prices.prices)
@@ -342,8 +343,8 @@ class PriceRetriever(object):
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pass
     file_type = 'xl'
-    path = '\/test\/test_data\/sheets\/sell_buy\/all_methods_1.xlsx'
+    path = os.getcwd() + '\/test\/test_data\/sheets\/sell_buy\/all_methods_3.xlsx'
     trade_manager = TradeManager(file_type, path)
     print(trade_manager.trade_instructions)

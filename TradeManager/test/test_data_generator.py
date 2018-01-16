@@ -1,4 +1,4 @@
-# import TradeManager.allocation as allocate
+import TradeManager.allocation as allocate
 import TradeManager.portfolio as portfolio
 import TradeManager.trade_calculator as tc
 import TradeManager.trade_manager as trade_manage
@@ -56,26 +56,14 @@ def pickle_tam(portfolio, trade_calculator):
     with open(destination + file_output_name + '_tam.pkl', 'wb') as myfile:
         pickle.dump(tam, myfile)
 
+def pickle_trade_instructions(trade_instructions):
+    with open(destination + file_output_name + '_trade_instructions.pkl', 'wb') as myfile:
+        pickle.dump(trade_instructions, myfile)
+
 def read_pickle(file):
     with open(file, 'rb') as afile:
         apickle = pickle.load(afile)
     return apickle
-
-def _parse_args(args=None):
-    # if not args: return None
-    parser = argparse.ArgumentParser(description='Path to the config file.')
-    parser.add_argument('source_path', help='Path relative to ./test\/test_data.')
-    parser.add_argument('source_name', help='Name of test data file.')
-    parser.add_argument('destination_path', help='Example sellsOnly or sellsOnly\/singleSell')
-    parser.add_argument('command', help='Name of the function to apply. Each function generates different pickles.')
-    parser.add_argument('--file_name', help='Name of the test output file')
-
-    return parser.parse_args(args)
-
-def _build_paths(source_path, source_file, destination_path):
-    source = source_path + '\/' + source_file
-    destination = destination_path + '\/'
-    return source, destination
 
 def generate_with_one_pickle():
     request = pickle_trade_request(source, destination)
@@ -130,9 +118,31 @@ def generate_trade_request_prices():
     with open(destination + file_output_name + '_prices.pkl', 'wb') as myprices:
         pickle.dump(prices, myprices)
 
+def generate_trade_instructions():
+    request = pickle_trade_request(source, destination)
+    prices = pickle_prices(source, destination)
+    portfolio, model = pickle_portfolios_models(request, prices.prices, destination)
+    trade_calculator = pickle_trade_calculator(portfolio, model, prices.prices, destination)
+    instructions = pickle_allocation(portfolio, trade_calculator)
+    pickle_trade_instructions(instructions)
+
+def _parse_args(args=None):
+    # if not args: return None
+    parser = argparse.ArgumentParser(description='Path to the config file.')
+    parser.add_argument('source_path', help='Path relative to ./test\/test_data.')
+    parser.add_argument('source_name', help='Name of test data file.')
+    parser.add_argument('destination_path', help='Example sellsOnly or sellsOnly\/singleSell')
+    parser.add_argument('command', help='Name of the function to apply. Each function generates different pickles.')
+    parser.add_argument('--file_name', help='Name of the test output file')
+    return parser.parse_args(args)
+
+def _build_paths(source_path, source_file, destination_path):
+    source = source_path + '\/' + source_file
+    destination = destination_path + '\/'
+    return source, destination
 
 if __name__ == "__main__":
-    FUNCTION_MAP = {'generate_trade_request_prices':generate_trade_request_prices,'generate_with_one_pickle': generate_with_one_pickle,'generate_portfolios_and_portfolio_trade_lists': generate_portfolios_and_portfolio_trade_lists, 'generate_with_all_pickles': generate_with_all_pickles, 'generate_portfolio_model_prices': generate_portfolio_model_prices}
+    FUNCTION_MAP = {'generate_trade_request_prices':generate_trade_request_prices,'generate_with_one_pickle': generate_with_one_pickle,'generate_portfolios_and_portfolio_trade_lists': generate_portfolios_and_portfolio_trade_lists, 'generate_with_all_pickles': generate_with_all_pickles, 'generate_portfolio_model_prices': generate_portfolio_model_prices, 'generate_trade_instructions': generate_trade_instructions}
     args = _parse_args(sys.argv[1:])
     path = os.getcwd() + '\/TradeManager\/test\/test_data\/'
     source_path_only = path + args.source_path

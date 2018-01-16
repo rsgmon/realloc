@@ -13,11 +13,11 @@ class AllocationController(object):
         if len(self.portfolio.account_numbers) == 1:
             self.trade_selector = SingleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
             self.trade_selector.get_trades()
-            return self.trade_selector.trade_instructions.trades
+            return self.trade_selector.trade_instructions
         else:
             self.trade_selector = MultipleAccountTradeSelector(self.portfolio, self.portfolio_trade_list)
             self.trade_selector.get_trades()
-            return self.trade_selector.trade_instructions.trades
+            return self.trade_selector.trade_instructions
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
@@ -98,6 +98,7 @@ class MultipleAccountTradeSelector(TradeSelector):
                 more_trades = False
         more_trades = True
         while more_trades:
+            tam_before = tam.copy()
             while self.trading_library.buy_single_partial(tam, cash):
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
@@ -109,8 +110,8 @@ class MultipleAccountTradeSelector(TradeSelector):
             if self.trading_library.buy_new_partial(tam, cash):
                 self.trade_instructions.trades = tam
                 self.trade_account_matrix_object.update_tam()
-                # print('new_partial', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n')
-            if tam.empty:
+                # print('new_partial', '\n', tam.sort_index(), '\n', self.trade_instructions.trades, '\n', cash)
+            if tam.equals(tam_before):
                 more_trades = False
 
 
@@ -150,8 +151,10 @@ class TradeAccountMatrix(object):
     def _update_share_trades(self):
         trades_only = self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']
         trades_only.index = trades_only.index.droplevel(level=1)
-        self.trade_account_matrix['symbols_traded'] = pd.Series(self.trade_account_matrix.index.get_level_values(
-        0)).map(trades_only).fillna(0).values
+        print(trades_only.sum())
+        print(self.trade_account_matrix)
+        print(pd.Series(self.trade_account_matrix.index.get_level_values(0)).map(trades_only).fillna(0).values)
+        self.trade_account_matrix['symbols_traded'] = pd.Series(self.trade_account_matrix.index.get_level_values(0)).map(trades_only).fillna(0).values
         self.trade_account_matrix['share_trades'] = self.trade_account_matrix['share_trades'] - self.trade_account_matrix['symbols_traded']
         self.trade_account_matrix.drop(['symbols_traded'], axis=1, inplace=True)
 
@@ -533,6 +536,9 @@ class TradingLibrary(object):
                     tam['cash'] = group['shares'][0]
             # Check smallest trade is greater than largest balance and return false if true as no trade possible. tam and cash cleanup included.
             tam['dollar_trades'] = tam.price * tam.share_trades
+            if (tam.cash < tam.price).all():
+                tam.drop(['account', 'cash', 'dollar_trades'], 1, inplace=True)
+                return False
             new_account = tam.reset_index().copy()
             tam.drop(['account', 'cash', 'dollar_trades'], 1, inplace=True)
             cash.drop(['max_cash'], 1, inplace=True)
@@ -603,3 +609,9 @@ class TradeInstructions(object):
 
     def clean_up_trades(self):
         self._trades.drop(['shares'], inplace=True)
+
+    def prepare_for_transmission(self):
+        self.instructions = self.trades.copy().reset_index()
+        self.instructions.drop(['model_weight', 'price', 'share_trades', 'shares'], 1, inplace=True)
+
+

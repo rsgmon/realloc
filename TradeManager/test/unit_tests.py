@@ -1,6 +1,6 @@
 from unittest import TestCase
 from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
-from TradeManager.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, AllocationController, TradingLibrary, SingleAccountTradeSelector, TradeSizeUpdateTamLibrary
+from TradeManager.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, AllocationController, TradingLibrary, SingleAccountTradeSelector
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from TradeManager.test.test_data_generator import read_pickle
@@ -229,7 +229,6 @@ class TestCalculator(TestCase):
 class TAM(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
-        self.tam_trade_update = TradeSizeUpdateTamLibrary()
 
     def test_tam_create_buy_only(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/multi_account_single_target_actual_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/multi_account_single_target_actual_trade_calculator.pkl').portfolio_trade_list)
@@ -262,6 +261,13 @@ class TAM(TestCase):
         tam._update_cash()
         self.assertEqual(tam.cash.shares.sum(), 36500)
 
+class TradeInstructions(TestCase):
+    def test_all_trades_2(self):
+        trade_instruction_object = read_pickle('.\/test_data\/trade_instructions\/all_methods_2.pkl')
+        trade_instruction_object.prepare_for_transmission()
+        self.assertEqual(trade_instruction_object.instructions.shape, (14,3))
+
+# Each class in this section refers to a single method within the trading library class.
 
 class SellComplete(TestCase):
     def setUp(self):
@@ -623,19 +629,29 @@ class BuyNewPartial(TestCase):
 
 
 class SellAllMethods(TestCase):
-    def test_MultipleAccountTradeSelector(self):
-        tam = read_pickle(
-            '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_tam.pkl')
-        trade_selector = MultipleAccountTradeSelector(tam)
-        trade_selector._get_sell_trades()
-        trades = trade_selector.trade_instructions.trades
-        self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
-        self.assertEqual(trades.loc[('ABC', '56-66')]['size'], -690)
+    # def test_MultipleAccountTradeSelector(self):
+    #     trade_selector = MultipleAccountTradeSelector(read_pickle(
+    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_portfolio.pkl'), read_pickle(
+    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_trade_calculator.pkl').portfolio_trade_list)
+    #     trade_selector._get_sell_trades()
+    #     trades = trade_selector.trade_instructions.trades
+    #     self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
+    #     self.assertEqual(trades.loc[('ABC', '56-66')]['size'], -690)
+    #
+    # def test_MultipleAccountTradeSelector_2(self):
+    #     trade_selector = MultipleAccountTradeSelector(read_pickle(
+    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_expanded_portfolio.pkl'), read_pickle(
+    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_trade_expanded_calculator.pkl').portfolio_trade_list)
+    #     trade_selector._get_sell_trades()
+    #     trades = trade_selector.trade_instructions.trades
+    #     self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
+    #     self.assertEqual(trades.loc[('DEF', '111-111')]['size'], -412)
+    #     self.assertEqual(trades.loc[('DEF', '56-66')]['size'], -200)
 
     def test_MultipleAccountTradeSelector_2(self):
-        tam = read_pickle(
-            '.\/test_data\/tams\/sell_only\/cover_all_sell_methods_expanded_tam.pkl')
-        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_2_portfolio.pkl'), read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_2_trade_calculator.pkl').portfolio_trade_list)
         trade_selector._get_sell_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)

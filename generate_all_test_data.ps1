@@ -22,9 +22,6 @@
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_single_partial_01.xlsx tams\buy_only generate_with_one_pickle --file_name buy_single_partial_01
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only buy_single_partial_02.xlsx tams\buy_only generate_with_one_pickle --file_name buy_single_partial_02
 
-
-
-
 # ===  sell_only
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  multi_account_actual_equal_no_model.xlsx tams\sell_only generate_with_one_pickle --file_name multi_account_actual_equal_no_model
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  multi_account_actual_no_model.xlsx tams\sell_only generate_with_one_pickle --file_name multi_account_actual_no_model
@@ -39,9 +36,7 @@
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_1.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_1
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_2.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_2
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_3.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_3
-python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_4.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_4
-# python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods.xlsx tams\sell_only generate_with_one_pickle --file_name cover_all_sell_methods
-# python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_expanded.xlsx tams\sell_only generate_with_one_pickle --file_name cover_all_sell_methods_expanded
+# python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_4.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_4
 
 
 # ====== sell_buy
@@ -55,6 +50,10 @@ python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smalles
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name multi_account_single_target_actual
 
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  multi_account_actual_equal_no_model.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name multi_account_actual_equal_no_model
+python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods
+python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_2.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods_2
+python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_expanded.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods_expanded
+
 
 # ================ Generate trade_calculator from portfolios models prices
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name multi_account_single_target_actual
@@ -66,3 +65,8 @@ python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smalles
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx trade_request_prices generate_trade_request_prices --file_name buy_only_multi_account_single_target_actual
 
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only single_account_model_multi_actual.xlsx trade_request_prices generate_trade_request_prices --file_name single_account_model_multi_target
+
+
+
+# ================== Generate Trade Instructions
+# python .\TradeManager\test\test_data_generator.py sheets\sell_buy  all_methods_2.xlsx trade_instructions generate_trade_instructions --file_name all_methods_2
