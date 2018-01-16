@@ -419,12 +419,15 @@ class TradingLibrary(object):
             self.utility_get_unique_max(tam, 'cash', output_field='max_cash', index_level=1)
             # make a copy of the account with highest cash only
             account = tam[tam['max_cash']].copy()
+            if (account.cash < account.price).all():
+                tam.drop(['cash', 'max_cash'], 1, inplace=True)
+                return False
             tam.drop(['cash', 'max_cash'], 1, inplace=True)
             account['dollar_trade'] = account['share_trades'] * account['price']
             account.drop(account[account.share_trades < 0].index, inplace=True)
             self.utility_get_unique_max(account, 'dollar_trade', output_field='max_dollar_trade')
             account.drop(account[~account.max_dollar_trade].index, inplace=True)
-            tam['size'] = account.cash/account.price
+            tam['size'] = (account.cash/account.price).apply(lambda x: math.trunc(x))
             return True
         else:
             tam.drop(['any_trades', 'row_count'], 1, inplace=True)
@@ -437,7 +440,6 @@ class TradingLibrary(object):
         :param cash:
         :return:
         """
-
         tam['row_count'] = tam['price'].groupby(level=0).transform('count')
         tam['any_trades'] = (tam['share_trades'] > 0) & (tam['row_count'] == 1)
         if tam['any_trades'].any():
@@ -457,7 +459,7 @@ class TradingLibrary(object):
             if account.shape[0] > 1:
                 self.utility_get_unique_max(account, 'dollar_trade', output_field='max_dollar_trade')
                 account.drop(account[~account.max_dollar_trade].index, inplace=True)
-            tam['size'] = account.cash / account.price
+            tam['size'] = (account.cash / account.price).apply(lambda x: math.trunc(x))
             return True
         else:
             tam.drop(['any_trades', 'row_count'], 1, inplace=True)
@@ -535,10 +537,11 @@ class TradingLibrary(object):
             if (tam.cash < tam.price).all():
                 tam.drop(['account', 'cash', 'dollar_trades'], 1, inplace=True)
                 return False
+            # trade present, create new df and cleanup
             new_account = tam.reset_index().copy()
             tam.drop(['account', 'cash', 'dollar_trades'], 1, inplace=True)
             cash.drop(['max_cash'], 1, inplace=True)
-            # create dataframe with same index as tam
+            # update dataframe with same index as tam and complete trade selection
             new_account.drop_duplicates(inplace=True)
             new_account.drop(['account_number'], 1, inplace=True)
             new_account.rename(columns={'account': 'account_number'}, inplace=True)
