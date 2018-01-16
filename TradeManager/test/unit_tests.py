@@ -629,24 +629,24 @@ class BuyNewPartial(TestCase):
 
 
 class SellAllMethods(TestCase):
-    # def test_MultipleAccountTradeSelector(self):
-    #     trade_selector = MultipleAccountTradeSelector(read_pickle(
-    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_portfolio.pkl'), read_pickle(
-    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_trade_calculator.pkl').portfolio_trade_list)
-    #     trade_selector._get_sell_trades()
-    #     trades = trade_selector.trade_instructions.trades
-    #     self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
-    #     self.assertEqual(trades.loc[('ABC', '56-66')]['size'], -690)
-    #
-    # def test_MultipleAccountTradeSelector_2(self):
-    #     trade_selector = MultipleAccountTradeSelector(read_pickle(
-    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_expanded_portfolio.pkl'), read_pickle(
-    #         '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_trade_expanded_calculator.pkl').portfolio_trade_list)
-    #     trade_selector._get_sell_trades()
-    #     trades = trade_selector.trade_instructions.trades
-    #     self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
-    #     self.assertEqual(trades.loc[('DEF', '111-111')]['size'], -412)
-    #     self.assertEqual(trades.loc[('DEF', '56-66')]['size'], -200)
+    def test_MultipleAccountTradeSelector(self):
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_portfolio.pkl'), read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_trade_calculator.pkl').portfolio_trade_list)
+        trade_selector._get_sell_trades()
+        trades = trade_selector.trade_instructions.trades
+        self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
+        self.assertEqual(trades.loc[('ABC', '56-66')]['size'], -690)
+
+    def test_MultipleAccountTradeSelector_expanded(self):
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_expanded_portfolio.pkl'), read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_expanded_trade_calculator.pkl').portfolio_trade_list)
+        trade_selector._get_sell_trades()
+        trades = trade_selector.trade_instructions.trades
+        self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
+        self.assertEqual(trades.loc[('DEF', '111-111')]['size'], -412)
+        self.assertEqual(trades.loc[('DEF', '56-66')]['size'], -200)
 
     def test_MultipleAccountTradeSelector_2(self):
         trade_selector = MultipleAccountTradeSelector(read_pickle(
@@ -654,37 +654,36 @@ class SellAllMethods(TestCase):
             '.\/test_data\/portfolios_port_trade_lists\/sell_only\/cover_all_sell_methods_2_trade_calculator.pkl').portfolio_trade_list)
         trade_selector._get_sell_trades()
         trades = trade_selector.trade_instructions.trades
-        self.assertEqual(trades.loc[('GHI', '45-33')]['size'], -100)
-        self.assertEqual(trades.loc[('DEF', '111-111')]['size'], -412)
-        self.assertEqual(trades.loc[('DEF', '56-66')]['size'], -200)
+        self.assertEqual(trades.loc[('AAPL', '899-R')]['size'], -286)
+        self.assertEqual(trades.loc[('NKE', 'ER-56')]['size'], -600)
 
 
 class BuyAllMethods(TestCase):
     def test_MultipleAccountTradeSelector(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_tam.pkl')
-        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_trade_calculator.pkl').portfolio_trade_list)
         trade_selector._get_buy_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (6, 5))
         self.assertEqual(trades.loc[('GGG', '111-111')]['size'], 1086)
 
     def test_MultipleAccountTradeSelector_02(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_2_tam.pkl')
-        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_2_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_2_trade_calculator.pkl').portfolio_trade_list)
         trade_selector._get_buy_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (7, 5))
 
     def test_MultipleAccountTradeSelector_03(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_3_tam.pkl')
-        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_3_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_3_trade_calculator.pkl').portfolio_trade_list)
         trade_selector._get_buy_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (13, 5))
 
     def test_MultipleAccountTradeSelector_04(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/cover_all_buy_methods_4_tam.pkl')
-        trade_selector = MultipleAccountTradeSelector(tam)
+        trade_selector = MultipleAccountTradeSelector(read_pickle(
+            '.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_3_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/cover_all_buy_methods_3_trade_calculator.pkl').portfolio_trade_list)
         trade_selector._get_buy_trades()
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (13, 5))

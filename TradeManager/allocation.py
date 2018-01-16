@@ -149,11 +149,7 @@ class TradeAccountMatrix(object):
         self.trade_account_matrix['shares'] = self.trade_account_matrix['shares'] + self.trade_account_matrix['size']
 
     def _update_share_trades(self):
-        trades_only = self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']
-        trades_only.index = trades_only.index.droplevel(level=1)
-        print(trades_only.sum())
-        print(self.trade_account_matrix)
-        print(pd.Series(self.trade_account_matrix.index.get_level_values(0)).map(trades_only).fillna(0).values)
+        trades_only = (self.trade_account_matrix[self.trade_account_matrix.loc[:, 'size'] != 0]['size']).sum(level=0)
         self.trade_account_matrix['symbols_traded'] = pd.Series(self.trade_account_matrix.index.get_level_values(0)).map(trades_only).fillna(0).values
         self.trade_account_matrix['share_trades'] = self.trade_account_matrix['share_trades'] - self.trade_account_matrix['symbols_traded']
         self.trade_account_matrix.drop(['symbols_traded'], axis=1, inplace=True)
