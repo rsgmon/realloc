@@ -267,13 +267,12 @@ class TradingLibrary(object):
         tam['row_count'] = tam['price'].groupby(level=0).transform('count')
         tam['select'] = (tam['row_count'] == 1) & (tam['share_trades'] > 0)
         if tam['select'].any():
-            tam['dollar_trade'] = tam['share_trades'] * tam['price'] * -1
+            tam['dollar_trade'] = tam['share_trades'] * tam['price']
             self.utility_add_cash(tam, cash)
-            tam['has_cash'] = (tam['select']) & (tam['cash'] > tam['dollar_trade']*-1)
+            tam['has_cash'] = (tam['select']) & (tam['cash'] > tam['dollar_trade'])
             if tam['has_cash'].any():
                 tam['size'] = tam[tam['has_cash']]['share_trades']
                 tam.drop(['dollar_trade', 'cash', 'row_count', 'select', 'has_cash'], 1, inplace=True)
-
                 return True
             else:
                 tam.drop(['dollar_trade', 'cash', 'row_count', 'select', 'has_cash'], 1, inplace=True)
@@ -468,6 +467,7 @@ class TradingLibrary(object):
                 self.utility_get_unique_max(account, 'dollar_trade', output_field='max_dollar_trade')
                 account.drop(account[~account.max_dollar_trade].index, inplace=True)
             tam['size'] = (account.cash / account.price).apply(lambda x: math.trunc(x))
+            print(tam)
             return True
         else:
             tam.drop(['any_trades', 'row_count'], 1, inplace=True)
@@ -598,6 +598,7 @@ class TradingLibrary(object):
     def utility_add_cash(self, tam, cash):
         tam.reset_index(level=0, inplace=True)
         tam['cash'] = cash
+        tam.cash.fillna(0, inplace=True)
         tam.reset_index(inplace=True)
         tam.set_index(['symbol', 'account_number'], inplace=True)
 
@@ -610,8 +611,9 @@ class TradeInstructions(object):
     def trades(self):
         return self._trades
 
-    @trades.setter
+    @property.setter
     def trades(self, tam):
+        print(tam)
         self._trades = pd.concat([self._trades, tam.loc[~tam['size'].isnull()]])
 
     def clean_up_trades(self):
