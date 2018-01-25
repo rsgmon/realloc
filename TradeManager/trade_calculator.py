@@ -15,6 +15,11 @@ class TradeCalculator(object):
 
     def _get_dollar_trades(self, portfolio, model_positions):
         portfolio_model_weights = pd.concat([model_positions, portfolio.portfolio_positions['portfolio_weight'], portfolio.portfolio_positions['shares']], axis=1).fillna(0)
+        if portfolio_model_weights.empty:
+            portfolio_model_weights.loc['placeholder'] = 0
+            portfolio_model_weights['price'] = 0
+            portfolio_model_weights['dollar_trades'] = 0
+            return portfolio_model_weights
         portfolio_model_weights['price'] = self.prices
         portfolio_model_weights['dollar_trades'] = ((portfolio_model_weights['model_weight'] - portfolio_model_weights['portfolio_weight']) * self.portfolio.portfolio_value).round(2)
         portfolio_model_weights.index.name = 'symbol'

@@ -83,6 +83,17 @@ class TestTradeRequest(TestCase):
         request._validate_raw_request()
         self.assertEqual(len(request.raw_request['symbol'][0]),3)
 
+    def test_accept_json(self):
+        import json
+        rr = RawRequest('json', json.dumps(
+            {"account_number": ["gt056"], "symbol": ["account_cash"], "model_weight": None, "shares": 45, "price": '50',
+             "restrictions": None}))
+        with self.assertRaises(RuntimeError) as cm:
+            rr = RawRequest('json', json.dumps({"account_number": ["gt056"], "symbol": ["account_cash"], "model_weight": None, "shares": 45,"price": '50', "restrictions": None}))
+            rr._missing_required_columns()
+            self.assertEqual(str(cm.exception),
+                             "The following columns were missing: ['price', 'account_number', 'symbol', 'model_weight', 'shares', 'restrictions']")
+
 
 class TestPriceRetriever(TestCase):
     def setUp(self):
@@ -211,15 +222,8 @@ class TestCalculator(TestCase):
         trade_calculator = TradeCalculator(read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_portfolio.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_model.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/multi_account_single_target_actual_prices.pkl').prices)
         self.assertEqual(trade_calculator.portfolio_trade_list.loc['GGG'].share_trades, -122.5)
 
-    # def test_single_buy_and_sell(self):
-    #     portfolio = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/portfolio.pkl')
-    #     trade_request = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/request.pkl')
-    #     prices = read_pickle('.\/test_data\/sellsAndBuys\/singleAccount\/prices.pkl')
-    #     model = Model(trade_request.model_request)
-    #     trade_calculator = TradeCalculator(portfolio, model, prices.prices)
-    #     self.assertEqual(len(trade_calculator.portfolio_trade_list), 3)
-    #     self.assertEqual(trade_calculator.portfolio_trade_list['share_trades'][0], -352.0)
-    #     self.assertEqual(trade_calculator.portfolio_trade_list['share_trades'][1], -47.0)
+    def test_no_trades(self):
+        rr = RawRequest()
 
     def test_sell_only(self):
         trade_calculator = TradeCalculator(read_pickle(           '.\/test_data\/portfolio_model_prices/sell_only_multi_account_target_actual_equal_portfolio.pkl'), read_pickle(         '.\/test_data\/portfolio_model_prices\/sell_only_multi_account_target_actual_equal_model.pkl'), read_pickle(            '.\/test_data\/portfolio_model_prices\/sell_only_multi_account_target_actual_equal_prices.pkl').prices)

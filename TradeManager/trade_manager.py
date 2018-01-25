@@ -65,10 +65,7 @@ class RawRequest(object):
         if 'xl' in self.file_type_label:
             # todo add conditional that checks for model tab in sheet
             # todo handle blank rows in between positions
-
             self.raw_request = pd.read_excel(self.file_path, engine='xlrd')
-
-
             # self.raw_request['symbol'].astype("int")
         elif 'csv' in self.file_type_label:
             self.raw_request = pd.read_csv(self.file_path)
@@ -344,7 +341,10 @@ class PriceRetriever(object):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 if __name__ == "__main__": # pass
-    file_type = 'xl'
-    path = os.getcwd() + '\/test\/test_data\/sheets\/sell_buy\/all_methods_3.xlsx'
-    trade_manager = TradeManager(file_type, path)
-    print(trade_manager.trade_instructions)
+    # file_type = 'xl'
+    # path = os.getcwd() + '\/test\/test_data\/sheets\/sell_buy\/all_methods_3.xlsx'
+    # trade_manager = TradeManager(file_type, path)
+    # print(trade_manager.trade_instructions)
+    import json
+    trade_manager = TradeManager('json', json.dumps({"account_number": ["gt056"], "symbol": ["account_cash"], "model_weight": None, "shares": 45,"price": '50', "restrictions": None}))
+    # trade_manager = TradeManager('json', json.dumps({"account_number": ["model","gt056"], "symbol": ["ABC","account_cash"], "model_weight": [0.01,None], "shares": [None, 5000], "price": ['50',1],"restrictions": None}))

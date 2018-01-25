@@ -42,10 +42,10 @@ class TradeSelector(object):
 class SingleAccountTradeSelector(TradeSelector):
     def get_trades(self):
         if self._has_sells:
-            sell_trades = self.trading_library.single_account_sell(self.tam.trade_account_matrix, self.tam.account_numbers)
+            sell_trades = self.trading_library.single_account_sell(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
             self.trade_instructions.trades = sell_trades
         if self._has_buys():
-            buy_trades = self.trading_library.single_account_buy(self.tam.trade_account_matrix, self.tam.account_numbers)
+            buy_trades = self.trading_library.single_account_buy(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
             self.trade_instructions.trades = buy_trades
 
 
@@ -137,6 +137,7 @@ class TradeAccountMatrix(object):
         #     remove unneeded columns
         tam.shares.fillna(0, inplace=True)
         tam.drop(['portfolio_weight', 'dollar_trades'], 1, inplace=True)
+        # todo drop any sells with model as account
         return tam
 
     def _set_model_only_matrix(self, trade_list):

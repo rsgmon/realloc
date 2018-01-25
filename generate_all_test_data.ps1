@@ -47,10 +47,10 @@
 
 # ========== Buy Only
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name multi_account_single_target_actual
-python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods
-python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_2.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods_2
-python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_3.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods_3
-python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_4.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods_4
+# python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods
+# python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_2.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods_2
+# python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_3.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods_3
+# python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_methods_4.xlsx portfolios_port_trade_lists\buy_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_buy_methods_4
 
 
 
@@ -61,11 +61,13 @@ python .\TradeManager\test\test_data_generator.py sheets\buy_only cover_all_buy_
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_expanded.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods_expanded
 
 
-# ================ Generate trade_calculator from portfolios models prices
+# ================ Generate portfolios models prices
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name multi_account_single_target_actual
 
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only multi_account_actual_single_target.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name sell_only_multi_account_actual_single_target
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only multi_account_target_actual_equal.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name sell_only_multi_account_target_actual_equal
+python .\TradeManager\test\test_data_generator.py sheets\edge_cases no_trades.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name no_trades
+
 
 # ================= Generate portfolio from trade_request prices
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx trade_request_prices generate_trade_request_prices --file_name buy_only_multi_account_single_target_actual
