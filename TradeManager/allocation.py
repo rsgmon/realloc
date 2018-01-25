@@ -41,25 +41,30 @@ class TradeSelector(object):
 
 class SingleAccountTradeSelector(TradeSelector):
     def get_trades(self):
-        if self._has_sells:
-            sell_trades = self.trading_library.single_account_sell(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
-            self.trade_instructions.trades = sell_trades
-        if self._has_buys():
-            buy_trades = self.trading_library.single_account_buy(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
-            self.trade_instructions.trades = buy_trades
+        if self.trade_account_matrix_object.trade_account_matrix is None:
+            pass
+        else:
+            if self._has_sells:
+                sell_trades = self.trading_library.single_account_sell(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
+                self.trade_instructions.trades = sell_trades
+            if self._has_buys():
+                buy_trades = self.trading_library.single_account_buy(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
+                self.trade_instructions.trades = buy_trades
 
 
 class MultipleAccountTradeSelector(TradeSelector):
     def get_trades(self):
-        # if self._has_sells:
-        self._get_sell_trades()
-        # if self._has_buys():
-        self._get_buy_trades()
+        if self.trade_account_matrix_object.trade_account_matrix is None:
+            pass
+        else:
+            # if self._has_sells:
+            self._get_sell_trades()
+            # if self._has_buys():
+            self._get_buy_trades()
 
     def _get_sell_trades(self):
         tam = self.trade_account_matrix_object.trade_account_matrix
         more_trades = True
-
         if self.trading_library.sell_complete(tam):
             self.trade_instructions.trades = tam
             self.trade_account_matrix_object.update_tam()
@@ -122,8 +127,10 @@ class TradeAccountMatrix(object):
         self.account_matrix = portfolio.account_matrix
         self.portfolio_trade_list = portfolio_trade_list
         self.cash = portfolio.cash_matrix.copy()
-
-        if len(args) == 0:
+        if portfolio_trade_list is None:
+            self.trade_account_matrix = None
+        else:
+        # if len(args) == 0:  don't know why this xisted. keeping until all tests pass
             self.trade_account_matrix = self._construct_trade_account_matrix(self.account_matrix, self.portfolio_trade_list)
             self.trade_account_matrix = self.trade_account_matrix.copy()
 
@@ -611,7 +618,10 @@ class TradeInstructions(object):
         self._trades.drop(['shares'], inplace=True)
 
     def prepare_for_transmission(self):
-        self.instructions = self.trades.copy().reset_index()
-        self.instructions.drop(['model_weight', 'price', 'share_trades', 'shares'], 1, inplace=True)
+        if self.trades.empty:
+            self.instructions = pd.DataFrame(['no_trades'])
+        else:
+            self.instructions = self.trades.copy().reset_index()
+            self.instructions.drop(['model_weight', 'price', 'share_trades', 'shares'], 1, inplace=True)
 
 

@@ -219,11 +219,12 @@ class TestCalculator(TestCase):
         self.assertEqual(trade_calculator.portfolio_trade_list.loc['GGG'].share_trades, 10)
 
     def test_sell_only_single_target(self):
-        trade_calculator = TradeCalculator(read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_portfolio.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_model.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/multi_account_single_target_actual_prices.pkl').prices)
+        trade_calculator = TradeCalculator(read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_portfolio.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_model.pkl'), read_pickle('.\/test_data\/portfolio_model_prices\/sell_only_multi_account_actual_single_target_prices.pkl').prices)
         self.assertEqual(trade_calculator.portfolio_trade_list.loc['GGG'].share_trades, -122.5)
 
     def test_no_trades(self):
-        rr = RawRequest()
+        base = '.\/test_data\/portfolio_model_prices\/'
+        trade_calculator = TradeCalculator(read_pickle(base+'no_trades_portfolio.pkl'), read_pickle(base +'no_trades_model.pkl'), read_pickle(base+'no_trades_prices.pkl'))
 
     def test_sell_only(self):
         trade_calculator = TradeCalculator(read_pickle(           '.\/test_data\/portfolio_model_prices/sell_only_multi_account_target_actual_equal_portfolio.pkl'), read_pickle(         '.\/test_data\/portfolio_model_prices\/sell_only_multi_account_target_actual_equal_model.pkl'), read_pickle(            '.\/test_data\/portfolio_model_prices\/sell_only_multi_account_target_actual_equal_prices.pkl').prices)
@@ -233,6 +234,11 @@ class TestCalculator(TestCase):
 class TAM(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
+
+    def test_tam_create_no_trades(self):
+        portfolio = read_pickle('.\/test_data\/portfolios_port_trade_lists\/edge_cases\/no_trades_portfolio.pkl')
+        port_trade_list = read_pickle('.\/test_data\/portfolios_port_trade_lists\/edge_cases\/no_trades_trade_calculator.pkl').portfolio_trade_list
+        tam = TradeAccountMatrix(portfolio, port_trade_list)
 
     def test_tam_create_buy_only(self):
         tam = TradeAccountMatrix(read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/multi_account_single_target_actual_portfolio.pkl'), read_pickle('.\/test_data\/portfolios_port_trade_lists\/buy_only\/multi_account_single_target_actual_trade_calculator.pkl').portfolio_trade_list)

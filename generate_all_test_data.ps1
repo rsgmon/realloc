@@ -36,6 +36,8 @@
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  sell_smallest_multiple_4.xlsx tams\sell_only generate_with_one_pickle --file_name sell_smallest_multiple_4
 
 
+
+
 # ====== sell_buy
 # python .\TradeManager\test\test_data_generator.py sheets\sell_buy  sell_smallest_multiple_3.xlsx tams\sell_buy generate_with_one_pickle --file_name sell_smallest_multiple_3
 # python .\TradeManager\test\test_data_generator.py sheets\sell_buy  all_methods_1.xlsx tams\sell_buy generate_with_one_pickle --file_name all_methods_1
@@ -60,13 +62,16 @@
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_2.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods_2
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_expanded.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods_expanded
 
+# ===== edge cases
+python .\TradeManager\test\test_data_generator.py sheets\edge_cases no_trades.xlsx portfolios_port_trade_lists\edge_cases generate_portfolios_and_portfolio_trade_lists --file_name no_trades
+
 
 # ================ Generate portfolios models prices
 # python .\TradeManager\test\test_data_generator.py sheets\buy_only multi_account_single_target_actual.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name multi_account_single_target_actual
 
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only multi_account_actual_single_target.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name sell_only_multi_account_actual_single_target
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only multi_account_target_actual_equal.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name sell_only_multi_account_target_actual_equal
-python .\TradeManager\test\test_data_generator.py sheets\edge_cases no_trades.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name no_trades
+# python .\TradeManager\test\test_data_generator.py sheets\edge_cases no_trades.xlsx portfolio_model_prices generate_portfolio_model_prices --file_name no_trades
 
 
 # ================= Generate portfolio from trade_request prices
