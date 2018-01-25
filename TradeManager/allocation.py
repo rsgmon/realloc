@@ -130,9 +130,9 @@ class TradeAccountMatrix(object):
         if portfolio_trade_list is None:
             self.trade_account_matrix = None
         else:
-        # if len(args) == 0:  don't know why this xisted. keeping until all tests pass
-            self.trade_account_matrix = self._construct_trade_account_matrix(self.account_matrix, self.portfolio_trade_list)
-            self.trade_account_matrix = self.trade_account_matrix.copy()
+            if len(args) == 0:  #don't know why this xisted. keeping until all tests pass
+                self.trade_account_matrix = self._construct_trade_account_matrix(self.account_matrix, self.portfolio_trade_list)
+                self.trade_account_matrix = self.trade_account_matrix.copy()
 
     def _construct_trade_account_matrix(self, account_matrix, trade_list):
         tam = account_matrix.join(trade_list)
@@ -467,7 +467,6 @@ class TradingLibrary(object):
                 self.utility_get_unique_max(account, 'dollar_trade', output_field='max_dollar_trade')
                 account.drop(account[~account.max_dollar_trade].index, inplace=True)
             tam['size'] = (account.cash / account.price).apply(lambda x: math.trunc(x))
-            print(tam)
             return True
         else:
             tam.drop(['any_trades', 'row_count'], 1, inplace=True)
@@ -611,9 +610,9 @@ class TradeInstructions(object):
     def trades(self):
         return self._trades
 
-    @property.setter
+    @trades.setter
     def trades(self, tam):
-        print(tam)
+        print('hello', tam)
         self._trades = pd.concat([self._trades, tam.loc[~tam['size'].isnull()]])
 
     def clean_up_trades(self):

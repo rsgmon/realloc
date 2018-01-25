@@ -282,7 +282,6 @@ class TradeInstructions(TestCase):
 class SellComplete(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
-        self.tam_trade_update = TradeSizeUpdateTamLibrary()
         self.trade_instructions = TradeInstructions()
         self.test_method = self.trading_library.sell_complete
 
@@ -320,7 +319,6 @@ class SellComplete(TestCase):
 class SellSmallestMultiple(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
-        self.tam_trade_update = TradeSizeUpdateTamLibrary()
         self.trade_instructions = TradeInstructions()
         self.test_method = self.trading_library.sell_smallest_multiple
 
@@ -509,7 +507,6 @@ class BuyMultiplePartial(TestCase):
 class BuyMultiplePartialOneTrade(TestCase):
     def setUp(self):
         self.trading_library = TradingLibrary()
-        self.tam_trade_update = TradeSizeUpdateTamLibrary()
         self.trade_instructions = TradeInstructions()
         self.test_method = self.trading_library.buy_multiple_partial_one_trade
 
@@ -541,24 +538,24 @@ class BuySinglePartial(TestCase):
         # print(tam.trade_account_matrix, '\n', tam.cash)
         rows = 1
         while self.test_method(tam.trade_account_matrix, tam.cash):
-            print(tam.trade_account_matrix)
+            # print(tam.trade_account_matrix)
             self.trade_instructions.trades = tam.trade_account_matrix
-
+            print(self.trade_instructions.trades)
             tam.update_tam()
             rows+=1
         self.assertEqual(self.trade_instructions.trades.shape, (rows, 5))
         # print('ins', self.trade_instructions.trades)
 
-    def test_02(self):
-        tam = read_pickle('.\/test_data\/tams\/buy_only\/buy_single_partial_02_tam.pkl')
-        rows = 1
-        while self.test_method(tam.trade_account_matrix, tam.cash):
-            self.trade_instructions.trades = tam.trade_account_matrix
-            tam.update_tam()
-            self.assertEqual(self.trade_instructions.trades.shape, (rows, 5))
-            rows+=1
-        else:
-            self.assertEqual(self.trade_instructions.trades.iloc[0]['size'], 40)
+    # def test_02(self):
+    #     tam = read_pickle('.\/test_data\/tams\/buy_only\/buy_single_partial_02_tam.pkl')
+    #     rows = 1
+    #     while self.test_method(tam.trade_account_matrix, tam.cash):
+    #         self.trade_instructions.trades = tam.trade_account_matrix
+    #         tam.update_tam()
+    #         self.assertEqual(self.trade_instructions.trades.shape, (rows, 5))
+    #         rows+=1
+    #     else:
+    #         self.assertEqual(self.trade_instructions.trades.iloc[0]['size'], 40)
 
 
 class BuyNewComplete(TestCase):
