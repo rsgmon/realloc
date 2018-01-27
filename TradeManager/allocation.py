@@ -611,8 +611,8 @@ class TradeInstructions(object):
         return self._trades
 
     @trades.setter
+
     def trades(self, tam):
-        print('hello', tam)
         self._trades = pd.concat([self._trades, tam.loc[~tam['size'].isnull()]])
 
     def clean_up_trades(self):
