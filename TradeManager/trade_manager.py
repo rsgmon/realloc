@@ -98,6 +98,7 @@ class RawRequest(object):
     def strip_all(self):
         for column in self.raw_request:
             if not is_numeric_dtype(self.raw_request[column]):
+                self.raw_request[column] = self.raw_request[column].astype('str')
                 self.raw_request[column] = self.raw_request[column].str.strip()
 
     def _empty_request(self):
