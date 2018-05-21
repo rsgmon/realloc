@@ -85,12 +85,12 @@ class TestTradeRequest(TestCase):
 
 
 class TestPriceRetriever(TestCase):
-    def setUp(self):
-        self.raw_request_sell_only = RawRequest('xl',
-            'test_data\/sheets\/sell_only\/multi_account_target_actual_equal.xlsx')
-        self.raw_request = RawRequest('xl',
-            'test_data\/Trade Request Example.xlsx')
-        self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
+    def setUp(self): pass
+        # self.raw_request_sell_only = RawRequest('xl',
+        #     'test_data\/sheets\/sell_only\/multi_account_target_actual_equal.xlsx')
+        # self.raw_request = RawRequest('xl',
+        #     'test_data\/Trade Request Example.xlsx')
+        # self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
 
     def test_initiate_price_retriever(self):
         self.assertTrue(PriceRetriever(self.raw_request))
@@ -111,6 +111,14 @@ class TestPriceRetriever(TestCase):
                                           "price": 'hjg', "restrictions": None}})
         pr = PriceRetriever(simple_request)
         self.assertRaises(ValueError, pr)
+
+    def test_port_rebalance(self):
+        mock_raw_request = RawRequest('xl','test_data\/sheets\/port rebal for fithm.xlsx')
+        print(mock_raw_request.raw_request)
+        pr = PriceRetriever(mock_raw_request)
+        pr(test=False)
+        print(pr.raw_request)
+        # print(pr.prices)
 
     # 05/30/17 passes but calls yahoo so not running at this point
     # def test_price_retriever_add_prices_with_yahoo_prices(self):
