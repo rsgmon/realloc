@@ -624,7 +624,7 @@ class TradeInstructions(object):
         if self.trades.empty:
             self.instructions = pd.DataFrame(['no_trades'])
         else:
-            self.instructions = self.trades.copy().reset_index().loc[:,['account_number', 'size']]
+            self.instructions = self.trades.copy().reset_index().loc[:,['symbol', 'account_number', 'size']]
 
 
 
