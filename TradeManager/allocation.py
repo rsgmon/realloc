@@ -195,7 +195,6 @@ class TradingLibrary(object):
     """Other than single_account_sell and single_account_buy, all methods handle multiple accounts."""
 
     def single_account_sell(self, tam, ans):
-        print(tam)
         tam['account'] = ans[0]
         return tam.loc[tam.loc[:, 'share_trades'] < 0].loc[:, ['share_trades', 'account']]
 
@@ -625,7 +624,7 @@ class TradeInstructions(object):
         if self.trades.empty:
             self.instructions = pd.DataFrame(['no_trades'])
         else:
-            self.instructions = self.trades.copy().reset_index()
-            self.instructions.drop(['model_weight', 'price', 'share_trades', 'shares'], 1, inplace=True)
+            self.instructions = self.trades.copy().reset_index().loc[:,['account_number', 'size']]
+
 
 

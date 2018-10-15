@@ -47,6 +47,7 @@ def pickle_trade_calculator(portfolio, model, prices, destination):
 def pickle_allocation(portfolio, trade_calculator):
     allocation_controller = al.AllocationController(portfolio, trade_calculator)
     allocated_trades = allocation_controller.allocate_trades()
+    allocated_trades.prepare_for_transmission()
     # with open(destination + 'allocation.pkl', 'wb') as myfile:
     #     pickle.dump(allocated_trades, myfile)
     return allocated_trades
