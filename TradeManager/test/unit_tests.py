@@ -702,6 +702,9 @@ class AllTradeMethods(TestCase):
         trades = trade_selector.trade_instructions.trades
         self.assertEqual(trades.shape, (14, 5))
 
+    def test_MultipleAccounts_101518(self):
+        portfolio = read_pickle('.\/test_data\/portfolios_port_trade_lists\/sell_buy\/all_methods_1_portfolio.pkl')
+        print(portfolio)
 
 class TestDev(TestCase):
     pass

@@ -1,4 +1,4 @@
-import TradeManager.allocation as allocate
+from TradeManager.allocation import *
 import TradeManager.portfolio as portfolio
 import TradeManager.trade_calculator as tc
 import TradeManager.trade_manager as trade_manage

@@ -61,8 +61,8 @@
 # python .\TradeManager\test\test_data_generator.py sheets\sell_only  cover_all_sell_methods_expanded.xlsx portfolios_port_trade_lists\sell_only generate_portfolios_and_portfolio_trade_lists --file_name cover_all_sell_methods_expanded
 
 # ======= Sell Buy
-python .\TradeManager\test\test_data_generator.py sheets\sell_buy all_methods_1.xlsx portfolios_port_trade_lists\sell_buy generate_portfolios_and_portfolio_trade_lists --file_name all_methods_1
-python .\TradeManager\test\test_data_generator.py sheets\sell_buy all_methods_2.xlsx portfolios_port_trade_lists\sell_buy generate_portfolios_and_portfolio_trade_lists --file_name all_methods_2
+#python .\TradeManager\test\test_data_generator.py sheets\sell_buy all_methods_1.xlsx portfolios_port_trade_lists\sell_buy generate_portfolios_and_portfolio_trade_lists --file_name all_methods_1
+#python .\TradeManager\test\test_data_generator.py sheets\sell_buy all_methods_2.xlsx portfolios_port_trade_lists\sell_buy generate_portfolios_and_portfolio_trade_lists --file_name all_methods_2
 
 
 # ===== edge cases
@@ -86,3 +86,4 @@ python .\TradeManager\test\test_data_generator.py sheets\sell_buy all_methods_2.
 
 # ================== Generate Trade Instructions
 # python .\TradeManager\test\test_data_generator.py sheets\sell_buy  all_methods_2.xlsx trade_instructions generate_trade_instructions --file_name all_methods_2
+ python .\TradeManager\test\test_data_generator.py sheets\sell_buy  sell_buy_101518.xlsx trade_instructions generate_trade_instructions --file_name all_methods_101518
