@@ -41,12 +41,15 @@ class TradeSelector(object):
 
 class SingleAccountTradeSelector(TradeSelector):
     def get_trades(self):
+
+        self.trade_account_matrix_object.trade_account_matrix.reset_index(level=['account_number'], inplace=True)
+        self.trade_account_matrix_object.trade_account_matrix.account_number = self.trade_account_matrix_object.cash.index[0]
+        self.trade_account_matrix_object.trade_account_matrix.set_index(['account_number'], append=True, inplace=True)
         if self.trade_account_matrix_object.trade_account_matrix is None:
             pass
         else:
             if self._has_sells:
                 sell_trades = self.trading_library.single_account_sell(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
-
                 sell_trades['size'] = sell_trades.share_trades
                 self.trade_instructions.trades = sell_trades
             if self._has_buys():
