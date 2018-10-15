@@ -86,4 +86,4 @@
 
 # ================== Generate Trade Instructions
 # python .\TradeManager\test\test_data_generator.py sheets\sell_buy  all_methods_2.xlsx trade_instructions generate_trade_instructions --file_name all_methods_2
- python .\TradeManager\test\test_data_generator.py sheets\sell_buy  sell_buy_101518.xlsx trade_instructions generate_trade_instructions --file_name all_methods_101518
+ python .\test_data_generator.py sheets\sell_buy  sell_buy_101518.xlsx trade_instructions generate_trade_instructions --file_name all_methods_101518
