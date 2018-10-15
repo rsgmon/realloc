@@ -20,6 +20,7 @@ class TradeCalculator(object):
                 return row.shares if row.shares <0 else row.shares * -1
             else:
                 return (row.dollar_trades/row.price).round()
+        # todo: MUST DO THIS. Should not be rounding at this point. That should be done later.
         trade_list = self._get_dollar_trades(self.portfolio, self.model.model_positions)
         if trade_list is None: return None
         trade_list['share_trades'] = trade_list.apply(share_trade, axis=1)

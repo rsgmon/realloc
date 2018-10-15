@@ -30,10 +30,10 @@ class TradeSelector(object):
         self.trading_library = TradingLibrary()
 
     def _has_buys(self):
-        return (self.tam.portfolio_trade_list['share_trades'] > 0).any()
+        return (self.trade_account_matrix_object.portfolio_trade_list['share_trades'] > 0).any()
 
     def _has_sells(self):
-        return (self.tam.portfolio_trade_list['share_trades'] < 0).any()
+        return (self.trade_account_matrix_object.portfolio_trade_list['share_trades'] < 0).any()
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
@@ -46,9 +46,12 @@ class SingleAccountTradeSelector(TradeSelector):
         else:
             if self._has_sells:
                 sell_trades = self.trading_library.single_account_sell(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
+
+                sell_trades['size'] = sell_trades.share_trades
                 self.trade_instructions.trades = sell_trades
             if self._has_buys():
                 buy_trades = self.trading_library.single_account_buy(self.trade_account_matrix_object.trade_account_matrix, self.trade_account_matrix_object.account_numbers)
+                buy_trades['size'] = buy_trades.share_trades
                 self.trade_instructions.trades = buy_trades
 
 
@@ -192,12 +195,13 @@ class TradingLibrary(object):
     """Other than single_account_sell and single_account_buy, all methods handle multiple accounts."""
 
     def single_account_sell(self, tam, ans):
+        print(tam)
         tam['account'] = ans[0]
-        return tam.loc[tam.loc[:, 'share_trades'] < 0].loc[:, ['shares', 'account']]
+        return tam.loc[tam.loc[:, 'share_trades'] < 0].loc[:, ['share_trades', 'account']]
 
     def single_account_buy(self, tam, ans):
         tam['account'] = ans[0]
-        return tam.loc[tam.loc[:, 'share_trades'] > 0].loc[:, ['shares', 'account']]
+        return tam.loc[tam.loc[:, 'share_trades'] > 0].loc[:, ['share_trades', 'account']]
 
     def sell_single_holding(self, tam):
         """
@@ -611,7 +615,6 @@ class TradeInstructions(object):
         return self._trades
 
     @trades.setter
-
     def trades(self, tam):
         self._trades = pd.concat([self._trades, tam.loc[~tam['size'].isnull()]])
 
