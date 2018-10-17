@@ -1,3 +1,4 @@
+MANIFEST.in
 setup.py
 TradeManager/__init__.py
 TradeManager/allocation.py
@@ -8,6 +9,3 @@ TradeShop.egg-info/PKG-INFO
 TradeShop.egg-info/SOURCES.txt
 TradeShop.egg-info/dependency_links.txt
 TradeShop.egg-info/top_level.txt
-test/__init__.py
-test/test_data_generator.py
-test/unit_tests.py

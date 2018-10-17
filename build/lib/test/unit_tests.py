@@ -5,26 +5,29 @@ from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
 from test.test_data_generator import read_pickle
 import pandas as pd
+pd.set_option('display.max_columns', None)  # or 1000
+pd.set_option('display.max_rows', None)  # or 1000
 
+class TestRawRequest(TestCase):
+    def test_raw_from_excel(self):
+        request = RawRequest('xl', '.\/test_data\/sheets\/simple\/simple_101518.xlsx', test=True)
+        print(request)
 
-class TestTradeRequest(TestCase):
-    def test_trade_request_validation(self):
+    def test_raw_request_validation(self):
         with self.assertRaises(RuntimeError) as cm:
             rr = RawRequest('test', {'data': {}})
             rr._empty_request()
         self.assertEqual(str(cm.exception), 'Your request was had no data.')
-
         with self.assertRaises(RuntimeError) as cm:
             rr = RawRequest('test', {'data':{"symbl": ["A"]}, 'index': ['model']})
             rr._missing_required_columns()
         self.assertEqual(str(cm.exception), "The following columns were missing: ['price', 'account_number', 'symbol', 'model_weight', 'shares', 'restrictions']")
-
         with self.assertRaises(RuntimeError) as cm:
             rr = RawRequest('test', {"data":{"symbol": ["ABC"], "price": 10, "account_number": "model", "shares": None, "restrictions": None, "model_weight": [0.5]}})
             rr._no_accounts()
         self.assertEqual(str(cm.exception), 'No accounts were found in your request.')
 
-    def test_trade_request_model_row_validation(self):
+    def test_raw_request_model_row_validation(self):
         with self.assertRaises(RuntimeError) as cm:
             request = RawRequest('test', {"data":{"symbol": ["ABC"], "price": [10], "account_number": ["model"], "shares": [None], "restrictions": [None], "model_weight": [None]}})
             request._model_rows_validation()
@@ -50,7 +53,7 @@ class TestTradeRequest(TestCase):
             request._model_rows_validation()
         self.assertEqual('ShareQuantityOnModelLine', cm.exception.test_error_code)
 
-    def test_trade_request_account_row_validation(self):
+    def test_raw_request_account_row_validation(self):
         with self.assertRaises(RuntimeError) as cm:
             request = RawRequest('test', {"data":{"symbol": ["ABC"], "price": [10], "account_number": ["gh-67"], "shares": [None], "restrictions": [None], "model_weight": [None]}})
             request._account_rows_validation()
@@ -83,55 +86,31 @@ class TestTradeRequest(TestCase):
         request._validate_raw_request()
         self.assertEqual(len(request.raw_request['symbol'][0]),3)
 
+    def test_has_price(self):
+        request = RawRequest('xl', '.\/test_data\/sheets\/simple\/simple_101518.xlsx', test=True)
+        # request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
+        request._has_price()
+        request.raw_request.loc[[2],["price"]] = float('NaN')
+        with self.assertRaises(RuntimeError) as cm:
+            request._has_price()
+        self.assertEqual(str(cm.exception), 'The following symbols are missing prices. {0}'.format(['SPY']))
+        request.raw_request.loc[[1], ["price"]] = float('NaN')
+        with self.assertRaises(RuntimeError) as cm:
+            request._has_price()
+        self.assertEqual(str(cm.exception), "The following symbols are missing prices. ['MDY' 'SPY']")
 
-class TestPriceRetriever(TestCase):
-    def setUp(self): pass
-        # self.raw_request_sell_only = RawRequest('xl',
-        #     'test_data\/sheets\/sell_only\/multi_account_target_actual_equal.xlsx')
-        # self.raw_request = RawRequest('xl',
-        #     'test_data\/Trade Request Example.xlsx')
-        # self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
+    def test_duplicate_prices(self):
+        request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
+        request._duplicate_price()
+        request.raw_request.loc[[0], ["price"]] = 100
+        with self.assertRaises(RuntimeError) as cm:
+            request._duplicate_price()
+        self.assertEqual(str(cm.exception), 'The following symbols have two different prices. {0}'.format(['SPY']))
+        request.raw_request.loc[[1], ["symbol"]] = 'SPY'
+        with self.assertRaises(RuntimeError) as cm:
+            request._duplicate_price()
+        self.assertEqual(str(cm.exception), 'The following symbols have two different prices. {0}'.format(['SPY']))
 
-    def test_initiate_price_retriever(self):
-        self.assertTrue(PriceRetriever(self.raw_request))
-
-    def test_price_retriever_add_prices_with_local_sample_prices(self):
-        pr = PriceRetriever(self.raw_request)
-        pr(test=True)
-        self.assertGreater(pr.prices.sum().price, 1)
-
-    def test_sells_only(self):
-        pr = PriceRetriever(self.raw_request_sell_only)
-        pr(test=True)
-        self.assertGreater(pr.prices.sum().price, 1)
-
-    def test_simple_request(self):
-        simple_request = RawRequest('test',
-                                    {"data":{"account": ["gt056"], "symbol": ["YYY"], "weight": None, "shares": 45,
-                                          "price": 'hjg', "restrictions": None}})
-        pr = PriceRetriever(simple_request)
-        self.assertRaises(ValueError, pr)
-
-    def test_port_rebalance(self):
-        mock_raw_request = RawRequest('xl','test_data\/sheets\/port rebal for fithm.xlsx')
-        print(mock_raw_request.raw_request)
-        pr = PriceRetriever(mock_raw_request)
-        pr(test=False)
-        print(pr.raw_request)
-        # print(pr.prices)
-
-    # 05/30/17 passes but calls yahoo so not running at this point
-    # def test_price_retriever_add_prices_with_yahoo_prices(self):
-    #     pr = PriceRetriever(self.raw_request)
-    #     pr()
-    #     self.assertGreater(pr.prices.sum().price, 1)
-
-    # def test_flag_no_price(self):
-    #     pr = PriceRetriever(RawRequest('xl',
-    #                                    'test_data\/Trade Request Example_missing_price.xlsx'))
-    #     self.assertRaises(RuntimeError, pr, test=True, file_name='test_data\/prices.json', test_array_index=1)
-    #     # 05/30/17 I've turned this test off for now as it calls yahoo. but as of date it worked.
-    #     # self.assertRaises(RuntimeError, pr)
 
 
 class TestPortfolio(TestCase):
@@ -199,10 +178,7 @@ class TestModel(TestCase):
 
     def test_model_with_position_with_account_cash(self):
         request = RawRequest('test', {
-            "data": {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"],
-                     "model_weight": [0.10, 0.15, float('NaN')], "shares": [float('NaN'), float('NaN'), 74.5],
-                     "price": [float('NaN'), float('NaN'), float('NaN')],
-                     "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
+            "data": {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"], "model_weight": [0.10, 0.15, float('NaN')], "shares": [float('NaN'), float('NaN'), 74.5], "price": [float('NaN'), float('NaN'), float('NaN')], "restrictions": [float('NaN'), float('NaN'), float('NaN')]}})
         request._validate_raw_request()
         trade_request = TradeRequest(request)
         model = Model(trade_request.model_request, 'test')
@@ -708,3 +684,54 @@ class AllTradeMethods(TestCase):
 
 class TestDev(TestCase):
     pass
+
+""" Deprecated see development log 10/17/18
+class TestPriceRetriever(TestCase):
+    def setUp(self): pass
+        # self.raw_request_sell_only = RawRequest('xl',
+        #     'test_data\/sheets\/sell_only\/multi_account_target_actual_equal.xlsx')
+        # self.raw_request = RawRequest('xl',
+        #     'test_data\/Trade Request Example.xlsx')
+        # self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
+
+    def test_initiate_price_retriever(self):
+        self.assertTrue(PriceRetriever(self.raw_request))
+
+    def test_price_retriever_add_prices_with_local_sample_prices(self):
+        pr = PriceRetriever(self.raw_request)
+        pr(test=True)
+        self.assertGreater(pr.prices.sum().price, 1)
+
+    def test_sells_only(self):
+        pr = PriceRetriever(self.raw_request_sell_only)
+        pr(test=True)
+        self.assertGreater(pr.prices.sum().price, 1)
+
+    def test_simple_request(self):
+        simple_request = RawRequest('test',
+                                    {"data":{"account": ["gt056"], "symbol": ["YYY"], "weight": None, "shares": 45,
+                                          "price": 'hjg', "restrictions": None}})
+        pr = PriceRetriever(simple_request)
+        self.assertRaises(ValueError, pr)
+
+    def test_port_rebalance(self):
+        mock_raw_request = RawRequest('xl','test_data\/sheets\/port rebal for fithm.xlsx')
+        print(mock_raw_request.raw_request)
+        pr = PriceRetriever(mock_raw_request)
+        pr(test=False)
+        print(pr.raw_request)
+        # print(pr.prices)
+
+    # 05/30/17 passes but calls yahoo so not running at this point
+    # def test_price_retriever_add_prices_with_yahoo_prices(self):
+    #     pr = PriceRetriever(self.raw_request)
+    #     pr()
+    #     self.assertGreater(pr.prices.sum().price, 1)
+
+    # def test_flag_no_price(self):
+    #     pr = PriceRetriever(RawRequest('xl',
+    #                                    'test_data\/Trade Request Example_missing_price.xlsx'))
+    #     self.assertRaises(RuntimeError, pr, test=True, file_name='test_data\/prices.json', test_array_index=1)
+    #     # 05/30/17 I've turned this test off for now as it calls yahoo. but as of date it worked.
+    #     # self.assertRaises(RuntimeError, pr)
+"""
