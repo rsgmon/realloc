@@ -1,6 +1,15 @@
 Fixing bugs log
+#####10/17/2018
+I have decided to eliminate the get prices. Its really not the job of this process to get prices and it should be handled by another process. So for now when receiving a request every security must have a price. If a request contains two different prices for the same security an error is thrown.
 
-10/15/2008
+#####10/16/2018
+#### todo 
+Need to create a better error message highlighting that a price is missing.
+Need to handle when send duplicate prices.
+Need to send better error message when "account_cash"  is not included for each account's cash.
+
+
+##### 10/15/2018
 I would get different bad responses from a clients sheet submission. After several tries I realized the sheet was wrong but also I had an issue in my portmgr algorithm. It was returning a key error. I fixed the issue.
 
 getting to the point to be able to identify and fix was tedious so I thought I'd explain process.

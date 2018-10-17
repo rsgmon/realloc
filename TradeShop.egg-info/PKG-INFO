@@ -1,0 +1,11 @@
+Metadata-Version: 1.2
+Name: TradeShop
+Version: 1.0.2
+Summary: Processes a trade request into a trade list.
+Home-page: UNKNOWN
+Author: Ryeland Gongora
+Author-email: rsgmon@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: ~=3.3

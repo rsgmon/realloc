@@ -29,7 +29,10 @@ class TradeManager(object):
     def get_portfolio_trades(self):
         return TradeCalculator(self.portfolio, self.model, self.prices.prices)
 
-
+    def get_prices(self):
+        prices = PriceRetriever(self.raw_request)
+        prices()
+        return prices
 
     def allocate_trades(self):
         allocation_controller = AllocationController(self.portfolio, self.portfolio_trades)
@@ -40,16 +43,9 @@ class TradeManager(object):
     def set_post_trade_portfolio(self):
         return PostTradePortfolio(self.trade_instructions, self.trade_request.portfolio_request, self.prices.prices)
 
-    """ 
-        Not in use any more. See Readme 10/17/2018
-        def get_prices(self):
-            prices = PriceRetriever(self.raw_request)
-            prices()
-            return prices
-    """
 
 class RawRequest(object):
-    def __init__(self, file_type_label=None, file_path=None, test=False):
+    def __init__(self, file_type_label=None, file_path=None):
         self.file_type_label = file_type_label
         self.file_path = file_path
         # todo the next three lines are to get it to work at the console. need to fix
@@ -57,7 +53,7 @@ class RawRequest(object):
         # print('C:\/Users\/Rye\/Projects\/Python\/PortMgr\/TradeManager\/test\/test_data\/sheets\/sell_buy\/all_methods_1.xlsx', '\n')
         # self.file_path = 'C:\/Users\/Rye\/Projects\/Python\/PortMgr\/TradeManager\/test\/test_data\/sheets\/sell_buy\/all_methods_1.xlsx'
         self._route_trade_request_type()
-        if test:
+        if 'test' in self.file_type_label:
             pass
         else:
             self._validate_raw_request()
@@ -93,14 +89,13 @@ class RawRequest(object):
     def _validate_raw_request(self):
         self._empty_request()
         self._missing_required_columns()
-        self._strip_all()
+        self.strip_all()
         self._no_accounts()
-        self._has_price()
         self.raw_request['account_number'] = self.raw_request['account_number'].str.strip()
         self._model_rows_validation()
         self._account_rows_validation()
 
-    def _strip_all(self):
+    def strip_all(self):
         for column in self.raw_request:
             if not is_numeric_dtype(self.raw_request[column]):
                 self.raw_request[column] = self.raw_request[column].astype('str')
@@ -173,34 +168,11 @@ class RawRequest(object):
                     raise runerror
                 except ValueError:
                     pass
+
+
         # todo check if duplicate symbols for an account exist
+
         self.raw_request[self.raw_request.loc[:,'account_number'] != 'model'].apply(shares, axis=1)
-
-    def _has_price(self):
-        sum_prices = self.raw_request.groupby(['symbol']).sum()
-        if (sum_prices.price == 0).any():
-            missing_price_symbols = sum_prices[sum_prices.loc[:,'price'] == 0].index.values
-            raise RuntimeError('The following symbols are missing prices. {0}'.format(missing_price_symbols))
-
-    def _duplicate_price(self):
-        groups = self.raw_request.dropna(subset=['price']).groupby(['symbol'])
-        dupes_not_equal_price = []
-        for i,v in groups:
-            if ((v.price - v.price.mean()) != 0).any():
-                dupes_not_equal_price.append(i)
-        if dupes_not_equal_price:
-            raise RuntimeError('The following symbols have two different prices. {0}'.format(dupes_not_equal_price))
-
-
-
-
-
-
-
-
-
-
-
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
@@ -331,13 +303,12 @@ class PriceRetriever(object):
         return pd.DataFrame(index=for_retrieval['symbol'].unique(), columns=['price']) if for_retrieval.size != 0 else pd.DataFrame()
 
     def _set_remote_prices(self, retrieval_list):
-        for symbol in retrieval_list.index:
+        for symbol in retrieval_list:
             try:
-                yahoo = Share(symbol="IBM")
+                yahoo = Share(symbol=symbol)
                 price = yahoo.get_price()
                 retrieval_list.set_value(symbol, 'price', price)
-            except Exception as e:
-                print(e, "ddodo")
+            except (AttributeError, TypeError) as e:
                 self.error.append( {symbol, 'Invalid symbol. Check for spaces or other non-alphanumeric characters'})
         return retrieval_list
 
