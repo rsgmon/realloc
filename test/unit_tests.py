@@ -1,5 +1,5 @@
 from unittest import TestCase
-from TradeManager.trade_manager import TradeManager, TradeRequest, Model, PriceRetriever, RawRequest
+from TradeManager.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
 from TradeManager.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, AllocationController, TradingLibrary, SingleAccountTradeSelector
 from TradeManager.trade_calculator import TradeCalculator
 from TradeManager.portfolio import Portfolio, PostTradePortfolio
@@ -690,15 +690,27 @@ class TestPriceRetriever(TestCase):
         self.request_valid_01 = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}])
 
     def test_initiate_price_retriever(self):
-        self.assertTrue(PriceRetriever(self.request_valid_01))
+        self.assertTrue(Prices(self.request_valid_01))
 
     def test_prices_are_numbers(self):
-        pr = PriceRetriever(self.request_symbol_no_price, test=True)
+        pr = Prices(self.request_symbol_no_price, test=True)
         with self.assertRaises(ValueError) as cm:
             pr._prices_are_numbers()
         self.assertEqual(str(cm.exception), 'Non numeric price entered.')
 
-    def test_
+    def test_filter_prices(self):
+        pr = Prices(self.request_valid_01, test=True)
+        filtered = pr._filter_prices()
+        self.assertEqual(filtered.shape, (2,2))
+        pr.raw_request.loc[[0], ["price"]] = 205
+        pr._filter_prices()
+        self.assertEqual(filtered.shape, (2, 2))
+
+    def test_set_prices(self):
+        pr = Prices(self.request_valid_01)
+        self.assertEqual(pr.prices.shape, (2,2))
+
+
 
 
 

@@ -20,7 +20,7 @@ def pickle_trade_request(source, destination):
     return request
 
 def pickle_prices(source, destination, test_prices=True, **myargs):
-    prices = trade_manage.PriceRetriever(trade_manage.RawRequest('xl', source))
+    prices = trade_manage.Prices(trade_manage.RawRequest('xl', source))
     if test_prices:
         prices()
     else:

@@ -43,7 +43,7 @@ class TradeManager(object):
     """ 
         Not in use any more. See Readme 10/17/2018
         def get_prices(self):
-            prices = PriceRetriever(self.raw_request)
+            prices = Prices(self.raw_request)
             prices()
             return prices
     """
@@ -275,14 +275,14 @@ class Model(object):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
-class PriceRetriever(object):
+class Prices(object):
     def __init__(self, raw_request, test=False):
         """
-        Returns empty PriceRetriever object.
+        Returns empty Prices object.
         :param raw_request: pandas dataframe object contains all symbols
         """
         self.error = []
-        self.raw_request = raw_request.raw_request
+        self.raw_request = raw_request.raw_request.loc[:,['symbol','price']]
         if test:
             pass
         else:
@@ -291,24 +291,17 @@ class PriceRetriever(object):
 
     def _set_prices(self):
         self._prices_are_numbers()
-
-        self.prices = pd.concat([local]).astype(float)
-        self._flag_no_price()
+        self.prices = self._filter_prices()
 
     def _filter_prices(self):
-        prices = self.raw_request.dropna(subset=['price'])
-        
+        prices = self.raw_request.dropna(subset=['price']).drop_duplicates()
+        return prices.drop(prices.loc[prices['symbol'] == "account_cash"].index)
+
 
     def _prices_are_numbers(self):
         if self.raw_request['price'].fillna(0).dtype == 'object':
             raise ValueError('Non numeric price entered.')
 
-
-
-    def _flag_no_price(self):
-        no_price = self.prices.loc[self.prices['price'].isnull()]
-        if len(no_price):
-            raise RuntimeError(no_price.to_string())
 
     def __str__(self):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
