@@ -111,7 +111,6 @@ class TestRawRequest(TestCase):
         self.assertEqual(str(cm.exception), 'The following symbols have two different prices. {0}'.format(['SPY']))
 
 
-
 class TestPortfolio(TestCase):
 
     def test_buys_Only(self):
@@ -681,8 +680,10 @@ class AllTradeMethods(TestCase):
         portfolio = read_pickle('.\/test_data\/trade_instructions\/all_methods_101518_trade_instructions.pkl')
         print(vars(portfolio))
 
+
 class TestDev(TestCase):
     pass
+
 
 class TestPriceRetriever(TestCase):
     def setUp(self):
@@ -708,9 +709,22 @@ class TestPriceRetriever(TestCase):
 
     def test_set_prices(self):
         pr = Prices(self.request_valid_01)
-        self.assertEqual(pr.prices.shape, (2,2))
+        self.assertEqual(pr.prices.shape, (2,1))
 
 
+class TestEntire(TestCase):
+    def setUp(self):
+        self.valid_request = [
+            {"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'),
+             "restrictions": float('NaN'), "model_weight": 0.5},
+            {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'),
+             "restrictions": float('NaN'), "model_weight": 0.5},
+            {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'),
+             "model_weight": float('NaN')},
+            {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81,
+             "restrictions": float('NaN'), "model_weight": float('NaN')}]
 
-
+    def test_entire_process(self):
+        trademanager = TradeManager('json', self.valid_request)
+        print(trademanager.trade_instructions)
 

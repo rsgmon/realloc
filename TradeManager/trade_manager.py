@@ -13,7 +13,7 @@ class TradeManager(object):
     def __init__(self, file_type=None, path=None):
         self.raw_request = RawRequest(file_type, path)
         self.trade_request = TradeRequest(self.raw_request)
-        # self.prices = self.get_prices()
+        self.prices = self.get_prices()
         self.model = Model(self.trade_request.model_request)
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
@@ -40,13 +40,10 @@ class TradeManager(object):
     def set_post_trade_portfolio(self):
         return PostTradePortfolio(self.trade_instructions, self.trade_request.portfolio_request, self.prices.prices)
 
-    """ 
-        Not in use any more. See Readme 10/17/2018
-        def get_prices(self):
-            prices = Prices(self.raw_request)
-            prices()
-            return prices
-    """
+    def get_prices(self):
+        prices = Prices(self.raw_request)
+        return prices
+
 
 class RawRequest(object):
     def __init__(self, file_type_label=None, file_path=None, test=False):
@@ -291,12 +288,11 @@ class Prices(object):
 
     def _set_prices(self):
         self._prices_are_numbers()
-        self.prices = self._filter_prices()
+        self.prices = self._filter_prices().set_index(['symbol'])
 
     def _filter_prices(self):
         prices = self.raw_request.dropna(subset=['price']).drop_duplicates()
         return prices.drop(prices.loc[prices['symbol'] == "account_cash"].index)
-
 
     def _prices_are_numbers(self):
         if self.raw_request['price'].fillna(0).dtype == 'object':
