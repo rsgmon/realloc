@@ -9,3 +9,4 @@ TradeShop.egg-info/PKG-INFO
 TradeShop.egg-info/SOURCES.txt
 TradeShop.egg-info/dependency_links.txt
 TradeShop.egg-info/top_level.txt
+test/test_data_generator.py

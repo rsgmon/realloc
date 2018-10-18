@@ -87,8 +87,7 @@ class TestRawRequest(TestCase):
         self.assertEqual(len(request.raw_request['symbol'][0]),3)
 
     def test_has_price(self):
-        request = RawRequest('xl', '.\/test_data\/sheets\/simple\/simple_101518.xlsx', test=True)
-        # request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
+        request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
         request._has_price()
         request.raw_request.loc[[2],["price"]] = float('NaN')
         with self.assertRaises(RuntimeError) as cm:
@@ -685,53 +684,21 @@ class AllTradeMethods(TestCase):
 class TestDev(TestCase):
     pass
 
-""" Deprecated see development log 10/17/18
 class TestPriceRetriever(TestCase):
-    def setUp(self): pass
-        # self.raw_request_sell_only = RawRequest('xl',
-        #     'test_data\/sheets\/sell_only\/multi_account_target_actual_equal.xlsx')
-        # self.raw_request = RawRequest('xl',
-        #     'test_data\/Trade Request Example.xlsx')
-        # self.request_symbol_no_price = RawRequest('test', {"data":{"account": ["bgg"], "symbol": ["YYY"], "weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}} )
+    def setUp(self):
+        self.request_symbol_no_price = RawRequest('test', [{"account_number": ["bgg"], "symbol": ["YYY"], "model_weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}], test=True )
+        self.request_valid_01 = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}])
 
     def test_initiate_price_retriever(self):
-        self.assertTrue(PriceRetriever(self.raw_request))
+        self.assertTrue(PriceRetriever(self.request_valid_01))
 
-    def test_price_retriever_add_prices_with_local_sample_prices(self):
-        pr = PriceRetriever(self.raw_request)
-        pr(test=True)
-        self.assertGreater(pr.prices.sum().price, 1)
+    def test_prices_are_numbers(self):
+        pr = PriceRetriever(self.request_symbol_no_price, test=True)
+        with self.assertRaises(ValueError) as cm:
+            pr._prices_are_numbers()
+        self.assertEqual(str(cm.exception), 'Non numeric price entered.')
 
-    def test_sells_only(self):
-        pr = PriceRetriever(self.raw_request_sell_only)
-        pr(test=True)
-        self.assertGreater(pr.prices.sum().price, 1)
+    def test_
 
-    def test_simple_request(self):
-        simple_request = RawRequest('test',
-                                    {"data":{"account": ["gt056"], "symbol": ["YYY"], "weight": None, "shares": 45,
-                                          "price": 'hjg', "restrictions": None}})
-        pr = PriceRetriever(simple_request)
-        self.assertRaises(ValueError, pr)
 
-    def test_port_rebalance(self):
-        mock_raw_request = RawRequest('xl','test_data\/sheets\/port rebal for fithm.xlsx')
-        print(mock_raw_request.raw_request)
-        pr = PriceRetriever(mock_raw_request)
-        pr(test=False)
-        print(pr.raw_request)
-        # print(pr.prices)
 
-    # 05/30/17 passes but calls yahoo so not running at this point
-    # def test_price_retriever_add_prices_with_yahoo_prices(self):
-    #     pr = PriceRetriever(self.raw_request)
-    #     pr()
-    #     self.assertGreater(pr.prices.sum().price, 1)
-
-    # def test_flag_no_price(self):
-    #     pr = PriceRetriever(RawRequest('xl',
-    #                                    'test_data\/Trade Request Example_missing_price.xlsx'))
-    #     self.assertRaises(RuntimeError, pr, test=True, file_name='test_data\/prices.json', test_array_index=1)
-    #     # 05/30/17 I've turned this test off for now as it calls yahoo. but as of date it worked.
-    #     # self.assertRaises(RuntimeError, pr)
-"""

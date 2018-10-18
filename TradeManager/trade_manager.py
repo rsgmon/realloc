@@ -13,7 +13,7 @@ class TradeManager(object):
     def __init__(self, file_type=None, path=None):
         self.raw_request = RawRequest(file_type, path)
         self.trade_request = TradeRequest(self.raw_request)
-        self.prices = self.get_prices()
+        # self.prices = self.get_prices()
         self.model = Model(self.trade_request.model_request)
         self.portfolio = self.get_portfolio()
         self.portfolio_trades = self.get_portfolio_trades()
@@ -276,37 +276,24 @@ class Model(object):
 
 
 class PriceRetriever(object):
-    def __init__(self, raw_request):
+    def __init__(self, raw_request, test=False):
         """
         Returns empty PriceRetriever object.
         :param raw_request: pandas dataframe object contains all symbols
         """
         self.error = []
         self.raw_request = raw_request.raw_request
-
-
-    def __call__(self, test=False, file_name=None, test_array_index=0):
-        self._prices_are_numbers()
-        self._check_duplicate_user_input_prices()
-        retrieval_list = self._set_symbol_retrieval_list()
         if test:
-            if file_name:
-                remote_prices = self._test_set_remote_prices(retrieval_list, file_name, test_array_index)
-            else:
-                remote_prices = self._test_set_remote_prices(retrieval_list)
+            pass
         else:
-            remote_prices = self._set_remote_prices(retrieval_list)
-        self._combine_local_remote_prices(remote_prices)
-        self._flag_no_price()
+            self._set_prices()
 
-    def _check_duplicate_user_input_prices(self):
-        duplicates = self.raw_request[self.raw_request.duplicated(['symbol'], keep=False)].dropna(subset=['price'])
-        dup_price_error = pd.DataFrame()
-        for name, group in duplicates.groupby('symbol'):
-            if len(group) > 1:
-                dup_price_error = dup_price_error.append(group, ignore_index=True)
-        if len(dup_price_error) > 0:
-            raise ValueError(dup_price_error.to_string())
+
+    def _set_prices(self):
+        self._prices_are_numbers()
+        # self._check_duplicate_user_input_prices()
+        self._combine_local_remote_prices()
+        self._flag_no_price()
 
     def _prices_are_numbers(self):
         if self.raw_request['price'].fillna(0).dtype == 'object':
@@ -330,40 +317,12 @@ class PriceRetriever(object):
                 for_retrieval = for_retrieval.append(group.drop_duplicates(['symbol']))
         return pd.DataFrame(index=for_retrieval['symbol'].unique(), columns=['price']) if for_retrieval.size != 0 else pd.DataFrame()
 
-    def _set_remote_prices(self, retrieval_list):
-        for symbol in retrieval_list.index:
-            try:
-                yahoo = Share(symbol="IBM")
-                price = yahoo.get_price()
-                retrieval_list.set_value(symbol, 'price', price)
-            except Exception as e:
-                print(e, "ddodo")
-                self.error.append( {symbol, 'Invalid symbol. Check for spaces or other non-alphanumeric characters'})
-        return retrieval_list
-
-    def _test_set_remote_prices(self, retrieval_list, file_name=None, test_array_index=0):
-        """
-        For testing only.
-        :param file_name: string, path to file
-        :param test_array_index: int, position of test data in the array test data objects
-        :return: none
-        """
-        if file_name:
-            import json
-            with open(file_name, 'r') as ob:
-                test_object = json.load(ob)
-                return pd.DataFrame(test_object[test_array_index]).set_index(['symbol'])
-        else:
-            for symbol in retrieval_list.index:
-                retrieval_list.set_value(symbol, 'price', 50)
-            return retrieval_list
-
-    def _combine_local_remote_prices(self, remote_prices):
+    def _combine_local_remote_prices(self):
         """
         :return: none
         """
         local = self.raw_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
-        self.prices = pd.concat([remote_prices, local]).astype(float)
+        self.prices = pd.concat([local]).astype(float)
 
     def _flag_no_price(self):
         no_price = self.prices.loc[self.prices['price'].isnull()]
