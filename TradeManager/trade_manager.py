@@ -291,38 +291,19 @@ class PriceRetriever(object):
 
     def _set_prices(self):
         self._prices_are_numbers()
-        # self._check_duplicate_user_input_prices()
-        self._combine_local_remote_prices()
+
+        self.prices = pd.concat([local]).astype(float)
         self._flag_no_price()
+
+    def _filter_prices(self):
+        prices = self.raw_request.dropna(subset=['price'])
+        
 
     def _prices_are_numbers(self):
         if self.raw_request['price'].fillna(0).dtype == 'object':
             raise ValueError('Non numeric price entered.')
 
-    def _set_symbol_retrieval_list(self):
-        """
-        Creates the list of symbols to retrieve from third party price provider.
-        :return: none
-        """
-        symbols_only = self.raw_request[self.raw_request.loc[:,'symbol'].notnull()].copy()
-        symbols_only['symbol'] = symbols_only.loc[:,'symbol'].astype(str)
-        symbols_only = symbols_only[~symbols_only.loc[:,'symbol'].str.contains('accountstore', case=False)]
-        symbols_only = symbols_only[~symbols_only.loc[:, 'symbol'].str.contains('account_cash', case=False)]
-        grouped_symbols = symbols_only.groupby('symbol')
-        for_retrieval = pd.DataFrame()
-        for name, group in grouped_symbols:
-            if len(group) == 1:
-                for_retrieval = for_retrieval.append(group[group.loc[:,'price'].isnull()])
-            elif group.loc[:, 'price'].isnull().all():
-                for_retrieval = for_retrieval.append(group.drop_duplicates(['symbol']))
-        return pd.DataFrame(index=for_retrieval['symbol'].unique(), columns=['price']) if for_retrieval.size != 0 else pd.DataFrame()
 
-    def _combine_local_remote_prices(self):
-        """
-        :return: none
-        """
-        local = self.raw_request.loc[:,['symbol', 'price']].dropna().set_index(['symbol'])
-        self.prices = pd.concat([local]).astype(float)
 
     def _flag_no_price(self):
         no_price = self.prices.loc[self.prices['price'].isnull()]
