@@ -29,8 +29,6 @@ class TradeManager(object):
     def get_portfolio_trades(self):
         return TradeCalculator(self.portfolio, self.model, self.prices.prices)
 
-
-
     def allocate_trades(self):
         allocation_controller = AllocationController(self.portfolio, self.portfolio_trades)
         instructions_object = allocation_controller.allocate_trades()
