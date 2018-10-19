@@ -93,9 +93,19 @@ class RawRequest(object):
         self._strip_all()
         self._no_accounts()
         self._has_price()
+        self._has_account_cash()
         self.raw_request['account_number'] = self.raw_request['account_number'].str.strip()
         self._model_rows_validation()
         self._account_rows_validation()
+
+    def _has_account_cash(self):
+        accounts = []
+        for i, v in self.raw_request.groupby(['account_number']):
+            if i == 'model': continue
+            if v[v.loc[:,'symbol'] == 'account_cash'].shape[0] != 1:
+                accounts.append(i)
+        if accounts:
+            raise RuntimeError('The following accounts do not have an account_cash entry {0}'.format(','.join(accounts)))
 
     def _strip_all(self):
         for column in self.raw_request:
@@ -175,6 +185,7 @@ class RawRequest(object):
 
     def _has_price(self):
         sum_prices = self.raw_request.groupby(['symbol']).sum()
+        sum_prices.drop(['account_cash'], inplace=True)
         if (sum_prices.price == 0).any():
             missing_price_symbols = sum_prices[sum_prices.loc[:,'price'] == 0].index.values
             raise RuntimeError('The following symbols are missing prices. {0}'.format(missing_price_symbols))

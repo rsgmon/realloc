@@ -9,6 +9,19 @@ pd.set_option('display.max_columns', None)  # or 1000
 pd.set_option('display.max_rows', None)  # or 1000
 
 class TestRawRequest(TestCase):
+    def setUp(self):
+        self.invalid_request_2 =  {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"], "model_weight": [0.10, 0.15, float('NaN')], "shares": [float('NaN'), float('NaN'),1174.5], "price": [23,45,1], "restrictions": [float('NaN'), float('NaN'), float('NaN')]}
+        self.valid_request_2 = {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["45-33", "model", "model"],
+                                "model_weight": [float('NaN'), 0.10, 0.15],
+                                "shares": [1174.5, float('NaN'), float('NaN')], "price": [float('NaN'), 23, 45],
+                                "restrictions": [float('NaN'), float('NaN'), float('NaN')]}
+
+    def test_has_account_cash(self):
+        raw_request = RawRequest('json', self.invalid_request_2, test=True)
+        with self.assertRaises(RuntimeError) as cm:
+            raw_request._has_account_cash()
+        self.assertEqual(str(cm.exception), 'The following accounts do not have an account_cash entry {0}'.format('45-33'))
+
     def test_raw_from_excel(self):
         request = RawRequest('xl', '.\/test_data\/sheets\/simple\/simple_101518.xlsx', test=True)
         print(request)
@@ -87,7 +100,7 @@ class TestRawRequest(TestCase):
         self.assertEqual(len(request.raw_request['symbol'][0]),3)
 
     def test_has_price(self):
-        request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
+        request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": float('NaN'), "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
         request._has_price()
         request.raw_request.loc[[2],["price"]] = float('NaN')
         with self.assertRaises(RuntimeError) as cm:
@@ -97,6 +110,9 @@ class TestRawRequest(TestCase):
         with self.assertRaises(RuntimeError) as cm:
             request._has_price()
         self.assertEqual(str(cm.exception), "The following symbols are missing prices. ['MDY' 'SPY']")
+
+
+
 
     def test_duplicate_prices(self):
         request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
@@ -724,7 +740,17 @@ class TestEntire(TestCase):
             {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81,
              "restrictions": float('NaN'), "model_weight": float('NaN')}]
 
+        self.invalid_request_2 = {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"],
+                              "model_weight": [0.10, 0.15, float('NaN')],
+                              "shares": [float('NaN'), float('NaN'), 1174.5], "price": [23, 45, 1],
+                              "restrictions": [float('NaN'), float('NaN'), float('NaN')]}
+
     def test_entire_process(self):
         trademanager = TradeManager('json', self.valid_request)
         print(trademanager.trade_instructions)
+
+    def test_bug_1(self):
+        trademanager = TradeManager('json', self.invalid_request_2)
+        print(trademanager.trade_instructions)
+
 
