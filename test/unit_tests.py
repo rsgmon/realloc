@@ -753,4 +753,6 @@ class TestEntire(TestCase):
         trademanager = TradeManager('json', self.invalid_request_2)
         print(trademanager.trade_instructions)
 
+    def test_bug_2(self):
+        trademanager = TradeManager('csv', './test_data/sheets/bug_02_101918.csv')
 

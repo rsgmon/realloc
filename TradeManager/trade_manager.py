@@ -91,6 +91,7 @@ class RawRequest(object):
         self._strip_all()
         self._no_accounts()
         self._has_price()
+        self._duplicate_price()
         self._has_account_cash()
         self.raw_request['account_number'] = self.raw_request['account_number'].str.strip()
         self._model_rows_validation()
