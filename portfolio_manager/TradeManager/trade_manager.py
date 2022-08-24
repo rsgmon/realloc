@@ -1,10 +1,9 @@
 import pandas as pd
 import os
-from TradeManager.portfolio import Portfolio, PostTradePortfolio
-from TradeManager.trade_calculator import TradeCalculator
-from TradeManager.allocation import AllocationController
+from portfolio_manager.TradeManager.portfolio import Portfolio, PostTradePortfolio
+from portfolio_manager.TradeManager.trade_calculator import TradeCalculator
+from portfolio_manager.TradeManager.allocation import AllocationController
 import math
-from yahoo_finance import Share
 from numbers import Number
 from pandas.api.types import is_numeric_dtype
 
@@ -197,16 +196,6 @@ class RawRequest(object):
                 dupes_not_equal_price.append(i)
         if dupes_not_equal_price:
             raise RuntimeError('The following symbols have two different prices. {0}'.format(dupes_not_equal_price))
-
-
-
-
-
-
-
-
-
-
 
 
     def __str__(self):

@@ -1,9 +1,9 @@
 from unittest import TestCase
-from TradeManager.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
-from TradeManager.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, AllocationController, TradingLibrary, SingleAccountTradeSelector
-from TradeManager.trade_calculator import TradeCalculator
-from TradeManager.portfolio import Portfolio, PostTradePortfolio
-from test.test_data_generator import read_pickle
+from portfolio_manager.TradeManager.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
+from portfolio_manager.TradeManager.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, TradingLibrary
+from portfolio_manager.TradeManager.trade_calculator import TradeCalculator
+from portfolio_manager.TradeManager.portfolio import Portfolio
+from portfolio_manager.test.test_data_generator import read_pickle
 import pandas as pd
 pd.set_option('display.max_columns', None)  # or 1000
 pd.set_option('display.max_rows', None)  # or 1000
@@ -23,7 +23,7 @@ class TestRawRequest(TestCase):
         self.assertEqual(str(cm.exception), 'The following accounts do not have an account_cash entry {0}'.format('45-33'))
 
     def test_raw_from_excel(self):
-        request = RawRequest('xl', '.\/test_data\/sheets\/simple\/simple_101518.xlsx', test=True)
+        request = RawRequest('xl', 'test_data/sheets/simple/simple_101518.xlsx', test=True)
         print(request)
 
     def test_raw_request_validation(self):
@@ -745,6 +745,8 @@ class TestEntire(TestCase):
                               "shares": [float('NaN'), float('NaN'), 1174.5], "price": [23, 45, 1],
                               "restrictions": [float('NaN'), float('NaN'), float('NaN')]}
 
+        self.request_3 = {'account_number': ['model', '445-87', '445-87', '445-87', '445-87'], 'symbol': ['SPY', 'MDY', 'AAPL', 'IBM', 'account_cash'], 'shares': [float('NaN'), 100, 100, 100, 100], 'model_weight': [0.25, float('NaN'), float('NaN'), float('NaN'), float('NaN')], 'price': [100, 280, 250, 150, float('NaN')], 'restrictions': [float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')]}
+
     def test_entire_process(self):
         trademanager = TradeManager('json', self.valid_request)
         print(trademanager.trade_instructions)
@@ -754,5 +756,13 @@ class TestEntire(TestCase):
         print(trademanager.trade_instructions)
 
     def test_bug_2(self):
-        trademanager = TradeManager('csv', './test_data/sheets/bug_02_101918.csv')
+        trademanager = TradeManager('csv', 'test_data/sheets/bug_02_101918.csv')
+
+    def test_bug_3(self):
+        trademanager = TradeManager('json', self.request_3)
+        print(trademanager.trade_instructions)
+
+    def test_bug_4(self):
+        trademanager = TradeManager('json', self.request_4)
+        print(trademanager.trade_instructions)
 
