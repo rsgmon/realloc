@@ -1,8 +1,8 @@
 import pandas as pd
 import os
-from portfolio_manager.TradeManager.portfolio import Portfolio, PostTradePortfolio
-from portfolio_manager.TradeManager.trade_calculator import TradeCalculator
-from portfolio_manager.TradeManager.allocation import AllocationController
+from trade_generator.portfolio import Portfolio, PostTradePortfolio
+from trade_generator.trade_calculator import TradeCalculator
+from trade_generator.allocation import AllocationController
 import math
 from numbers import Number
 from pandas.api.types import is_numeric_dtype

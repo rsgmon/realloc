@@ -1,9 +1,9 @@
 from unittest import TestCase
-from portfolio_manager.TradeManager.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
-from portfolio_manager.TradeManager.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, TradingLibrary
-from portfolio_manager.TradeManager.trade_calculator import TradeCalculator
-from portfolio_manager.TradeManager.portfolio import Portfolio
-from portfolio_manager.test.test_data_generator import read_pickle
+from trade_generator.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
+from trade_generator.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, TradingLibrary
+from trade_generator.trade_calculator import TradeCalculator
+from trade_generator.portfolio import Portfolio
+from test_data_generator import read_pickle
 import pandas as pd
 pd.set_option('display.max_columns', None)  # or 1000
 pd.set_option('display.max_rows', None)  # or 1000

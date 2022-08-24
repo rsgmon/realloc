@@ -1,8 +1,8 @@
-from .TradeManager.allocation import *
-from .TradeManager import portfolio as portfolio
-import portfolio_manager.TradeManager.trade_calculator as tc
-import portfolio_manager.TradeManager.trade_manager as trade_manage
-import portfolio_manager.TradeManager.allocation as al
+from trade_generator.allocation import *
+from trade_generator import portfolio as portfolio
+import trade_generator.trade_calculator as tc
+import trade_generator.trade_manager as trade_manage
+import trade_generator.allocation as al
 import pickle
 import argparse
 import sys
