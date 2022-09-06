@@ -1,0 +1,4 @@
+pandas==1.4.3
+xlrd==2.0.1
+numpy==1.23.2
+yahoo_finance==1.4.0
