@@ -10,7 +10,7 @@ pd.set_option('display.max_rows', None)  # or 1000
 
 class TestRawRequest(TestCase):
     def setUp(self):
-        self.invalid_request_2 =  {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"], "model_weight": [0.10, 0.15, float('NaN')], "shares": [float('NaN'), float('NaN'),1174.5], "price": [23,45,1], "restrictions": [float('NaN'), float('NaN'), float('NaN')]}
+        self.invalid_request_2 = {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["model", "model", "45-33"], "model_weight": [0.10, 0.15, float('NaN')], "shares": [float('NaN'), float('NaN'),1174.5], "price": [23,45,1], "restrictions": [float('NaN'), float('NaN'), float('NaN')]}
         self.valid_request_2 = {"symbol": ["account_cash", "FB", "ABC"], "account_number": ["45-33", "model", "model"],
                                 "model_weight": [float('NaN'), 0.10, 0.15],
                                 "shares": [1174.5, float('NaN'), float('NaN')], "price": [float('NaN'), 23, 45],
