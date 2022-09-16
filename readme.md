@@ -1,4 +1,9 @@
 Fixing bugs log
+#####9/6/22
+I have successfully implemented docker and ran one test `python -m unittest unit_tests.TestRawRequest.test_raw_from_excel` however other tests are failing likely because the data is not properly loaded. What I need to do is spin up the container with `docker run -it portfolio_calc bash` then cd into the test folder. Then I need to read the code on how to generate data and read each test to see how it gets its data.
+
+Once the tests are working I need to try and load an excel workbook.
+
 #####10/17/2018
 I have decided to eliminate the get prices. Its really not the job of this process to get prices and it should be handled by another process. So for now when receiving a request every security must have a price. If a request contains two different prices for the same security an error is thrown.
 

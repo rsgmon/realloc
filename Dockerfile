@@ -1,4 +1,4 @@
-FROM python:3.4.10
+FROM python
 
 
 COPY . ./portmgr
