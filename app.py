@@ -1,5 +1,5 @@
-from trade_manager import TradeManager
+import json
+from trade_generator.trade_manager import TradeManager
 
 def handler(event, context):
-    print("Hello from AWS Lambda!")
-    print("Info about pandas")
+    return json.dumps(TradeManager('json', event).trade_instructions.to_dict(orient='records'))
