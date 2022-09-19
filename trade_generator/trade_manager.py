@@ -1,11 +1,12 @@
-import pandas as pd
-import os
-from trade_generator.portfolio import Portfolio, PostTradePortfolio
-from trade_generator.trade_calculator import TradeCalculator
-from trade_generator.allocation import AllocationController
 import math
+import pandas as pd
+
 from numbers import Number
 from pandas.api.types import is_numeric_dtype
+
+from .allocation import AllocationController
+from .portfolio import Portfolio, PostTradePortfolio
+from .trade_calculator import TradeCalculator
 
 
 class TradeManager(object):
@@ -302,7 +303,3 @@ class Prices(object):
             return '\n\n'.join(['{key}\n{value}'.format(key=key, value=self.__dict__.get(key)) for key in self.__dict__])
 
 
-def handler(event, context):
-    print("Hello from AWS Lambda!")
-    print("Info about pandas")
-    print(pd.show_versions(as_json=False))
