@@ -9,6 +9,14 @@ from .portfolio import Portfolio, PostTradePortfolio
 from .trade_calculator import TradeCalculator
 
 
+def is_number(x):
+    try:
+        price = int(x)
+    except ValueError:
+        return False
+    return True
+
+
 class TradeManager(object):
     def __init__(self, file_type=None, path=None):
         self.raw_request = RawRequest(file_type, path)
@@ -183,20 +191,30 @@ class RawRequest(object):
         self.raw_request[self.raw_request.loc[:,'account_number'] != 'model'].apply(shares, axis=1)
 
     def _has_price(self):
-        sum_prices = self.raw_request.groupby(['symbol']).sum()
-        sum_prices.drop(['account_cash'], inplace=True)
+        raw_request_prices_with_numbers = self.raw_request[self.raw_request['price'].apply(is_number)]
+        raw_request_prices_with_numbers['price'] = raw_request_prices_with_numbers['price'].astype(float)
+        sum_prices = raw_request_prices_with_numbers.groupby(['symbol']).sum()
+        # sum_prices.drop(['account_cash'], inplace=True)
         if (sum_prices.price == 0).any():
             missing_price_symbols = sum_prices[sum_prices.loc[:,'price'] == 0].index.values
             raise RuntimeError('The following symbols are missing prices. {0}'.format(missing_price_symbols))
 
+
     def _duplicate_price(self):
-        groups = self.raw_request.dropna(subset=['price']).groupby(['symbol'])
+        groups = self.raw_request.groupby(['symbol'])
         dupes_not_equal_price = []
         for i,v in groups:
-            if ((v.price - v.price.mean()) != 0).any():
+            prices = []
+            for value in v.price.values:
+                try:
+                    price = int(value)
+                except ValueError:
+                    continue
+                prices.append(price)
+            if len(set(prices)) > 1:
                 dupes_not_equal_price.append(i)
-        if dupes_not_equal_price:
-            raise RuntimeError('The following symbols have two different prices. {0}'.format(dupes_not_equal_price))
+            if dupes_not_equal_price:
+                raise RuntimeError('The following symbols have two different prices. {0}'.format(dupes_not_equal_price))
 
 
     def __str__(self):
@@ -285,8 +303,26 @@ class Prices(object):
         else:
             self._set_prices()
 
+    def fill_na(self, prices):
+        if isinstance(prices, list):
+            for price in prices:
+                try:
+                    price = int(price)
+                except ValueError:
+                    price = float('NaN')
+        else:
+            try:
+                int(prices)
+            except ValueError:
+                return float('NaN')
+            return prices
+
+
+    def fill_na_or_string_prices(self):
+        self.raw_request['price'] = self.raw_request['price'].apply(self.fill_na)
 
     def _set_prices(self):
+        self.fill_na_or_string_prices()
         self._prices_are_numbers()
         self.prices = self._filter_prices().set_index(['symbol'])
 

@@ -1,3 +1,5 @@
+import pytest
+
 from unittest import TestCase
 from trade_generator.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
 from trade_generator.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, TradingLibrary
@@ -7,6 +9,7 @@ from test_data_generator import read_pickle
 import pandas as pd
 pd.set_option('display.max_columns', None)  # or 1000
 pd.set_option('display.max_rows', None)  # or 1000
+
 
 class TestRawRequest(TestCase):
     def setUp(self):
@@ -100,7 +103,7 @@ class TestRawRequest(TestCase):
         self.assertEqual(len(request.raw_request['symbol'][0]),3)
 
     def test_has_price(self):
-        request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": float('NaN'), "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
+        request = RawRequest('test', [{"symbol": "SPY", "price": "NaN", "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205.0, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1.0, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
         request._has_price()
         request.raw_request.loc[[2],["price"]] = float('NaN')
         with self.assertRaises(RuntimeError) as cm:
@@ -115,7 +118,7 @@ class TestRawRequest(TestCase):
 
 
     def test_duplicate_prices(self):
-        request = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
+        request = RawRequest('test', [{"symbol": "SPY", "price": "NN", "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}], test=True)
         request._duplicate_price()
         request.raw_request.loc[[0], ["price"]] = 100
         with self.assertRaises(RuntimeError) as cm:
@@ -700,17 +703,19 @@ class AllTradeMethods(TestCase):
 class TestDev(TestCase):
     pass
 
-
+#To do these tests are not reflecting reality (signed Rye 09/23/22)
 class TestPriceRetriever(TestCase):
     def setUp(self):
-        self.request_symbol_no_price = RawRequest('test', [{"account_number": ["bgg"], "symbol": ["YYY"], "model_weight": [None], "shares": [None],"price": 'hjg', "restrictions": [None]}], test=True )
-        self.request_valid_01 = RawRequest('test', [{"symbol": "SPY", "price": float('NaN'), "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}])
+        json_request = json.loads('[{"symbol": ["account_cash", "FB", "ABC", "FB"], "account_number": ["45-33", "model", "model", "45-33"],"model_weight": ["NaN", 0.10, 0.15, "NaN"],"shares": [1174.5, "NaN", "NaN", 50], "price": ["NaN", 23, 45, 23],"restrictions": ["NaN", "NaN", "NaN", "NaN"]}]')
+
+        self.request_symbol_no_price = RawRequest('json', json_request, test=True )
+        self.request_valid_01 = RawRequest('test', [{"symbol": "SPY", "price": "nano", "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "MDY", "price": 349.07, "account_number": "model", "shares": float('NaN'), "restrictions": float('NaN'), "model_weight": 0.5}, {"symbol": "SPY", "price": 205, "account_number": "123-45", "shares": 30, "restrictions": float('NaN'), "model_weight": float('NaN')}, {"symbol": "account_cash", "price": 1, "account_number": "123-45", "shares": 1812.81, "restrictions": float('NaN'), "model_weight": float('NaN')}])
 
     def test_initiate_price_retriever(self):
         self.assertTrue(Prices(self.request_valid_01))
 
     def test_prices_are_numbers(self):
-        pr = Prices(self.request_symbol_no_price, test=True)
+        pr = Prices(self.request_symbol_no_price)
         with self.assertRaises(ValueError) as cm:
             pr._prices_are_numbers()
         self.assertEqual(str(cm.exception), 'Non numeric price entered.')
