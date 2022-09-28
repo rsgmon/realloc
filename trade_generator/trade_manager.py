@@ -1,6 +1,6 @@
 import math
 import pandas as pd
-
+import json
 from numbers import Number
 from pandas.api.types import is_numeric_dtype
 
@@ -63,6 +63,7 @@ class RawRequest(object):
         if test:
             pass
         else:
+            self._clean_raw_request()
             self._validate_raw_request()
 
     def _route_trade_request_type(self):
@@ -92,6 +93,29 @@ class RawRequest(object):
                 else: self.raw_request = pd.DataFrame(self.file_path['data'])
             else:
                 return Exception
+
+    def _clean_raw_request(self):
+        try:
+            self.raw_request['price'] = self.raw_request['price'].apply(self.fill_na)
+        except KeyError:
+            raise KeyError(json.dumps(self.raw_request.to_dict()))
+        self.raw_request['model_weight'] = self.raw_request['model_weight'].apply(self.fill_na)
+        self.raw_request['shares'] = self.raw_request['shares'].apply(self.fill_na)
+
+
+    def fill_na(self, prices):
+        if isinstance(prices, list):
+            for price in prices:
+                try:
+                    price = int(price)
+                except ValueError:
+                    price = float('NaN')
+        else:
+            try:
+                int(prices)
+            except ValueError:
+                return float('NaN')
+            return prices
 
     def _validate_raw_request(self):
         self._empty_request()
@@ -139,11 +163,13 @@ class RawRequest(object):
 
     def _model_rows_validation(self):
         def weights(row):
+
             runerror = RuntimeError("Model Row Error")
             if not row.model_weight:
                 runerror.test_error_code = "BlankWeight"
                 raise runerror
             if isinstance(row.model_weight, str):
+                #this is a total shim to get it to work now
                 if not row.model_weight.isnumeric():
                     runerror.test_error_code = "NonNumericWeight"
                     raise runerror
