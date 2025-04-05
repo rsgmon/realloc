@@ -629,5 +629,11 @@ class TradeInstructions(object):
         else:
             self.instructions = self.trades.copy().reset_index().loc[:,['symbol', 'account_number', 'size']]
 
+class TradeAlgorithms(object):
+    def __init__(self):
+        pass
+
+    def sell_position(self, target: float, current: float) -> float:
+        return target - current
 
 
