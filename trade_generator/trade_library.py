@@ -79,6 +79,15 @@ class TradeAccountMatrix:
             self.account_trades[account_number] = {
                 k: v for k, v in self.account_trades[account_number].items() if v != 0
             }
+    def to_dict(self) -> Dict:
+        return {
+            "portfolio_trades": self.portfolio_trades,
+            "prices": self.prices,
+            "cash_matrix": self.cash_matrix,
+            "share_trades": self.share_trades,
+            "account_trades": self.account_trades,
+            "model_only": self.model_only
+        }
 
 class ScaledPortfolio:
     def __init__(self, accounts: List[Account], model_target: Dict[str, float]):
@@ -166,4 +175,4 @@ def split_trades(
     net_trades = allocate_trades(current_shares, target_shares, prices)
     buys = {s: v for s, v in net_trades.items() if v > 0}
     sells = {s: abs(v) for s, v in net_trades.items() if v < 0}
-    return {'buy': buys, 'sell': sells'}
+    return {'buy': buys, 'sell': sells}
