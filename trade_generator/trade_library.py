@@ -45,49 +45,44 @@ class TradeAccountMatrix:
     def __init__(
         self,
         accounts: List[Account],
-        portfolio_trades: Dict[str, int],
         prices: Dict[str, float],
+        portfolio_trades: Optional[Dict[str, int]] = None,
     ):
         self.accounts = {a.account_number: a for a in accounts}
-        self.portfolio_trades = portfolio_trades.copy()
+        self.portfolio_trades = portfolio_trades.copy() if portfolio_trades else {}
         self.prices = prices.copy()
-        self.account_trades: Dict[str, Dict[str, int]] = {a.account_number: {} for a in accounts}
         self.cash_matrix: Dict[str, float] = {a.account_number: a.cash for a in accounts}
-        self.share_trades: Dict[str, int] = portfolio_trades.copy()
         self.model_only: Dict[str, int] = {
-            sym: qty for sym, qty in portfolio_trades.items()
+            sym: qty for sym, qty in self.portfolio_trades.items()
             if not any(sym in a.positions for a in accounts)
         }
 
-    def update(self):
-        for account_number, trades in self.account_trades.items():
+    def update(self, trades: Dict[str, Dict[str, int]]):
+        for account_number, trade_dict in trades.items():
             account = self.accounts[account_number]
-            for symbol, qty in trades.items():
-                # Update holdings
+            for symbol, qty in trade_dict.items():
                 account.positions[symbol] = account.positions.get(symbol, 0) + qty
-
-                # Update cash
                 trade_value = qty * self.prices.get(symbol, 0)
                 self.cash_matrix[account_number] -= trade_value
 
-                # Update portfolio trade state
-                self.share_trades[symbol] = self.share_trades.get(symbol, 0) - qty
-
-        # Remove zeroed-out trades
-        self.share_trades = {k: v for k, v in self.share_trades.items() if v != 0}
-        for account_number in self.account_trades:
-            self.account_trades[account_number] = {
-                k: v for k, v in self.account_trades[account_number].items() if v != 0
-            }
     def to_dict(self) -> Dict:
         return {
             "portfolio_trades": self.portfolio_trades,
             "prices": self.prices,
             "cash_matrix": self.cash_matrix,
-            "share_trades": self.share_trades,
-            "account_trades": self.account_trades,
             "model_only": self.model_only
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict, accounts: List[Account]) -> 'TradeAccountMatrix':
+        instance = cls(
+            accounts=accounts,
+            portfolio_trades=data.get("portfolio_trades", {}),
+            prices=data.get("prices", {})
+        )
+        instance.cash_matrix = data.get("cash_matrix", {})
+        instance.model_only = data.get("model_only", {})
+        return instance
 
 class ScaledPortfolio:
     def __init__(self, accounts: List[Account], model_target: Dict[str, float]):
