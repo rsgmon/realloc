@@ -1,6 +1,7 @@
 import pytest
 from trade_generator.core import (Account, TradeAccountMatrix, ScaledPortfolio,
-                                  allocate_trades, split_trades, PortfolioModel)
+                                  allocate_trades, split_trades, PortfolioModel,
+                                  select_account_for_buy_trade, select_account_for_sell_trade)
 
 @pytest.fixture
 def sample_portfoliomodel():
@@ -26,7 +27,7 @@ def test_split_trades():
     assert trades == {"buy": {"AAPL": 5}, "sell": {"GOOG": 1}}
 
 def test_trade_account_matrix_update(sample_accounts):
-    prices = {"AAPL": 100, "GOOG": 200}
+    prices = {"AAPL": 100, "GOOG": 200, "MSFT": 300}
     trades = {"A001": {"AAPL": 2}, "A002": {"GOOG": -1}}
     tam = TradeAccountMatrix(sample_accounts, prices)
     tam.update(trades)
@@ -41,17 +42,23 @@ def test_scaled_portfolio(sample_accounts, sample_portfoliomodel):
     assert isinstance(trades, dict)
 
 def test_portfoliomodel_manual_allocation(sample_accounts, sample_portfoliomodel):
-    prices = {"AAPL": 100, "GOOG": 200}
+    prices = {"AAPL": 100, "GOOG": 200, "MSFT": 300}
     trades_by_account = {}
     normalized_model = sample_portfoliomodel.normalize()
+    print(normalized_model)
     for account in sample_accounts:
-        total_value = sum(account.positions.get(sym, 0) * prices.get(sym, 0) for sym in normalized_model) + account.cash
+        print(account.positions)
+        total_value = sum(account.positions.get(sym, 0) * prices.get(sym, 0) for sym in account.positions) + account.cash
+        print(total_value)
         target_dollars = {sym: weight * total_value for sym, weight in normalized_model.items()}
         target_shares = {sym: target_dollars[sym] / prices[sym] for sym in normalized_model}
         current = account.positions
         trades = allocate_trades(current, target_shares, prices)
         trades_by_account[account.account_number] = trades
 
+    print(current)
+    print(target_dollars)
+    print(trades_by_account)
     assert isinstance(trades_by_account, dict)
 
 
@@ -131,3 +138,33 @@ def test_trade_account_matrix_allows_valid_trades():
     trades = {"001": {"AAPL": -2}}
     tam.update(trades)
     assert acc.positions["AAPL"] == 3
+
+@pytest.fixture
+def accounts():
+    return [
+        Account("A", "A001", 1000, {"AAPL": 5}, {}),
+        Account("B", "A002", 2000, {"GOOG": 10}, {})
+    ]
+
+def test_select_account_for_buy_trade_existing_holder(accounts):
+    prices = {"AAPL": 100, "GOOG": 200}
+    selected = select_account_for_buy_trade("AAPL", 3, accounts, prices)
+    assert selected == "A001"
+
+def test_select_account_for_buy_trade_fallback_to_cash(accounts):
+    prices = {"MSFT": 100}
+    selected = select_account_for_buy_trade("MSFT", 5, accounts, prices)
+    assert selected == "A002"  # B has more cash
+
+def test_select_account_for_sell_trade_full_sell(accounts):
+    selected = select_account_for_sell_trade("GOOG", 5, accounts)
+    assert selected == "A002"
+
+def test_select_account_for_sell_trade_partial(accounts):
+    selected = select_account_for_sell_trade("AAPL", 10, accounts)
+    assert selected == "A001"  # Only one with AAPL, partial
+
+def test_select_account_for_sell_trade_none():
+    accounts = [Account("C", "A003", 500, {}, {})]
+    selected = select_account_for_sell_trade("TSLA", 1, accounts)
+    assert selected is None

@@ -229,3 +229,68 @@ def split_trades(
     buys = {s: v for s, v in net_trades.items() if v > 0}
     sells = {s: abs(v) for s, v in net_trades.items() if v < 0}
     return {'buy': buys, 'sell': sells}
+
+
+def select_account_for_buy_trade(
+    symbol: str,
+    trade_amount: int,
+    accounts: List[Account],
+    prices: Dict[str, float]
+) -> Optional[str]:
+    """
+    Select the most appropriate account for a given buy trade.
+
+    Priority:
+    1. Accounts that already hold the symbol.
+    2. Among them, the one with the largest position.
+    3. If none can fulfill the full trade, choose the one that can fulfill the largest partial.
+    4. If no accounts hold the symbol, choose the one with enough cash.
+    """
+    candidates = [a for a in accounts if symbol in a.positions]
+    if candidates:
+        candidates.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
+        for account in candidates:
+            max_possible = int(account.cash // prices[symbol])
+            if trade_amount <= max_possible:
+                return account.account_number
+
+        # If none can fulfill the full trade, return the one that can do the most
+        partial_candidates = [(a, int(a.cash // prices[symbol])) for a in candidates if int(a.cash // prices[symbol]) > 0]
+        if partial_candidates:
+            best = max(partial_candidates, key=lambda x: x[1])
+            return best[0].account_number
+
+    # Fallback to any account with enough cash
+    cash_candidates = [(a, int(a.cash // prices[symbol])) for a in accounts if int(a.cash // prices[symbol]) > 0]
+    if cash_candidates:
+        best = max(cash_candidates, key=lambda x: x[1])
+        return best[0].account_number
+
+    return None
+
+
+def select_account_for_sell_trade(
+    symbol: str,
+    trade_amount: int,
+    accounts: List[Account]
+) -> Optional[str]:
+    """
+    Select the most appropriate account for a given sell trade.
+
+    Priority:
+    1. Accounts that already hold the symbol.
+    2. Among them, the one with the largest position.
+    3. Return the first one that can fulfill the full sell.
+    4. If none can do it fully, choose the one that can do the largest partial.
+    """
+    candidates = [a for a in accounts if symbol in a.positions and a.positions[symbol] > 0]
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
+    for account in candidates:
+        if account.positions[symbol] >= trade_amount:
+            return account.account_number
+
+    # Fallback to the one with the largest position
+    return candidates[0].account_number if candidates else None
