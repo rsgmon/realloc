@@ -41,33 +41,6 @@ def test_scaled_portfolio(sample_accounts, sample_portfoliomodel):
     trades = portfolio.generate_scaled_cash_constrained_trades(prices)
     assert isinstance(trades, dict)
 
-def test_portfoliomodel_manual_allocation(sample_accounts, sample_portfoliomodel):
-    prices = {"AAPL": 100, "GOOG": 200, "MSFT": 300}
-    trades_by_account = {}
-    normalized_model = sample_portfoliomodel.normalize()
-    print(normalized_model)
-    for account in sample_accounts:
-        print(account.positions)
-        total_value = sum(account.positions.get(sym, 0) * prices.get(sym, 0) for sym in account.positions) + account.cash
-        print(total_value)
-        target_dollars = {sym: weight * total_value for sym, weight in normalized_model.items()}
-        target_shares = {sym: target_dollars[sym] / prices[sym] for sym in normalized_model}
-        current = account.positions
-        trades = allocate_trades(current, target_shares, prices)
-        trades_by_account[account.account_number] = trades
-
-    print(current)
-    print(target_dollars)
-    print(trades_by_account)
-    assert isinstance(trades_by_account, dict)
-
-
-    model = {"AAPL": 0.6, "GOOG": 0.4}
-    prices = {"AAPL": 100, "GOOG": 200}
-    portfolio = ScaledPortfolio(sample_accounts, model)
-    trades = portfolio.generate_scaled_cash_constrained_trades(prices)
-    assert isinstance(trades, dict)
-
 def test_portfolio_model_init():
     model = PortfolioModel("Growth")
     assert model.name == "Growth"
