@@ -8,13 +8,20 @@ class Account:
         account_number: str,
         cash: float,
         positions: Dict[str, float],
-        targets: Dict[str, float]
+        targets: Dict[str, float],
+        enforce_no_negative_positions: bool = False
     ):
         self.label = label
         self.account_number = account_number
         self.cash = cash
         self.positions = positions
         self.targets = targets
+        self.enforce_no_negative_positions = enforce_no_negative_positions
+
+        if self.enforce_no_negative_positions:
+            for symbol, amount in self.positions.items():
+                if amount < 0:
+                    raise ValueError(f"Negative position for {symbol} not allowed in account {account_number}")
 
     def allocate(self, prices: Optional[Dict[str, float]] = None) -> Dict[str, int]:
         return allocate_trades(self.positions, self.targets, prices)
@@ -28,7 +35,8 @@ class Account:
             "account_number": self.account_number,
             "cash": self.cash,
             "positions": self.positions,
-            "targets": self.targets
+            "targets": self.targets,
+            "enforce_no_negative_positions": self.enforce_no_negative_positions
         }
 
     @classmethod
@@ -38,6 +46,43 @@ class Account:
             account_number=data.get("account_number", ""),
             cash=data.get("cash", 0.0),
             positions=data.get("positions", {}),
+            targets=data.get("targets", {}),
+            enforce_no_negative_positions=data.get("enforce_no_negative_positions", False)
+        )
+
+class PortfolioModel:
+    def __init__(self, name: str, targets: Optional[Dict[str, float]] = None):
+        self.name = name
+        self.targets = targets if targets is not None else {}
+
+    def add_target(self, symbol: str, weight: float):
+        self.targets[symbol] = weight
+
+    def remove_target(self, symbol: str):
+        self.targets.pop(symbol, None)
+
+    def update_target(self, symbol: str, weight: float):
+        self.targets[symbol] = weight
+
+    def get_target(self, symbol: str) -> Optional[float]:
+        return self.targets.get(symbol)
+
+    def normalize(self) -> Dict[str, float]:
+        total = sum(self.targets.values())
+        if total == 0:
+            return self.targets
+        return {symbol: weight / total for symbol, weight in self.targets.items()}
+
+    def to_dict(self) -> Dict:
+        return {
+            "name": self.name,
+            "targets": self.targets
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'PortfolioModel':
+        return cls(
+            name=data.get("name", ""),
             targets=data.get("targets", {})
         )
 
@@ -49,19 +94,22 @@ class TradeAccountMatrix:
         portfolio_trades: Optional[Dict[str, int]] = None,
     ):
         self.accounts = {a.account_number: a for a in accounts}
-        self.portfolio_trades = portfolio_trades.copy() if portfolio_trades else {}
         self.prices = prices.copy()
+        self.portfolio_trades = portfolio_trades.copy() if portfolio_trades else {}
         self.cash_matrix: Dict[str, float] = {a.account_number: a.cash for a in accounts}
         self.model_only: Dict[str, int] = {
             sym: qty for sym, qty in self.portfolio_trades.items()
             if not any(sym in a.positions for a in accounts)
         }
 
-    def update(self, trades: Dict[str, Dict[str, int]]):
+    def update(self, trades: Dict[str, Dict[str, int]]) -> None:
         for account_number, trade_dict in trades.items():
             account = self.accounts[account_number]
             for symbol, qty in trade_dict.items():
-                account.positions[symbol] = account.positions.get(symbol, 0) + qty
+                new_position = account.positions.get(symbol, 0) + qty
+                if account.enforce_no_negative_positions and new_position < 0:
+                    raise ValueError(f"Trade would result in negative position for {symbol} in account {account_number}")
+                account.positions[symbol] = new_position
                 trade_value = qty * self.prices.get(symbol, 0)
                 self.cash_matrix[account_number] -= trade_value
 
@@ -77,8 +125,8 @@ class TradeAccountMatrix:
     def from_dict(cls, data: Dict, accounts: List[Account]) -> 'TradeAccountMatrix':
         instance = cls(
             accounts=accounts,
-            portfolio_trades=data.get("portfolio_trades", {}),
-            prices=data.get("prices", {})
+            prices=data.get("prices", {}),
+            portfolio_trades=data.get("portfolio_trades", {})
         )
         instance.cash_matrix = data.get("cash_matrix", {})
         instance.model_only = data.get("model_only", {})

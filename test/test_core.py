@@ -1,5 +1,6 @@
 import pytest
-from trade_generator.core import Account, TradeAccountMatrix, ScaledPortfolio, allocate_trades, split_trades
+from trade_generator.core import (Account, TradeAccountMatrix, ScaledPortfolio,
+                                  allocate_trades, split_trades, PortfolioModel)
 
 @pytest.fixture
 def sample_accounts():
@@ -34,3 +35,74 @@ def test_scaled_portfolio(sample_accounts):
     portfolio = ScaledPortfolio(sample_accounts, model)
     trades = portfolio.generate_scaled_cash_constrained_trades(prices)
     assert isinstance(trades, dict)
+
+def test_portfolio_model_init():
+    model = PortfolioModel("Growth")
+    assert model.name == "Growth"
+    assert model.targets == {}
+
+def test_add_update_get_target():
+    model = PortfolioModel("Test")
+    model.add_target("AAPL", 0.4)
+    assert model.get_target("AAPL") == 0.4
+    model.update_target("AAPL", 0.5)
+    assert model.get_target("AAPL") == 0.5
+
+def test_remove_target():
+    model = PortfolioModel("Test", {"AAPL": 0.4, "GOOG": 0.6})
+    model.remove_target("AAPL")
+    assert "AAPL" not in model.targets
+
+def test_normalize_targets():
+    model = PortfolioModel("Test", {"AAPL": 2, "GOOG": 3})
+    normalized = model.normalize()
+    assert pytest.approx(normalized["AAPL"], 0.01) == 0.4
+    assert pytest.approx(normalized["GOOG"], 0.01) == 0.6
+
+def test_portfolio_model_serialization():
+    original = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.5})
+    data = original.to_dict()
+    restored = PortfolioModel.from_dict(data)
+    assert restored.name == original.name
+    assert restored.targets == original.targets
+
+def test_account_disallows_negative_starting_position():
+    with pytest.raises(ValueError):
+        Account(
+            label="Test",
+            account_number="001",
+            cash=1000.0,
+            positions={"AAPL": -10},
+            targets={},
+            enforce_no_negative_positions=True
+        )
+
+def test_trade_account_matrix_prevents_negative_position():
+    acc = Account(
+        label="Test",
+        account_number="001",
+        cash=1000.0,
+        positions={"AAPL": 5},
+        targets={},
+        enforce_no_negative_positions=True
+    )
+    prices = {"AAPL": 100.0}
+    tam = TradeAccountMatrix([acc], prices)
+    trades = {"001": {"AAPL": -10}}
+    with pytest.raises(ValueError):
+        tam.update(trades)
+
+def test_trade_account_matrix_allows_valid_trades():
+    acc = Account(
+        label="Test",
+        account_number="001",
+        cash=1000.0,
+        positions={"AAPL": 5},
+        targets={},
+        enforce_no_negative_positions=True
+    )
+    prices = {"AAPL": 100.0}
+    tam = TradeAccountMatrix([acc], prices)
+    trades = {"001": {"AAPL": -2}}
+    tam.update(trades)
+    assert acc.positions["AAPL"] == 3

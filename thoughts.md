@@ -6,8 +6,8 @@ So right now I can
     send those trades to tam to update
     repeat until no more trades are needed
 
-So I still need a, but not in this order
+So I still need a, (but not in this order)
     model class that holds model positions
     function that accepts Account objects, model object, and prices (optional)
-    trade class to hold trades
-    
+    trade class that holds trades
+    many functions that calculate account level trades
