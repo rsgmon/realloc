@@ -3,6 +3,10 @@ from trade_generator.core import (Account, TradeAccountMatrix, ScaledPortfolio,
                                   allocate_trades, split_trades, PortfolioModel)
 
 @pytest.fixture
+def sample_portfoliomodel():
+    return PortfolioModel("SampleModel", {"AAPL": 0.6, "GOOG": 0.4})
+
+@pytest.fixture
 def sample_accounts():
     return [
         Account("Taxable", "A001", 10000.0, {"AAPL": 10, "GOOG": 5}, {}),
@@ -29,7 +33,28 @@ def test_trade_account_matrix_update(sample_accounts):
     assert tam.accounts["A001"].positions["AAPL"] == 12
     assert tam.accounts["A002"].positions["GOOG"] == -1 or "GOOG" not in tam.accounts["A002"].positions
 
-def test_scaled_portfolio(sample_accounts):
+def test_scaled_portfolio(sample_accounts, sample_portfoliomodel):
+    prices = {"AAPL": 100, "GOOG": 200}
+    normalized_model = sample_portfoliomodel.normalize()
+    portfolio = ScaledPortfolio(sample_accounts, normalized_model)
+    trades = portfolio.generate_scaled_cash_constrained_trades(prices)
+    assert isinstance(trades, dict)
+
+def test_portfoliomodel_manual_allocation(sample_accounts, sample_portfoliomodel):
+    prices = {"AAPL": 100, "GOOG": 200}
+    trades_by_account = {}
+    normalized_model = sample_portfoliomodel.normalize()
+    for account in sample_accounts:
+        total_value = sum(account.positions.get(sym, 0) * prices.get(sym, 0) for sym in normalized_model) + account.cash
+        target_dollars = {sym: weight * total_value for sym, weight in normalized_model.items()}
+        target_shares = {sym: target_dollars[sym] / prices[sym] for sym in normalized_model}
+        current = account.positions
+        trades = allocate_trades(current, target_shares, prices)
+        trades_by_account[account.account_number] = trades
+
+    assert isinstance(trades_by_account, dict)
+
+
     model = {"AAPL": 0.6, "GOOG": 0.4}
     prices = {"AAPL": 100, "GOOG": 200}
     portfolio = ScaledPortfolio(sample_accounts, model)
