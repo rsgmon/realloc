@@ -123,6 +123,13 @@ class TradeAccountMatrix:
                 trade_value = qty * self.prices.get(symbol, 0)
                 self.cash_matrix[account_number] -= trade_value
 
+    def update_portfolio_trades(self, target_shares: Dict[str, float]):
+        combined_current = {}
+        for account in self.accounts.values():
+            for sym, qty in account.positions.items():
+                combined_current[sym] = combined_current.get(sym, 0.0) + qty
+        self.portfolio_trades = allocate_trades(combined_current, target_shares)
+
     def to_dict(self) -> Dict:
         return {
             "portfolio_trades": self.portfolio_trades,
@@ -235,38 +242,44 @@ def select_account_for_buy_trade(
     symbol: str,
     trade_amount: int,
     accounts: List[Account],
-    prices: Dict[str, float]
+    prices: Dict[str, float],
+    cash_matrix: Dict[str, float]
 ) -> Optional[str]:
     """
-    Select the most appropriate account for a given buy trade.
+    Select the most appropriate account for a buy trade.
 
     Priority:
-    1. Accounts that already hold the symbol.
-    2. Among them, the one with the largest position.
-    3. If none can fulfill the full trade, choose the one that can fulfill the largest partial.
-    4. If no accounts hold the symbol, choose the one with enough cash.
+    1. Any account that can fulfill the full trade (holder or not)
+    2. Among holders, pick the one with the largest partial capacity
+    3. Else, pick any account with the largest cash-based capacity
     """
-    candidates = [a for a in accounts if symbol in a.positions]
-    if candidates:
-        candidates.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
-        for account in candidates:
-            max_possible = int(account.cash // prices[symbol])
-            if trade_amount <= max_possible:
-                return account.account_number
+    full_fillers = [
+        a for a in accounts if int(cash_matrix[a.account_number] // prices[symbol]) >= trade_amount
+    ]
+    if full_fillers:
+        # Optional: sort to prefer holders if there's a tie
+        full_fillers.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
+        return full_fillers[0].account_number
 
-        # If none can fulfill the full trade, return the one that can do the most
-        partial_candidates = [(a, int(a.cash // prices[symbol])) for a in candidates if int(a.cash // prices[symbol]) > 0]
-        if partial_candidates:
-            best = max(partial_candidates, key=lambda x: x[1])
-            return best[0].account_number
+    # Partial holders
+    holders = [a for a in accounts if symbol in a.positions]
+    partials = [
+        (a, int(a.cash // prices[symbol])) for a in holders if int(a.cash // prices[symbol]) > 0
+    ]
+    if partials:
+        best_partial = max(partials, key=lambda x: x[1])
+        return best_partial[0].account_number
 
-    # Fallback to any account with enough cash
-    cash_candidates = [(a, int(a.cash // prices[symbol])) for a in accounts if int(a.cash // prices[symbol]) > 0]
+    # Fallback: any account with some buying power
+    cash_candidates = [
+        (a, int(a.cash // prices[symbol])) for a in accounts if int(a.cash // prices[symbol]) > 0
+    ]
     if cash_candidates:
-        best = max(cash_candidates, key=lambda x: x[1])
-        return best[0].account_number
+        best_cash = max(cash_candidates, key=lambda x: x[1])
+        return best_cash[0].account_number
 
     return None
+
 
 
 def select_account_for_sell_trade(
