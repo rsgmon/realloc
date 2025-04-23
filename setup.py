@@ -1,4 +1,12 @@
 from setuptools import setup, find_packages
 
-if __name__ == "__main__":
-    setup()
+setup(
+    name="portfolio_allocator",
+    version="0.1.0",
+    description="A modular Python library for multi-account portfolio trade allocation",
+    author="Your Name",
+    author_email="you@example.com",
+    packages=find_packages(),
+    install_requires=[],
+    python_requires=">=3.8",
+)

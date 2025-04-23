@@ -10,10 +10,10 @@ import math
 
 # --- Rebalance Simulation Block ---
 if __name__ == "__main__":
-    prices = {"AAPL": 100, "GOOG": 100, "MSFT": 100}
+    prices = {"AAPL": 100, "GOOG": 100, "MSFT": 100, "IBM": 34.56}
 
     accounts = [
-        Account("Account A", "A", 99, {"AAPL": 10}, {}),
+        Account("Account A", "A", 99, {"AAPL": 10, "IBM": 5000}, {}),
         Account("Account B", "B", 80000, {"GOOG": 4, "MSFT": 5}, {}),
         Account("Account C", "C", 0, {"AAPL": 50}, {})
     ]

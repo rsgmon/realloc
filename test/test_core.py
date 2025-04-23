@@ -1,5 +1,5 @@
 import pytest
-from trade_generator.core import (Account, TradeAccountMatrix, ScaledPortfolio,
+from trade_generator import (Account, TradeAccountMatrix, ScaledPortfolio,
                                   allocate_trades, split_trades, PortfolioModel,
                                   select_account_for_buy_trade, select_account_for_sell_trade)
 
