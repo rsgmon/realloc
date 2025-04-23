@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict
 
-from accounts import Account
+from core.accounts import Account
 
 class TradeAccountMatrix:
     def __init__(

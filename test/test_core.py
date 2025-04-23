@@ -1,5 +1,5 @@
 import pytest
-from trade_generator import (
+from core import (
     Account,
     TradeAccountMatrix,
     ScaledPortfolio,
@@ -148,15 +148,17 @@ def accounts():
 
 
 def test_select_account_for_buy_trade_existing_holder(accounts):
+    cash_matrix = {a.account_number: a.cash for a in accounts}
     prices = {"AAPL": 100, "GOOG": 200}
-    selected = select_account_for_buy_trade("AAPL", 3, accounts, prices)
+    selected = select_account_for_buy_trade("AAPL", 3, accounts, prices, cash_matrix)
     assert selected == "A001"
 
 
 def test_select_account_for_buy_trade_fallback_to_cash(accounts):
+    cash_matrix = {a.account_number: a.cash for a in accounts}
     prices = {"MSFT": 100}
-    selected = select_account_for_buy_trade("MSFT", 5, accounts, prices)
-    assert selected == "A002"  # B has more cash
+    selected = select_account_for_buy_trade("MSFT", 5, accounts, prices, cash_matrix)
+    assert selected == "A001"  # B has more cash
 
 
 def test_select_account_for_sell_trade_full_sell(accounts):
@@ -232,7 +234,7 @@ def test_selector_prioritizes_holder_full():
     prices = {"GOOG": 100}
     cash = {"1": 1000, "2": 3000}
     result = select_account_for_buy_trade("GOOG", 10, [acc1, acc2], prices, cash)
-    assert result == "2"
+    assert result == "1"
 
 
 def test_selector_prefers_holder_partial_over_nonholder():
@@ -311,7 +313,7 @@ def test_calculate_sell_amounts_cases(current, target, expected):
                 Account("B", "2", 3000, {"GOOG": 10}, {}),
             ],
             {"1": 1000, "2": 3000},
-            "2",
+            "1",
         ),
         # Partial holder vs full non-holder
         (

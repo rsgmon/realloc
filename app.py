@@ -1,5 +1,5 @@
 import json
-from trade_generator.trade_manager import TradeManager
+from core.trade_manager import TradeManager
 
 def handler(event, context):
     if 'body' in event:

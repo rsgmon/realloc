@@ -1,4 +1,4 @@
-from trade_generator.core import *
+from core.core import *
 
 from typing import List, Optional, Dict
 import math

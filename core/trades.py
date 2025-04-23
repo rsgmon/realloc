@@ -1,4 +1,11 @@
+from typing import List, Optional, Dict, TYPE_CHECKING
+import math
 
+
+from core.utils import normalize_symbol_sets
+
+if TYPE_CHECKING:
+    from .accounts import Account
 
 def allocate_trades(
     current_shares: Dict[str, float],
@@ -23,7 +30,7 @@ def split_trades(
 
 
 class ScaledPortfolio:
-    def __init__(self, accounts: List[Account], model_target: Dict[str, float]):
+    def __init__(self, accounts: List["Account"], model_target: Dict[str, float]):
         self.accounts = accounts
         self.model_target = model_target
 
@@ -78,9 +85,3 @@ def buy_position(current: float, target: float) -> float:
 
 def calculate_buy_amounts(current_amounts: List[float], target_amounts: List[Optional[float]]) -> List[float]:
     return [buy_position(c, t if t is not None else 0) for c, t in zip(current_amounts, target_amounts)]
-
-
-
-
-
-

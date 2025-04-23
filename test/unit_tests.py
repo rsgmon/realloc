@@ -1,10 +1,10 @@
 import pytest
 import json
 from unittest import TestCase
-from trade_generator.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
-from trade_generator.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, TradingLibrary
-from trade_generator.trade_calculator import TradeCalculator
-from trade_generator.portfolio import Portfolio
+from core.trade_manager import TradeManager, TradeRequest, Model, Prices, RawRequest
+from core.allocation import TradeAccountMatrix, MultipleAccountTradeSelector, TradeInstructions, TradingLibrary
+from core.trade_calculator import TradeCalculator
+from core.portfolio import Portfolio
 from test_data_generator import read_pickle
 import pandas as pd
 pd.set_option('display.max_columns', None)  # or 1000

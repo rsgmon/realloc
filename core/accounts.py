@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict
 
-from trades import allocate_trades, split_trades
+from core.trades import allocate_trades, split_trades
 
 class Account:
     def __init__(

@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict
 
-from trade_generator.accounts import Account
+from core.accounts import Account
 
 
 def select_account_for_buy_trade(
