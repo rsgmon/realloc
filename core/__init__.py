@@ -1,4 +1,5 @@
 from .accounts import Account
+from .allocator import PortfolioAllocator
 from .models import PortfolioModel
 from .matrix import TradeAccountMatrix
 from .trades import (
