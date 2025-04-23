@@ -13,8 +13,8 @@ if __name__ == "__main__":
     prices = {"AAPL": 100, "GOOG": 100, "MSFT": 100}
 
     accounts = [
-        Account("Account A", "A", 1300, {"AAPL": 10}, {}),
-        Account("Account B", "B", 800, {"GOOG": 4, "MSFT": 5}, {}),
+        Account("Account A", "A", 99, {"AAPL": 10}, {}),
+        Account("Account B", "B", 80000, {"GOOG": 4, "MSFT": 5}, {}),
         Account("Account C", "C", 0, {"AAPL": 50}, {})
     ]
 
