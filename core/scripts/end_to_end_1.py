@@ -1,4 +1,4 @@
-from core.core import *
+from core import *
 
 from typing import List, Optional, Dict
 import math

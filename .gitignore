@@ -1,2 +1,35 @@
-.idea
-*pycache*
+# Bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# Testing
+htmlcov/
+.cache/
+coverage.xml
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+
