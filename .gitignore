@@ -17,6 +17,7 @@ venv/
 htmlcov/
 .cache/
 coverage.xml
+.coverage
 
 # Packaging
 build/
