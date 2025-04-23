@@ -14,4 +14,14 @@ setup(
             'portfolio-cli=core.__main__:main',
         ],
     },
+    extras_require={
+        'dev': [
+            'pytest',
+            'pytest-cov',
+        ]
+    },
+    tests_require=[
+        'pytest',
+        'pytest-cov',
+    ],
 )

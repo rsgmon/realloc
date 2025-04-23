@@ -83,3 +83,75 @@ def select_account_for_sell_trade(
 
     # Fallback to the one with the largest position
     return candidates[0].account_number if candidates else None
+
+class TaxAwareSelector:
+    def __init__(self, tax_deferred_accounts: List[str]):
+        self.tax_deferred = set(tax_deferred_accounts)
+
+    def select_account_for_sell_trade(
+        self,
+        symbol: str,
+        trade_amount: int,
+        accounts: List[Account]
+    ) -> Optional[str]:
+        taxable = [
+            a for a in accounts
+            if symbol in a.positions and a.positions[symbol] > 0 and a.account_number not in self.tax_deferred
+        ]
+        taxable.sort(key=lambda a: a.positions[symbol], reverse=True)
+
+        for acc in taxable:
+            if acc.positions[symbol] >= trade_amount:
+                return acc.account_number
+
+        deferred = [
+            a for a in accounts
+            if symbol in a.positions and a.positions[symbol] > 0 and a.account_number in self.tax_deferred
+        ]
+        deferred.sort(key=lambda a: a.positions[symbol], reverse=True)
+
+        for acc in deferred:
+            if acc.positions[symbol] >= trade_amount:
+                return acc.account_number
+
+        all_candidates = taxable + deferred
+        if all_candidates:
+            return max(all_candidates, key=lambda a: a.positions[symbol]).account_number
+
+        return None
+
+    def select_account_for_buy_trade(
+        self,
+        symbol: str,
+        trade_amount: int,
+        accounts: List[Account],
+        prices: Dict[str, float],
+        cash_matrix: Dict[str, float]
+    ) -> Optional[str]:
+        price = prices[symbol]
+
+        # Prefer tax-deferred accounts
+        deferred = [
+            a for a in accounts
+            if int(cash_matrix[a.account_number] // price) >= trade_amount and a.account_number in self.tax_deferred
+        ]
+        if deferred:
+            return deferred[0].account_number
+
+        # Fallback: taxable accounts
+        taxable = [
+            a for a in accounts
+            if int(cash_matrix[a.account_number] // price) >= trade_amount and a.account_number not in self.tax_deferred
+        ]
+        if taxable:
+            return taxable[0].account_number
+
+        # Partial fallback: largest buyer anywhere
+        all_partial = [
+            (a, int(cash_matrix[a.account_number] // price))
+            for a in accounts if int(cash_matrix[a.account_number] // price) > 0
+        ]
+        if all_partial:
+            return max(all_partial, key=lambda x: x[1])[0].account_number
+
+        return None
