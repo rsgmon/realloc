@@ -1,0 +1,26 @@
+{
+  "accounts": [
+    {
+      "label": "IRA",
+      "account_number": "A1",
+      "cash": 1000,
+      "positions": {"AAPL": 5},
+      "targets": {}
+    },
+    {
+      "label": "Taxable",
+      "account_number": "A2",
+      "cash": 2000,
+      "positions": {"GOOG": 3},
+      "targets": {}
+    }
+  ],
+  "model": {
+    "AAPL": 0.5,
+    "GOOG": 0.5
+  },
+  "prices": {
+    "AAPL": 100,
+    "GOOG": 200
+  }
+}
