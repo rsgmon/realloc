@@ -18,6 +18,8 @@ setup(
         'dev': [
             'pytest',
             'pytest-cov',
+            'black',
+            'flake8',
         ]
     },
     tests_require=[
