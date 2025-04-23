@@ -13,16 +13,16 @@ if __name__ == "__main__":
     prices = {"AAPL": 100, "GOOG": 100, "MSFT": 100}
 
     accounts = [
-        Account("Account A", "A", 1200, {"AAPL": 10}, {}),
+        Account("Account A", "A", 1300, {"AAPL": 10}, {}),
         Account("Account B", "B", 800, {"GOOG": 4, "MSFT": 5}, {}),
+        Account("Account C", "C", 0, {"AAPL": 50}, {})
     ]
 
-    model = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.5})
+    model = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.4, "MSFT": 0.1})
 
     print("=== Initial Account States ===")
     for acc in accounts:
         print(f"{acc.account_number}: positions={acc.positions}, cash={acc.cash}")
-    print()
 
     combined_positions = {}
     total_cash = 0
@@ -50,15 +50,14 @@ if __name__ == "__main__":
     tam = TradeAccountMatrix(accounts, prices, trades)
 
     def is_trade_remaining(trades: Dict[str, int], tolerance: float = 0.01) -> bool:
-
         return any(abs(qty) > tolerance for qty in trades.values())
 
-    max_iterations = 100
+    max_iterations = 10
     iteration = 0
 
     while is_trade_remaining(tam.portfolio_trades) and iteration < max_iterations:
         sorted_trades = sorted(tam.portfolio_trades.items(), key=lambda item: (item[1] > 0, abs(item[1])))
-        print(f"sorted trades {sorted_trades}")
+        # print(f"sorted trades {sorted_trades}")
         for symbol, qty in sorted_trades:
             if abs(qty) < 0.1:
                 continue
@@ -73,7 +72,7 @@ if __name__ == "__main__":
             if account_id is None:
                 print(f"⚠️ Cannot find account to {direction} {qty_remaining} {symbol}")
                 break
-            print(f"acount_id {account_id}")
+            print(f"Selected Account_id: {account_id}")
             print(f"\n🔍 Evaluating trade for {symbol}: {qty} ({direction})")
             print(f"Remaining qty needed: {qty_remaining}")
             print("📊 Account states:")
@@ -82,7 +81,7 @@ if __name__ == "__main__":
                 cash = tam.cash_matrix[acc.account_number]
                 can_afford = int(cash // prices[symbol])
                 print(
-                    f"  Account {acc.account_number} | Holds: {holding} | Cash: {cash:.2f} | Can afford: {can_afford} {symbol}")
+                    f"Account {acc.account_number} | Holds: {holding} | Cash: {cash:.2f} | Can afford: {can_afford} {symbol}")
 
             account = tam.accounts[account_id]
             if direction == "buy":
@@ -97,9 +96,9 @@ if __name__ == "__main__":
             single_trade = {account_id: {symbol: qty_to_trade if direction == "buy" else -qty_to_trade}}
             print(f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}")
             tam.update(single_trade)
-            print(tam.cash_matrix)
+
             tam.update_portfolio_trades(target_shares)
-            print(is_trade_remaining(tam.portfolio_trades, tolerance=0.1))
+            print(f"Is Trade Remaining: {is_trade_remaining(tam.portfolio_trades, tolerance=0.1)}")
             break  # Re-evaluate trades after each execution
         iteration += 1
 

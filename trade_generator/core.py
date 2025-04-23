@@ -246,37 +246,49 @@ def select_account_for_buy_trade(
     cash_matrix: Dict[str, float]
 ) -> Optional[str]:
     """
-    Select the most appropriate account for a buy trade.
-
-    Priority:
-    1. Any account that can fulfill the full trade (holder or not)
-    2. Among holders, pick the one with the largest partial capacity
-    3. Else, pick any account with the largest cash-based capacity
+    Select the most appropriate account for a buy trade based on strict priority:
+    1. Holder who can fully fulfill
+    2. Holder who can partially fulfill (largest partial)
+    3. Non-holder who can fully fulfill
+    4. Non-holder who can partially fulfill (largest partial)
     """
-    full_fillers = [
-        a for a in accounts if int(cash_matrix[a.account_number] // prices[symbol]) >= trade_amount
-    ]
-    if full_fillers:
-        # Optional: sort to prefer holders if there's a tie
-        full_fillers.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
-        return full_fillers[0].account_number
+    price = prices[symbol]
 
-    # Partial holders
-    holders = [a for a in accounts if symbol in a.positions]
-    partials = [
-        (a, int(a.cash // prices[symbol])) for a in holders if int(a.cash // prices[symbol]) > 0
+    # Step 1: Holder who can fully fulfill
+    holder_full = [
+        a for a in accounts
+        if symbol in a.positions and int(cash_matrix[a.account_number] // price) >= trade_amount
     ]
-    if partials:
-        best_partial = max(partials, key=lambda x: x[1])
-        return best_partial[0].account_number
+    if holder_full:
+        return holder_full[0].account_number  # highest position not required — any is fine
 
-    # Fallback: any account with some buying power
-    cash_candidates = [
-        (a, int(a.cash // prices[symbol])) for a in accounts if int(a.cash // prices[symbol]) > 0
+    # Step 2: Holder who can partially fulfill
+    holder_partials = [
+        (a, int(cash_matrix[a.account_number] // price))
+        for a in accounts
+        if symbol in a.positions and int(cash_matrix[a.account_number] // price) > 0
     ]
-    if cash_candidates:
-        best_cash = max(cash_candidates, key=lambda x: x[1])
-        return best_cash[0].account_number
+    if holder_partials:
+        best = max(holder_partials, key=lambda x: x[1])
+        return best[0].account_number
+
+    # Step 3: Non-holder who can fully fulfill
+    nonholder_full = [
+        a for a in accounts
+        if symbol not in a.positions and int(cash_matrix[a.account_number] // price) >= trade_amount
+    ]
+    if nonholder_full:
+        return nonholder_full[0].account_number
+
+    # Step 4: Non-holder who can partially fulfill
+    nonholder_partials = [
+        (a, int(cash_matrix[a.account_number] // price))
+        for a in accounts
+        if symbol not in a.positions and int(cash_matrix[a.account_number] // price) > 0
+    ]
+    if nonholder_partials:
+        best = max(nonholder_partials, key=lambda x: x[1])
+        return best[0].account_number
 
     return None
 
