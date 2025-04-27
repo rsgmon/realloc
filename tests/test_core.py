@@ -26,30 +26,49 @@ def sample_accounts():
     ]
 
 
-def test_allocate_trades():
-    current = {"AAPL": 5, "GOOG": 3}
-    target = {"AAPL": 10, "GOOG": 2}
-    trades = allocate_trades(current, target)
-    assert trades == {"AAPL": 5, "GOOG": -1}
+@pytest.mark.parametrize(
+    "current, target, expected",
+    [
+        ({"AAPL": 5}, {"AAPL": 10}, {"AAPL": 5}),
+        ({"AAPL": 10}, {"AAPL": 5}, {"AAPL": -5}),
+        ({"AAPL": 0}, {"AAPL": 0}, {"AAPL": 0}),
+        ({}, {"AAPL": 5}, {"AAPL": 5}),
+        ({"AAPL": 5, "GOOG": 2}, {"AAPL": 5, "GOOG": 2}, {"AAPL": 0, "GOOG": 0}),
+    ],
+)
+def test_allocate_trades(current, target, expected):
+    assert allocate_trades(current, target) == expected
 
 
-def test_split_trades():
-    current = {"AAPL": 5, "GOOG": 3}
-    target = {"AAPL": 10, "GOOG": 2}
-    trades = split_trades(current, target)
-    assert trades == {"buy": {"AAPL": 5}, "sell": {"GOOG": 1}}
+@pytest.mark.parametrize(
+    "current, target, expected_buy, expected_sell",
+    [
+        ({"AAPL": 5}, {"AAPL": 10}, {"AAPL": 5}, {}),
+        ({"AAPL": 10}, {"AAPL": 5}, {}, {"AAPL": 5}),
+        ({"AAPL": 5, "GOOG": 2}, {"AAPL": 10, "GOOG": 0}, {"AAPL": 5}, {"GOOG": 2}),
+    ],
+)
+def test_split_trades(current, target, expected_buy, expected_sell):
+    result = split_trades(current, target)
+    assert result["buy"] == expected_buy
+    assert result["sell"] == expected_sell
 
 
-def test_trade_account_matrix_update(sample_accounts):
-    prices = {"AAPL": 100, "GOOG": 200, "MSFT": 300}
-    trades = {"A001": {"AAPL": 2}, "A002": {"GOOG": -1}}
-    tam = TradeAccountMatrix(sample_accounts, prices)
-    tam.update(trades)
-    assert tam.accounts["A001"].positions["AAPL"] == 12
-    assert (
-        tam.accounts["A002"].positions["GOOG"] == -1
-        or "GOOG" not in tam.accounts["A002"].positions
-    )
+@pytest.mark.parametrize(
+    "initial_positions, trades, expected_positions",
+    [
+        ({"AAPL": 5}, {"AAPL": 2}, {"AAPL": 7}),
+        ({"AAPL": 5}, {"AAPL": -3}, {"AAPL": 2}),
+        ({}, {"AAPL": 4}, {"AAPL": 4}),
+    ],
+)
+def test_trade_account_matrix_update(initial_positions, trades, expected_positions):
+    account = Account("Test", "A1", 1000, initial_positions, {})
+    tam = TradeAccountMatrix(accounts=[account], prices={"AAPL": 100})
+
+    tam.update({"A1": trades})
+
+    assert account.positions == expected_positions
 
 
 def test_scaled_portfolio(sample_accounts, sample_portfoliomodel):

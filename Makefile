@@ -1,7 +1,7 @@
 # Makefile for portmgr
 
 # Run unit tests with coverage
-test:
+tests:
 	pytest --cov=core --cov-report=term --cov-report=html
 
 # Clean Python bytecode and coverage
@@ -20,7 +20,7 @@ coverage:
 
 # Format code with black
 format:
-	black core/ test_core.py end_to_end.py
+	black core/ tests/
 
 # Lint with flake8
 lint:
