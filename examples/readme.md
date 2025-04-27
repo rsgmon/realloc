@@ -25,3 +25,9 @@ If you are using Jupyter notebooks:
 cd examples/
 jupyter notebook
 ```
+
+Or run the stress test script directly:
+`python examples/stress_test_rebalance.py`
+
+Make sure you've installed all dependencies with:
+`pip install -e .[dev]`
