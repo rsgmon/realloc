@@ -1,7 +1,7 @@
 # Makefile for portmgr
 
 # Run unit tests with coverage
-tests:
+test:
 	pytest --cov=core --cov-report=term --cov-report=html
 
 # Clean Python bytecode and coverage
