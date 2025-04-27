@@ -1,4 +1,15 @@
-# 📈 Portfolio Allocator
+# Portmgr
+
+[//]: # ([![Build Status]&#40;https://github.com/rsgmon/portmgr/actions/workflows/ci.yml/badge.svg&#41;]&#40;https://github.com/rsgmon/portmgr/actions&#41;)
+
+[//]: # ([![Python Versions]&#40;https://img.shields.io/pypi/pyversions/portmgr&#41;]&#40;https://www.python.org/&#41;)
+
+[//]: # ([![License]&#40;https://img.shields.io/github/license/rsgmon/portmgr&#41;]&#40;LICENSE&#41;)
+
+[//]: # ([![Coverage]&#40;https://img.shields.io/badge/Coverage-84%25-brightgreen&#41;]&#40;htmlcov/index.html&#41;)
+
+---
+
 
 A modular Python library for managing and rebalancing multi-account investment portfolios.
 
