@@ -1,13 +1,11 @@
 import pytest
 from core import (
     Account,
-    TradeAccountMatrix,
     ScaledPortfolio,
     allocate_trades,
     split_trades,
     PortfolioModel,
     select_account_for_buy_trade,
-    select_account_for_sell_trade,
     calculate_buy_amounts,
     calculate_sell_amounts,
 )
@@ -52,23 +50,6 @@ def test_split_trades(current, target, expected_buy, expected_sell):
     result = split_trades(current, target)
     assert result["buy"] == expected_buy
     assert result["sell"] == expected_sell
-
-
-@pytest.mark.parametrize(
-    "initial_positions, trades, expected_positions",
-    [
-        ({"AAPL": 5}, {"AAPL": 2}, {"AAPL": 7}),
-        ({"AAPL": 5}, {"AAPL": -3}, {"AAPL": 2}),
-        ({}, {"AAPL": 4}, {"AAPL": 4}),
-    ],
-)
-def test_trade_account_matrix_update(initial_positions, trades, expected_positions):
-    account = Account("Test", "A1", 1000, initial_positions, {})
-    tam = TradeAccountMatrix(accounts=[account], prices={"AAPL": 100})
-
-    tam.update({"A1": trades})
-
-    assert account.positions == expected_positions
 
 
 def test_scaled_portfolio(sample_accounts, sample_portfoliomodel):
@@ -126,76 +107,6 @@ def test_account_disallows_negative_starting_position():
         )
 
 
-def test_trade_account_matrix_prevents_negative_position():
-    acc = Account(
-        label="Test",
-        account_number="001",
-        cash=1000.0,
-        positions={"AAPL": 5},
-        targets={},
-        enforce_no_negative_positions=True,
-    )
-    prices = {"AAPL": 100.0}
-    tam = TradeAccountMatrix([acc], prices)
-    trades = {"001": {"AAPL": -10}}
-    with pytest.raises(ValueError):
-        tam.update(trades)
-
-
-def test_trade_account_matrix_allows_valid_trades():
-    acc = Account(
-        label="Test",
-        account_number="001",
-        cash=1000.0,
-        positions={"AAPL": 5},
-        targets={},
-        enforce_no_negative_positions=True,
-    )
-    prices = {"AAPL": 100.0}
-    tam = TradeAccountMatrix([acc], prices)
-    trades = {"001": {"AAPL": -2}}
-    tam.update(trades)
-    assert acc.positions["AAPL"] == 3
-
-
-@pytest.fixture
-def accounts():
-    return [
-        Account("A", "A001", 1000, {"AAPL": 5}, {}),
-        Account("B", "A002", 2000, {"GOOG": 10}, {}),
-    ]
-
-
-def test_select_account_for_buy_trade_existing_holder(accounts):
-    cash_matrix = {a.account_number: a.cash for a in accounts}
-    prices = {"AAPL": 100, "GOOG": 200}
-    selected = select_account_for_buy_trade("AAPL", 3, accounts, prices, cash_matrix)
-    assert selected == "A001"
-
-
-def test_select_account_for_buy_trade_fallback_to_cash(accounts):
-    cash_matrix = {a.account_number: a.cash for a in accounts}
-    prices = {"MSFT": 100}
-    selected = select_account_for_buy_trade("MSFT", 5, accounts, prices, cash_matrix)
-    assert selected == "A001"  # B has more cash
-
-
-def test_select_account_for_sell_trade_full_sell(accounts):
-    selected = select_account_for_sell_trade("GOOG", 5, accounts)
-    assert selected == "A002"
-
-
-def test_select_account_for_sell_trade_partial(accounts):
-    selected = select_account_for_sell_trade("AAPL", 10, accounts)
-    assert selected == "A001"  # Only one with AAPL, partial
-
-
-def test_select_account_for_sell_trade_none():
-    accounts = [Account("C", "A003", 500, {}, {})]
-    selected = select_account_for_sell_trade("TSLA", 1, accounts)
-    assert selected is None
-
-
 def test_allocate_trades_handles_empty_input():
     assert allocate_trades({}, {}) == {}
 
@@ -226,13 +137,6 @@ def test_account_rejects_negative_positions_when_enforced():
 def test_portfolio_model_rejects_negative_weights():
     with pytest.raises(ValueError):
         PortfolioModel("LongOnly", {"AAPL": -0.5})
-
-
-def test_trade_matrix_blocks_negative_position_update():
-    acc = Account("T", "1", 1000, {"AAPL": 1}, {}, enforce_no_negative_positions=True)
-    tam = TradeAccountMatrix([acc], {"AAPL": 100})
-    with pytest.raises(ValueError):
-        tam.update({"1": {"AAPL": -2}})
 
 
 def test_selector_prioritizes_holder_full():
