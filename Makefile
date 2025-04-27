@@ -4,6 +4,10 @@
 test:
 	pytest --cov=core --cov-report=term --cov-report=html
 
+coverage:
+	pytest --cov=core --cov-report=term --cov-report=html
+	open htmlcov/index.html || xdg-open htmlcov/index.html || echo "Coverage report generated in htmlcov/index.html"
+
 # Clean Python bytecode and coverage
 clean:
 	find . -type f -name '*.pyc' -delete
