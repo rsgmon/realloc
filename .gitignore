@@ -18,6 +18,7 @@ htmlcov/
 .cache/
 coverage.xml
 .coverage
+.hypothesis
 
 # Packaging
 build/
