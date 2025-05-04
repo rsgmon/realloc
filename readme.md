@@ -60,7 +60,10 @@ trades = allocator.rebalance()
 
 print(trades)
 
-### 📄 rebalance-cli Input Format
+### 📄 `rebalance-cli` 
+This is a ready-made script that demonstrates a full re-balance (not just a slice re-balance) of realloc. 
+
+Input Format
 
 To use `rebalance-cli`, you must provide a JSON file with:
 
@@ -84,7 +87,11 @@ To use `rebalance-cli`, you must provide a JSON file with:
 
 ## 🗂 Project Structure
 
-```core/
+```
+core/
+  cli/
+    reblance-cli
+    portfolio-cli
   accounts.py
   models.py
   trades.py
