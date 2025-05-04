@@ -1,5 +1,1 @@
-pandas==1.4.4
-openpyxl==3.0.10
-numpy==1.23.2
-yahoo_finance==1.4.0
 ipython==6.5.0
