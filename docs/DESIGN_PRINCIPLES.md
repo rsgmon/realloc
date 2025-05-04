@@ -1,6 +1,6 @@
-# 🧠 Design Principles — Portmgr
+# 🧠 Design Principles — realloc
 
-This document explains the key architectural and design choices behind the `portmgr` library.
+This document explains the key architectural and design choices behind the `realloc` library.
 
 Following these principles ensures the system remains modular, extensible, and reliable for real-world portfolio management.
 
@@ -98,7 +98,7 @@ Following these principles ensures the system remains modular, extensible, and r
 
 # 📚 Summary
 
-`portmgr` is built to be:
+`realloc` is built to be:
 
 - Modular
 - Transparent

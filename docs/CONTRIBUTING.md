@@ -1,6 +1,6 @@
-# 🙌 Contributing to Portmgr
+# 🙌 Contributing to realloc
 
-First, thank you for considering contributing to `portmgr`!  
+First, thank you for considering contributing to `realloc`!  
 Your help makes this project better for everyone.
 
 This document outlines the process for contributing fixes, features, and improvements.
@@ -33,8 +33,8 @@ Click "Fork" on GitHub to create your own copy of the project.
 ### 2. Clone Your Fork Locally
 
 ```bash
-git clone https://github.com/your-username/portmgr.git
-cd portmgr
+git clone https://github.com/your-username/realloc.git
+cd realloc
 ```
 
 ### 3. Create a New Branch
@@ -93,4 +93,4 @@ We're happy to help!
 
 🚀 Thank You!
 
-We appreciate your interest and effort — together we can make portmgr a world-class portfolio management toolkit.
+We appreciate your interest and effort — together we can make realloc a world-class portfolio management toolkit.

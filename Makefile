@@ -1,4 +1,4 @@
-# Makefile for portmgr
+# Makefile for realloc
 
 # Run unit tests with coverage
 test:

@@ -1,9 +1,11 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="portmgr",
+    name="realloc",
     version="0.1.0",
     description="A modular Python library for multi-account portfolio trade allocation",
+    long_description="A modular Python library for multi-account portfolio trade allocation.",
+    long_description_content_type="text/markdown",
     author="Your Name",
     author_email="you@example.com",
     packages=find_packages(),

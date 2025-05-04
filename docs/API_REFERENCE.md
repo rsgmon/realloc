@@ -1,6 +1,6 @@
-# 📚 API Reference: Portmgr
+# 📚 API Reference: realloc
 
-This document describes the main classes, functions, and interfaces provided by the `portmgr` library.
+This document describes the main classes, functions, and interfaces provided by the `realloc` library.
 
 ---
 
