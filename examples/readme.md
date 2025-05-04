@@ -1,6 +1,6 @@
 # 📚 Portfolio Allocator Examples
 
-This folder contains ready-to-run examples demonstrating how to use `portmgr` to allocate and rebalance portfolios.
+This folder contains ready-to-run examples demonstrating how to use `realloc` to allocate and rebalance portfolios.
 
 Each example highlights a different real-world use case.
 
