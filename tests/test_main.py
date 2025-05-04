@@ -1,8 +1,7 @@
 import pytest
 import sys
-from unittest import mock
 
-from core.__main__ import main
+from core.cli.portfolio_main import main
 
 
 @pytest.fixture

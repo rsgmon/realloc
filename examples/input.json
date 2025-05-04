@@ -1,0 +1,50 @@
+{
+  "prices": {
+    "AAPL": 100,
+    "GOOG": 100,
+    "MSFT": 100,
+    "IBM": 34.56
+  },
+  "accounts": [
+    {
+      "label": "Account A",
+      "account_number": "A",
+      "cash": 99,
+      "positions": {
+        "AAPL": 10,
+        "IBM": 5000
+      },
+      "targets": {},
+      "enforce_no_negative_positions": false
+    },
+    {
+      "label": "Account B",
+      "account_number": "B",
+      "cash": 80000,
+      "positions": {
+        "GOOG": 4,
+        "MSFT": 5
+      },
+      "targets": {},
+      "enforce_no_negative_positions": false
+    },
+    {
+      "label": "Account C",
+      "account_number": "C",
+      "cash": 0,
+      "positions": {
+        "AAPL": 50
+      },
+      "targets": {},
+      "enforce_no_negative_positions": false
+    }
+  ],
+  "model": {
+    "name": "Balanced",
+    "targets": {
+      "AAPL": 0.5,
+      "GOOG": 0.4,
+      "MSFT": 0.1
+    }
+  }
+}

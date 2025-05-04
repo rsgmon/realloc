@@ -60,6 +60,28 @@ trades = allocator.rebalance()
 
 print(trades)
 
+### 📄 rebalance-cli Input Format
+
+To use `rebalance-cli`, you must provide a JSON file with:
+
+- `prices`: { symbol → float }
+- `accounts`: list of account dictionaries
+- `model`: portfolio model with `name` and `targets`
+
+📂 Example:
+```json
+{
+  "prices": { "AAPL": 100, "GOOG": 100 },
+  "accounts": [
+    { "label": "A", "account_number": "1", "cash": 1000, "positions": { "AAPL": 5 }, "targets": {} }
+  ],
+  "model": {
+    "name": "Balanced",
+    "targets": { "AAPL": 0.6, "GOOG": 0.4 }
+  }
+}
+
+
 ## 🗂 Project Structure
 
 ```core/
