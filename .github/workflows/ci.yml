@@ -15,24 +15,25 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v3
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install .[dev]
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev]
 
-    - name: Run tests and coverage
-      run: |
-        pytest --cov=core --cov-report=term
+      - name: 🧪 Run tests and coverage
+        run: |
+          pytest --cov=core --cov-report=term --cov-report=html
 
-    - name: Upload coverage report artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-report
-        path: htmlcov/
+      - name: 📤 Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
