@@ -23,6 +23,7 @@ setup(
             'pytest-cov',
             'black',
             'flake8',
+            'hypothesis',
         ]
     },
     tests_require=[
