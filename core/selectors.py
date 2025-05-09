@@ -98,6 +98,13 @@ class TaxAwareSelector:
     def select_account_for_sell_trade(
         self, symbol: str, trade_amount: int, accounts: List[Account]
     ) -> Optional[str]:
+        """
+        S
+        :param symbol:
+        :param trade_amount:
+        :param accounts:
+        :return:
+        """
         taxable = [
             a
             for a in accounts
