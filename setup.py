@@ -14,7 +14,8 @@ setup(
     entry_points={
         'console_scripts': [
             'portfolio-cli=core.cli.portfolio_main:main',
-            'rebalance-cli=core.cli.rebalance_main:main'
+            'rebalance-cli=core.cli.rebalance_main:main',
+            'partial-rebalance-cli=core.cli.partial_rebalance_main:main',
         ],
     },
     extras_require={
