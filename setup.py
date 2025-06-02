@@ -17,6 +17,9 @@ setup(
             'rebalance-cli=core.cli.rebalance_main:main',
             'partial-rebalance-cli=core.cli.partial_rebalance_main:main',
         ],
+        'realloc.plugins': [
+            'csv = core.plugins.csv_exporter'
+        ],
     },
     extras_require={
         'dev': [

@@ -14,7 +14,7 @@ def load_export_plugin(name: str):
             matches = [ep for ep in matches if ep.name == name]
         if not matches:
             raise ValueError(f"No export plugin named '{name}' found.")
-        return matches[0].load()()
+        return matches[0].load()
     except Exception as e:
         raise RuntimeError(f"Failed to load plugin '{name}': {e}")
 

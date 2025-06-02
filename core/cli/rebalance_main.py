@@ -59,7 +59,7 @@ def main():
 
     max_iterations = args.iterations
     iteration = 0
-
+    account_trades = []
     while is_trade_remaining(tam.portfolio_trades) and iteration < max_iterations:
         sorted_trades = sorted(
             tam.portfolio_trades.items(),
@@ -104,6 +104,7 @@ def main():
                     symbol: qty_to_trade if direction == "buy" else -qty_to_trade
                 }
             }
+            account_trades.append(single_trade)
             print(
                 f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
             )
@@ -124,5 +125,5 @@ def main():
     if args.exporter and args.export_path:
         from core.plugins.loader import load_export_plugin
         plugin = load_export_plugin(args.exporter)
-        plugin.export(tam.portfolio_trades, args.export_path)
+        plugin.export(account_trades, args.export_path)
 
