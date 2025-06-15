@@ -13,6 +13,8 @@ def main():
     parser.add_argument(
         "--rebalance", help="Path to input JSON with accounts, model, and prices"
     )
+    parser.add_argument("--exporter", help="Optional exporter plugin name")
+    parser.add_argument("--export-path", help="Where to write output file")
     args = parser.parse_args()
 
     if args.rebalance:
@@ -51,6 +53,10 @@ def main():
             print(
                 f"{acc.account_number} => positions: {acc.positions}, cash: {tam.cash_matrix[acc.account_number]:.2f}"
             )
+        if args.exporter and args.export_path:
+            from core.plugins.loader import load_export_plugin
+            plugin = load_export_plugin(args.exporter)
+            plugin.export(tam.portfolio_trades, args.export_path)
 
 
 if __name__ == "__main__":

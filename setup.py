@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="realloc",
-    version="0.1.1",
+    version="0.1.2",
     description="A modular Python library for multi-account portfolio trade allocation",
     long_description="A modular Python library for multi-account portfolio trade allocation.",
     long_description_content_type="text/markdown",
@@ -14,7 +14,11 @@ setup(
     entry_points={
         'console_scripts': [
             'portfolio-cli=core.cli.portfolio_main:main',
-            'rebalance-cli=core.cli.rebalance_main:main'
+            'rebalance-cli=core.cli.rebalance_main:main',
+            'partial-rebalance-cli=core.cli.partial_rebalance_main:main',
+        ],
+        'realloc.plugins': [
+            'csv = core.plugins.csv_exporter'
         ],
     },
     extras_require={
