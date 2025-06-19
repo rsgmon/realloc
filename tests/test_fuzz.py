@@ -1,6 +1,6 @@
 import pytest
 from hypothesis import given, strategies as st
-from core import (
+from realloc import (
     Account,
     PortfolioModel,
     PortfolioAllocator,

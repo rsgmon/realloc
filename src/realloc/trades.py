@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, TYPE_CHECKING
 import math
 
 
-from core.utils import normalize_symbol_sets
+from realloc.utils import normalize_symbol_sets
 
 if TYPE_CHECKING:
     from .accounts import Account

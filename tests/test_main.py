@@ -1,7 +1,7 @@
 import pytest
 import sys
 
-from core.cli.portfolio_main import main
+from realloc.cli.portfolio_main import main
 
 
 @pytest.fixture

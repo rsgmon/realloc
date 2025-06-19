@@ -1,6 +1,6 @@
 # Stress Test: 100 Accounts, 200 Symbols
 import random
-from core import Account, PortfolioModel, PortfolioAllocator
+from realloc import Account, PortfolioModel, PortfolioAllocator
 
 # Generate random symbols
 symbols = [f"SYM{i:03d}" for i in range(200)]

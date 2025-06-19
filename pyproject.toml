@@ -23,12 +23,14 @@ dev = [
 ]
 
 [project.scripts]
-portfolio-cli = "core.cli.portfolio_main:main"
-rebalance-cli = "core.cli.rebalance_main:main"
-partial-rebalance-cli = "core.cli.partial_rebalance_main:main"
+portfolio-cli = "realloc.cli.rebalance_main:main"
+rebalance-cli = "realloc.cli.rebalance_main:main"
+partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
+
 
 [project.entry-points."realloc.plugins"]
-csv = "core.plugins.csv_exporter"
+csv = "realloc.plugins.csv_exporter"
 
 [tool.setuptools]
-packages = ["core"]
+package-dir = {"" = "src"}
+packages = ["realloc", "realloc.cli", "realloc.plugins", "realloc.scripts"]  # Make sure all your subpackages are listed

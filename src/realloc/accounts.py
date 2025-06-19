@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict
 
-from core.trades import allocate_trades, split_trades
+from realloc.trades import allocate_trades, split_trades
 
 
 class Account:

@@ -40,7 +40,7 @@ pip install -e .[dev]
 
 ## 🏁 Quick Start 
 
-from core import Account, PortfolioModel, PortfolioAllocator
+from realloc import Account, PortfolioModel, PortfolioAllocator
 
 ### Define accounts
 accounts = [
@@ -88,24 +88,29 @@ To use `rebalance-cli`, you must provide a JSON file with:
 ## 🗂 Project Structure
 
 ```
-core/
-  cli/
-    reblance-cli
-    portfolio-cli
-  accounts.py
-  models.py
-  trades.py
-  selectors.py
-  matrix.py
-  utils.py
-  allocator.py
-  __init__.py
-tests/
-  test_core.py
-Dockerfile
-Makefile
-README.md
-setup.py
+src/
+  realloc/
+    plugins/
+      base.py
+      csv_exporter.py
+      loader.py
+    cli/
+      reblance-cli
+      portfolio-cli
+    accounts.py
+    models.py
+    trades.py
+    selectors.py
+    matrix.py
+    utils.py
+    allocator.py
+    __init__.py
+  tests/
+    test_realloc.py
+  Dockerfile
+  Makefile
+  README.md
+  setup.py
 ```
 
 ## 📄 License

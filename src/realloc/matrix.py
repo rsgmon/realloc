@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict
 
-from core.accounts import Account
-from core.trades import allocate_trades
+from realloc.accounts import Account
+from realloc.trades import allocate_trades
 
 
 class TradeAccountMatrix:

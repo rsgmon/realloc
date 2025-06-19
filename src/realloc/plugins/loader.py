@@ -1,6 +1,6 @@
 import sys
 import importlib.metadata
-from core.plugins.base import ExportPlugin
+from realloc.plugins.base import ExportPlugin
 
 
 def load_export_plugin(name: str):

@@ -1,7 +1,7 @@
 import pytest
-from core.accounts import Account
-from core.models import PortfolioModel
-from core.allocator import PortfolioAllocator
+from realloc.accounts import Account
+from realloc.models import PortfolioModel
+from realloc.allocator import PortfolioAllocator
 
 
 @pytest.fixture

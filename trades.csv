@@ -1,0 +1,6 @@
+Account,Symbol_Quantity
+A,{'IBM': -5000}
+B,{'MSFT': 254}
+B,{'GOOG': 546}
+A,{'GOOG': 489}
+A,{'AAPL': 1238}

@@ -1,6 +1,6 @@
 import argparse
 import json
-from core import Account, PortfolioModel, TradeAccountMatrix, allocate_trades
+from realloc import Account, PortfolioModel, TradeAccountMatrix, allocate_trades
 
 
 def load_json(path):
@@ -54,7 +54,7 @@ def main():
                 f"{acc.account_number} => positions: {acc.positions}, cash: {tam.cash_matrix[acc.account_number]:.2f}"
             )
         if args.exporter and args.export_path:
-            from core.plugins.loader import load_export_plugin
+            from realloc.plugins.loader import load_export_plugin
 
             plugin = load_export_plugin(args.exporter)
             plugin.export(tam.portfolio_trades, args.export_path)
