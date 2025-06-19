@@ -111,7 +111,36 @@ src/
   Makefile
   README.md
   setup.py
+
+## 🔌 Export Plugins
+
+Realloc supports custom export plugins to output rebalancing data in different formats. Plugins are loaded dynamically using entry points.
+
+### Using Plugins
+
+To use an export plugin with the CLI:
+
+bash rebalance-cli --exporter plugin_name input.json
+
+### Available Plugins
+
+- `csv` - Built-in CSV exporter (included with realloc)
+- `csvplus` - Enhanced CSV export with metadata ([realloc-csvplus](https://github.com/yourusername/realloc-csvplus))
+
+### Creating Plugins
+
+To create your own export plugin, see our [Plugin Development Guide](docs/plugin-development.md).
+
+Basic example:
+```python
+from realloc.plugins.base import ExportPlugin
+
+class MyExporter(ExportPlugin):
+    def export(self, data):
+        # Your export logic here
+        pass
 ```
+
 
 ## 📄 License
 
