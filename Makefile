@@ -18,10 +18,6 @@ clean:
 install-dev:
 	pip install -e .[dev]
 
-# Show test coverage report in browser
-coverage:
-	open htmlcov/index.html
-
 # Format code with black
 format:
 	black core/ tests/
@@ -30,4 +26,20 @@ format:
 lint:
 	flake8 core/ --max-line-length=100
 
-.PHONY: test clean install-dev coverage format lint
+# Build package distributions
+build-clean:
+	rm -rf build/ dist/ *.egg-info/
+
+build:
+	python -m build
+
+# Build and clean in one command
+build-all: build-clean build
+
+# Install latest build
+install-build:
+	pip install dist/*.whl
+
+
+
+.PHONY: test clean install-dev coverage format lint build build-clean build-all install-build

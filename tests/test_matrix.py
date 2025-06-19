@@ -9,8 +9,20 @@ from core import (
 @pytest.fixture
 def sample_accounts():
     return [
-        Account(label="IRA", account_number="A1", cash=1000, positions={"AAPL": 5}, targets={}),
-        Account(label="Taxable", account_number="A2", cash=500, positions={"GOOG": 2}, targets={}),
+        Account(
+            label="IRA",
+            account_number="A1",
+            cash=1000,
+            positions={"AAPL": 5},
+            targets={},
+        ),
+        Account(
+            label="Taxable",
+            account_number="A2",
+            cash=500,
+            positions={"GOOG": 2},
+            targets={},
+        ),
     ]
 
 
@@ -33,6 +45,7 @@ def tam(sample_accounts, sample_prices, sample_portfolio_trades):
 # 🔥 Existing Improved
 # --------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "initial_positions, trades, expected_positions",
     [
@@ -49,7 +62,9 @@ def test_trade_account_matrix_update(initial_positions, trades, expected_positio
 
 
 def test_trade_account_matrix_prevents_negative_position():
-    acc = Account("Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True)
+    acc = Account(
+        "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True
+    )
     tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
     trades = {"001": {"AAPL": -10}}
     with pytest.raises(ValueError):
@@ -57,7 +72,9 @@ def test_trade_account_matrix_prevents_negative_position():
 
 
 def test_trade_account_matrix_allows_valid_trades():
-    acc = Account("Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True)
+    acc = Account(
+        "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True
+    )
     tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
     trades = {"001": {"AAPL": -2}}
     tam.update(trades)
@@ -74,6 +91,7 @@ def test_trade_matrix_blocks_negative_position_update():
 # --------------------------------------------------------
 # ✨ New Coverage
 # --------------------------------------------------------
+
 
 def test_trade_account_matrix_to_dict_and_from_dict(tam, sample_accounts):
     serialized = tam.to_dict()
@@ -107,7 +125,9 @@ def test_trade_account_matrix_update_portfolio_trades(sample_accounts, sample_pr
 
 
 def test_trade_account_matrix_empty_update_does_nothing():
-    acc = Account("Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True)
+    acc = Account(
+        "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True
+    )
     tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
     tam.update({})
     assert acc.positions["AAPL"] == 5
@@ -115,9 +135,10 @@ def test_trade_account_matrix_empty_update_does_nothing():
 
 
 def test_trade_account_matrix_handles_missing_price_gracefully():
-    acc = Account("Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=False)
+    acc = Account(
+        "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=False
+    )
     tam = TradeAccountMatrix([acc], {})  # Empty prices dict
     tam.update({"001": {"AAPL": 1}})
     assert acc.positions["AAPL"] == 6
     # Cash won't change because price was missing (defaults to 0)
-

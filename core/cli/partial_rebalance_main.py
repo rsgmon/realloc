@@ -9,6 +9,7 @@ from core import (
     select_account_for_sell_trade,
 )
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Perform partial rebalance for two symbols using model targets"
@@ -39,7 +40,9 @@ def main():
             combined_positions[sym] = combined_positions.get(sym, 0) + qty
 
     # Step 2: Compute model-based target trades
-    total_value = total_cash + sum(qty * prices[sym] for sym, qty in combined_positions.items())
+    total_value = total_cash + sum(
+        qty * prices[sym] for sym, qty in combined_positions.items()
+    )
     normalized = model.normalize()
     target_dollars = {sym: weight * total_value for sym, weight in normalized.items()}
     target_shares = {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
@@ -105,14 +108,20 @@ def main():
 
     # Step 6: Raise cash if buy incomplete
     if qty_remaining > 0:
-        print(f"⚠️ Not enough cash to complete buy. Raising funds via overweight symbols...")
+        print(
+            f"⚠️ Not enough cash to complete buy. Raising funds via overweight symbols..."
+        )
         combined = {}
         for acc in tam.accounts.values():
             for sym, qty in acc.positions.items():
                 combined[sym] = combined.get(sym, 0) + qty
 
-        total_value = sum(qty * prices[sym] for sym, qty in combined.items()) + sum(tam.cash_matrix.values())
-        target_dollars = {sym: normalized.get(sym, 0) * total_value for sym in normalized}
+        total_value = sum(qty * prices[sym] for sym, qty in combined.items()) + sum(
+            tam.cash_matrix.values()
+        )
+        target_dollars = {
+            sym: normalized.get(sym, 0) * total_value for sym in normalized
+        }
         actual_dollars = {sym: combined.get(sym, 0) * prices[sym] for sym in combined}
 
         overweight = {
@@ -131,7 +140,9 @@ def main():
                     holding, int((qty_remaining * price) // prices[sym]) + 1
                 )
                 tam.update({acc.account_number: {sym: -qty_to_sell}})
-                print(f"💸 Sold {qty_to_sell} of overweight {sym} from {acc.account_number}")
+                print(
+                    f"💸 Sold {qty_to_sell} of overweight {sym} from {acc.account_number}"
+                )
                 break
 
             # Reattempt buy
@@ -159,6 +170,6 @@ def main():
         )
     if args.exporter and args.export_path:
         from core.plugins.loader import load_export_plugin
+
         plugin = load_export_plugin(args.exporter)
         plugin.export(tam.portfolio_trades, args.export_path)
-

@@ -14,7 +14,7 @@ from .trades import (
 from .selectors import (
     select_account_for_buy_trade,
     select_account_for_sell_trade,
-    TaxAwareSelector
+    TaxAwareSelector,
 )
 
 __all__ = [

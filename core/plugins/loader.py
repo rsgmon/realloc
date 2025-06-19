@@ -1,4 +1,3 @@
-
 import sys
 import importlib.metadata
 from core.plugins.base import ExportPlugin
@@ -7,7 +6,7 @@ from core.plugins.base import ExportPlugin
 def load_export_plugin(name: str):
     try:
         entry_points = importlib.metadata.entry_points()
-        if hasattr(entry_points, 'select'):  # Python 3.10+
+        if hasattr(entry_points, "select"):  # Python 3.10+
             matches = entry_points.select(group="realloc.plugins", name=name)
         else:  # <3.10 fallback
             matches = entry_points.get("realloc.plugins", [])
@@ -17,4 +16,3 @@ def load_export_plugin(name: str):
         return matches[0].load()
     except Exception as e:
         raise RuntimeError(f"Failed to load plugin '{name}': {e}")
-

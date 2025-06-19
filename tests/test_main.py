@@ -28,4 +28,3 @@ def test_main_invalid_json_file(reset_sys_argv, tmp_path):
     with pytest.raises(SystemExit) as e:
         main()
     assert e.value.code != 0
-
