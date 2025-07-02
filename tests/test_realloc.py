@@ -1,5 +1,5 @@
 import pytest
-from core import (
+from realloc import (
     Account,
     ScaledPortfolio,
     allocate_trades,

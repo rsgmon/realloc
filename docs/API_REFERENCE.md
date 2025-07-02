@@ -4,7 +4,7 @@ This document describes the main classes, functions, and interfaces provided by 
 
 ---
 
-## ✨ Core Classes
+## ✨ realloc Classes
 
 ### `Account`
 Manages a single investment account's state.
@@ -89,7 +89,7 @@ select_account_for_buy_trade(symbol, amount, accounts, prices, cash_matrix)
 
 ---
 
-## 🛠 Core Utility Functions
+## 🛠 realloc Utility Functions
 
 ```
 allocate_trades(current_shares, target_shares, prices=None)

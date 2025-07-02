@@ -1,6 +1,6 @@
 import argparse
 import json
-from core import (
+from realloc import (
     Account,
     PortfolioModel,
     TradeAccountMatrix,
@@ -9,13 +9,21 @@ from core import (
     select_account_for_sell_trade,
 )
 
+
 def is_trade_remaining(trades, tolerance: float = 0.01) -> bool:
     return any(abs(qty) > tolerance for qty in trades.values())
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Run full rebalance using TradeAccountMatrix")
-    parser.add_argument("input_file", help="Path to input JSON file (accounts, model, prices)")
-    parser.add_argument("--iterations", type=int, default=10, help="Path to output JSON file")
+    parser = argparse.ArgumentParser(
+        description="Run full rebalance using TradeAccountMatrix"
+    )
+    parser.add_argument(
+        "input_file", help="Path to input JSON file (accounts, model, prices)"
+    )
+    parser.add_argument(
+        "--iterations", type=int, default=10, help="Path to output JSON file"
+    )
     parser.add_argument("--exporter", help="Optional exporter plugin name")
     parser.add_argument("--export-path", help="Where to write output file")
     args = parser.parse_args()
@@ -41,7 +49,9 @@ def main():
         qty * prices[sym] for sym, qty in combined_positions.items()
     )
     normalized_model = model.normalize()
-    target_dollars = {sym: weight * total_value for sym, weight in normalized_model.items()}
+    target_dollars = {
+        sym: weight * total_value for sym, weight in normalized_model.items()
+    }
     target_shares = {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
 
     current_shares = combined_positions
@@ -62,8 +72,7 @@ def main():
     account_trades = []
     while is_trade_remaining(tam.portfolio_trades) and iteration < max_iterations:
         sorted_trades = sorted(
-            tam.portfolio_trades.items(),
-            key=lambda item: (item[1] > 0, abs(item[1]))
+            tam.portfolio_trades.items(), key=lambda item: (item[1] > 0, abs(item[1]))
         )
 
         for symbol, qty in sorted_trades:
@@ -123,7 +132,7 @@ def main():
             f"{acc.account_number}: positions={acc.positions}, cash={tam.cash_matrix[acc.account_number]:.2f}"
         )
     if args.exporter and args.export_path:
-        from core.plugins.loader import load_export_plugin
+        from realloc.plugins.loader import load_export_plugin
+
         plugin = load_export_plugin(args.exporter)
         plugin.export(account_trades, args.export_path)
-

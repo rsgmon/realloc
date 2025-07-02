@@ -2,16 +2,35 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-#[project]
-#name = "realloc"
-#version = "0.1.0"
-#description = "A modular Python library for multi-account portfolio trade allocation"
-#authors = [
-#    { name="Ryeland Gongora", email="rsgmon@gmail.com" }
-#]
-#license = "MIT"
-#readme = "README.md"
-#requires-python = ">=3.8"
-#
-#[project.urls]
-#Homepage = "https://github.com/ryelandgongora/realloc"
+[project]
+name = "realloc"
+version = "0.1.2.1"
+description = "A modular Python library for multi-account portfolio trade allocation"
+authors = [
+    { name = "Ryeland Gongora", email = "rsgmon@gmail.com" }
+]
+requires-python = ">=3.8"
+license = "MIT"
+readme = "README.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "hypothesis",
+]
+
+[project.scripts]
+portfolio-cli = "realloc.cli.rebalance_main:main"
+rebalance-cli = "realloc.cli.rebalance_main:main"
+partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
+
+
+[project.entry-points."realloc.plugins"]
+csv = "realloc.plugins.csv_exporter"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["realloc", "realloc.cli", "realloc.plugins", "realloc.scripts"]  # Make sure all your subpackages are listed

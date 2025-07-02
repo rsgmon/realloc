@@ -1,8 +1,8 @@
 from typing import List, Dict, Optional
-from core.accounts import Account
-from core.models import PortfolioModel
-from core.matrix import TradeAccountMatrix
-from core.trades import allocate_trades
+from realloc.accounts import Account
+from realloc.models import PortfolioModel
+from realloc.matrix import TradeAccountMatrix
+from realloc.trades import allocate_trades
 
 
 class PortfolioAllocator:

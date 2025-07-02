@@ -17,4 +17,4 @@ htmlcov/
 .DS_Store
 .git/
 .gitignore
-test_core.py
+test_realloc.py

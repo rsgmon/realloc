@@ -1,5 +1,6 @@
 import csv
 
+
 def export(trades: list, path: str):
     with open(path, mode="w", newline="") as f:
         writer = csv.writer(f)

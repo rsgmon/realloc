@@ -8,9 +8,9 @@ Following these principles ensures the system remains modular, extensible, and r
 
 ## ✨ 1. Modularity First
 
-- Each core component (`Account`, `PortfolioModel`, `PortfolioAllocator`, etc.) has a **single responsibility**.
+- Each realloc component (`Account`, `PortfolioModel`, `PortfolioAllocator`, etc.) has a **single responsibility**.
 - Business logic is separated cleanly from orchestration.
-- Users can swap pieces (e.g., tax-aware selectors) without rewriting the core.
+- Users can swap pieces (e.g., tax-aware selectors) without rewriting the realloc.
 
 ✅ Easy to extend  
 ✅ Easy to test  
@@ -18,9 +18,9 @@ Following these principles ensures the system remains modular, extensible, and r
 
 ---
 
-## 🔁 2. Stateless Core Functions
+## 🔁 2. Stateless realloc Functions
 
-- Core functions (like `allocate_trades`, `split_trades`) are **pure functions** wherever possible.
+- realloc functions (like `allocate_trades`, `split_trades`) are **pure functions** wherever possible.
 - No hidden mutation or implicit side-effects.
 - Classes like `TradeAccountMatrix` explicitly manage portfolio/account state transitions.
 
@@ -54,7 +54,7 @@ Following these principles ensures the system remains modular, extensible, and r
 ## 🔥 5. Tax Awareness as a Pluggable Concern
 
 - Tax-sensitive behaviors (e.g., selling from taxable first) are injected via **Selector Strategies** (`TaxAwareSelector`).
-- The core allocator is tax-agnostic by default.
+- The realloc allocator is tax-agnostic by default.
 
 ✅ Allows flexibility for future tax rules (harvesting, wash sale detection, etc.)
 
