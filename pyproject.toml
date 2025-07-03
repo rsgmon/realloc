@@ -29,7 +29,9 @@ partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
 
 
 [project.entry-points."realloc.plugins"]
-csv = "realloc.plugins.csv_exporter"
+csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
+minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

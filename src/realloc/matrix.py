@@ -1,6 +1,8 @@
 from typing import List, Optional, Dict
 
 from realloc.accounts import Account
+from realloc.plugins.core.base import TradeInfo
+from realloc.plugins.core.engine import PluginEngine, ValidationEngine
 from realloc.trades import allocate_trades
 
 
@@ -22,6 +24,8 @@ class TradeAccountMatrix:
             for sym, qty in self.portfolio_trades.items()
             if not any(sym in a.positions for a in accounts)
         }
+        self.plugin_engine = PluginEngine()
+        self.validation_engine = ValidationEngine(self.plugin_engine)
 
     def update(self, trades: Dict[str, Dict[str, int]]) -> None:
         for account_number, trade_dict in trades.items():
@@ -43,6 +47,21 @@ class TradeAccountMatrix:
                 combined_current[sym] = combined_current.get(sym, 0.0) + qty
         self.portfolio_trades = allocate_trades(combined_current, target_shares)
 
+    def validate_trade(self, account_id: str, symbol: str, quantity: float) -> tuple[bool, str]:
+        account = self.accounts[account_id]
+        price = self.prices.get(symbol, 0)
+
+        trade_info = TradeInfo(
+            symbol=symbol,
+            quantity=quantity,
+            price=price,
+            minimum_value=account.minimum_trade_value,
+            current_position=account.positions.get(symbol, 0),
+            account_balance=self.cash_matrix.get(account_id, 0)
+        )
+
+        return self.validation_engine.validate_trade(trade_info)
+
     def to_dict(self) -> Dict:
         return {
             "portfolio_trades": self.portfolio_trades,
@@ -61,3 +80,5 @@ class TradeAccountMatrix:
         instance.cash_matrix = data.get("cash_matrix", {})
         instance.model_only = data.get("model_only", {})
         return instance
+
+

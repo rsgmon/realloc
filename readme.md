@@ -132,8 +132,10 @@ bash rebalance-cli --exporter plugin_name input.json
 To create your own export plugin, see our [Plugin Development Guide](docs/plugin-development.md).
 
 Basic example:
+
 ```python
-from realloc.plugins.base import ExportPlugin
+from realloc.plugins import ExportPlugin
+
 
 class MyExporter(ExportPlugin):
     def export(self, data):

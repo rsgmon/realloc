@@ -31,9 +31,28 @@ def main():
     with open(args.input_file, "r") as f:
         data = json.load(f)
 
+    # Validate required data structure
+    required_keys = ["prices", "accounts", "model"]
+    if not all(key in data for key in required_keys):
+        raise ValueError(f"Input file must contain all required keys: {required_keys}")
+
+    if not isinstance(data["prices"], dict):
+        raise ValueError("Prices must be a dictionary")
+
+    if not isinstance(data["accounts"], list):
+        raise ValueError("Accounts must be a list")
+
+    if not isinstance(data["model"], dict):
+        raise ValueError("Model must be a dictionary")
+
+    if "label" not in data["model"] or "targets" not in data["model"]:
+        raise ValueError("Model must contain 'label' and 'targets' fields")
+
     prices = data["prices"]
     accounts = [Account(**acc) for acc in data["accounts"]]
-    model = PortfolioModel(**data["model"])
+
+    model_data = data["model"]
+    model = PortfolioModel(model_data["label"], model_data["targets"])
 
     print("=== Initial Account States ===")
     for acc in accounts:
@@ -132,7 +151,7 @@ def main():
             f"{acc.account_number}: positions={acc.positions}, cash={tam.cash_matrix[acc.account_number]:.2f}"
         )
     if args.exporter and args.export_path:
-        from realloc.plugins.loader import load_export_plugin
+        from realloc.plugins.core.base import Exporter
 
-        plugin = load_export_plugin(args.exporter)
-        plugin.export(account_trades, args.export_path)
+        plugin = Exporter.load_export_plugin(args.exporter, args.export_path)
+        plugin.export(account_trades)
