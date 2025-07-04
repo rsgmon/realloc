@@ -7,11 +7,8 @@ from realloc import (
     allocate_trades,
     select_account_for_buy_trade,
     select_account_for_sell_trade,
+    is_trade_remaining,
 )
-
-
-def is_trade_remaining(trades, tolerance: float = 0.01) -> bool:
-    return any(abs(qty) > tolerance for qty in trades.values())
 
 
 def main():
