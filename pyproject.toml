@@ -13,6 +13,15 @@ requires-python = ">=3.8"
 license = "MIT"
 readme = "README.md"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["realloc*"]
+exclude = ["tests*", "docs*", "examples*"]  # exclude what you definitely don't want
+
+
 [project.optional-dependencies]
 dev = [
     "pytest",
@@ -26,11 +35,11 @@ dev = [
 portfolio-cli = "realloc.cli.rebalance_main:main"
 rebalance-cli = "realloc.cli.rebalance_main:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
+list-plugins = "realloc.plugins.core.discovery:list_plugins"
 
 
 [project.entry-points."realloc.plugins"]
-csv = "realloc.plugins.csv_exporter"
+csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
+minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["realloc", "realloc.cli", "realloc.plugins", "realloc.scripts"]  # Make sure all your subpackages are listed

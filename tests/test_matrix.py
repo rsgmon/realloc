@@ -2,7 +2,7 @@ import pytest
 from realloc import (
     Account,
     TradeAccountMatrix,
-    allocate_trades,
+    allocate_trades, Trade,
 )
 
 
@@ -45,19 +45,22 @@ def tam(sample_accounts, sample_prices, sample_portfolio_trades):
 # 🔥 Existing Improved
 # --------------------------------------------------------
 
-
 @pytest.mark.parametrize(
-    "initial_positions, trades, expected_positions",
+    "initial_positions, trade_shares, expected_positions",
     [
-        ({"AAPL": 5}, {"AAPL": 2}, {"AAPL": 7}),
-        ({"AAPL": 5}, {"AAPL": -3}, {"AAPL": 2}),
-        ({}, {"AAPL": 4}, {"AAPL": 4}),
+        ({"AAPL": 5}, 2, {"AAPL": 7}),
+        ({"AAPL": 5}, -3, {"AAPL": 2}),
+        ({}, 4, {"AAPL": 4}),
     ],
 )
-def test_trade_account_matrix_update(initial_positions, trades, expected_positions):
+def test_trade_account_matrix_update(initial_positions, trade_shares, expected_positions):
     account = Account("Test", "A1", 1000, initial_positions, {})
     tam = TradeAccountMatrix(accounts=[account], prices={"AAPL": 100})
-    tam.update({"A1": trades})
+
+    # Create a single Trade object with the test parameters
+    trade = Trade(account_id="A1", symbol="AAPL", shares=trade_shares)
+    tam.update([trade])
+
     assert account.positions == expected_positions
 
 
@@ -66,9 +69,9 @@ def test_trade_account_matrix_prevents_negative_position():
         "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True
     )
     tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
-    trades = {"001": {"AAPL": -10}}
+    trade = Trade(account_id="001", symbol="AAPL", shares=-10)
     with pytest.raises(ValueError):
-        tam.update(trades)
+        tam.update([trade])
 
 
 def test_trade_account_matrix_allows_valid_trades():
@@ -76,16 +79,17 @@ def test_trade_account_matrix_allows_valid_trades():
         "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True
     )
     tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
-    trades = {"001": {"AAPL": -2}}
-    tam.update(trades)
+    trade = Trade(account_id="001", symbol="AAPL", shares=-2)
+    tam.update([trade])
     assert acc.positions["AAPL"] == 3
 
 
 def test_trade_matrix_blocks_negative_position_update():
     acc = Account("T", "1", 1000, {"AAPL": 1}, {}, enforce_no_negative_positions=True)
     tam = TradeAccountMatrix([acc], {"AAPL": 100})
+    trade = Trade(account_id="1", symbol="AAPL", shares=-2)
     with pytest.raises(ValueError):
-        tam.update({"1": {"AAPL": -2}})
+        tam.update([trade])
 
 
 # --------------------------------------------------------
@@ -129,7 +133,7 @@ def test_trade_account_matrix_empty_update_does_nothing():
         "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=True
     )
     tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
-    tam.update({})
+    tam.update([])
     assert acc.positions["AAPL"] == 5
     assert tam.cash_matrix["001"] == 1000.0
 
@@ -139,6 +143,7 @@ def test_trade_account_matrix_handles_missing_price_gracefully():
         "Test", "001", 1000.0, {"AAPL": 5}, {}, enforce_no_negative_positions=False
     )
     tam = TradeAccountMatrix([acc], {})  # Empty prices dict
-    tam.update({"001": {"AAPL": 1}})
+    trade = Trade(acc.account_number, symbol="AAPL", shares=1)
+    tam.update([trade])
     assert acc.positions["AAPL"] == 6
     # Cash won't change because price was missing (defaults to 0)

@@ -1,20 +1,23 @@
 import argparse
 import json
+import sys
 from realloc import (
     Account,
     PortfolioModel,
+    Trade,
     TradeAccountMatrix,
     allocate_trades,
     select_account_for_buy_trade,
     select_account_for_sell_trade,
+    is_trade_remaining,
 )
-
-
-def is_trade_remaining(trades, tolerance: float = 0.01) -> bool:
-    return any(abs(qty) > tolerance for qty in trades.values())
+from realloc.plugins.core.discovery import list_plugins
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "list-plugins":
+        list_plugins()
+        return
     parser = argparse.ArgumentParser(
         description="Run full rebalance using TradeAccountMatrix"
     )
@@ -31,9 +34,28 @@ def main():
     with open(args.input_file, "r") as f:
         data = json.load(f)
 
+    # Validate required data structure
+    required_keys = ["prices", "accounts", "model"]
+    if not all(key in data for key in required_keys):
+        raise ValueError(f"Input file must contain all required keys: {required_keys}")
+
+    if not isinstance(data["prices"], dict):
+        raise ValueError("Prices must be a dictionary")
+
+    if not isinstance(data["accounts"], list):
+        raise ValueError("Accounts must be a list")
+
+    if not isinstance(data["model"], dict):
+        raise ValueError("Model must be a dictionary")
+
+    if "label" not in data["model"] or "targets" not in data["model"]:
+        raise ValueError("Model must contain 'label' and 'targets' fields")
+
     prices = data["prices"]
     accounts = [Account(**acc) for acc in data["accounts"]]
-    model = PortfolioModel(**data["model"])
+
+    model_data = data["model"]
+    model = PortfolioModel(model_data["label"], model_data["targets"])
 
     print("=== Initial Account States ===")
     for acc in accounts:
@@ -107,17 +129,12 @@ def main():
 
             if qty_to_trade == 0:
                 break
-
-            single_trade = {
-                account_id: {
-                    symbol: qty_to_trade if direction == "buy" else -qty_to_trade
-                }
-            }
+            single_trade = Trade(account_id, symbol, qty_to_trade if direction == "buy" else -qty_to_trade)
             account_trades.append(single_trade)
             print(
                 f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
             )
-            tam.update(single_trade)
+            tam.update([single_trade])
             tam.update_portfolio_trades(target_shares)
             break  # Re-evaluate after each trade
 
@@ -132,7 +149,8 @@ def main():
             f"{acc.account_number}: positions={acc.positions}, cash={tam.cash_matrix[acc.account_number]:.2f}"
         )
     if args.exporter and args.export_path:
-        from realloc.plugins.loader import load_export_plugin
+        from realloc.plugins.core.base import Exporter
 
-        plugin = load_export_plugin(args.exporter)
-        plugin.export(account_trades, args.export_path)
+        plugin = Exporter.load_export_plugin(args.exporter, args.export_path)
+        plugin.export(account_trades)
+    return [trade.to_dict() for trade in account_trades]

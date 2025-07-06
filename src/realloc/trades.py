@@ -89,6 +89,10 @@ class ScaledPortfolio:
         return trades_by_account
 
 
+def is_trade_remaining(trades, tolerance: float = 0.01) -> bool:
+    return any(abs(qty) > tolerance for qty in trades.values())
+
+
 def sell_position(current: float, target: float) -> float:
     return max(current - target, 0)
 
