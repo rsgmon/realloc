@@ -1,33 +1,69 @@
-from core import *
+import argparse
+import json
+import sys
+from realloc import (
+    Account,
+    PortfolioModel,
+    Trade,
+    TradeAccountMatrix,
+    allocate_trades,
+    select_account_for_buy_trade,
+    select_account_for_sell_trade,
+    is_trade_remaining,
+)
+from realloc.plugins.core.discovery import list_plugins
 
-from typing import List, Optional, Dict
-import math
 
-from typing import List, Optional, Dict
-import math
+def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "list-plugins":
+        list_plugins()
+        return
+    parser = argparse.ArgumentParser(
+        description="Run full rebalance using TradeAccountMatrix"
+    )
+    parser.add_argument(
+        "input_file", help="Path to input JSON file (accounts, model, prices)"
+    )
+    parser.add_argument(
+        "--iterations", type=int, default=10, help="Path to output JSON file"
+    )
+    parser.add_argument("--exporter", help="Optional exporter plugin name")
+    parser.add_argument("--export-path", help="Where to write output file")
+    args = parser.parse_args()
 
-# (existing classes/functions here...)
+    with open(args.input_file, "r") as f:
+        data = json.load(f)
 
-# --- Rebalance Simulation Block ---
-if __name__ == "__main__":
-    prices = {"AAPL": 100, "GOOG": 100, "MSFT": 100, "IBM": 34.56}
+    # Validate required data structure
+    required_keys = ["prices", "accounts", "model"]
+    if not all(key in data for key in required_keys):
+        raise ValueError(f"Input file must contain all required keys: {required_keys}")
 
-    accounts = [
-        Account("Account A", "A", 99, {"AAPL": 10, "IBM": 5000}, {}),
-        Account("Account B", "B", 80000, {"GOOG": 4, "MSFT": 5}, {}),
-        Account("Account C", "C", 0, {"AAPL": 50}, {}),
-    ]
+    if not isinstance(data["prices"], dict):
+        raise ValueError("Prices must be a dictionary")
 
-    model = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.4, "MSFT": 0.1})
+    if not isinstance(data["accounts"], list):
+        raise ValueError("Accounts must be a list")
+
+    if not isinstance(data["model"], dict):
+        raise ValueError("Model must be a dictionary")
+
+    if "label" not in data["model"] or "targets" not in data["model"]:
+        raise ValueError("Model must contain 'label' and 'targets' fields")
+
+    prices = data["prices"]
+    accounts = [Account(**acc) for acc in data["accounts"]]
+
+    model_data = data["model"]
+    model = PortfolioModel(model_data["label"], model_data["targets"])
 
     print("=== Initial Account States ===")
     for acc in accounts:
         print(f"{acc.account_number}: positions={acc.positions}, cash={acc.cash}")
 
     combined_positions = {}
-    total_cash = 0
+    total_cash = sum(acc.cash for acc in accounts)
     for acc in accounts:
-        total_cash += acc.cash
         for sym, qty in acc.positions.items():
             combined_positions[sym] = combined_positions.get(sym, 0) + qty
 
@@ -53,17 +89,14 @@ if __name__ == "__main__":
 
     tam = TradeAccountMatrix(accounts, prices, trades)
 
-    def is_trade_remaining(trades: Dict[str, int], tolerance: float = 0.01) -> bool:
-        return any(abs(qty) > tolerance for qty in trades.values())
-
-    max_iterations = 10
+    max_iterations = args.iterations
     iteration = 0
-
+    account_trades = []
     while is_trade_remaining(tam.portfolio_trades) and iteration < max_iterations:
         sorted_trades = sorted(
             tam.portfolio_trades.items(), key=lambda item: (item[1] > 0, abs(item[1]))
         )
-        # print(f"sorted trades {sorted_trades}")
+
         for symbol, qty in sorted_trades:
             if abs(qty) < 0.1:
                 continue
@@ -86,17 +119,6 @@ if __name__ == "__main__":
             if account_id is None:
                 print(f"⚠️ Cannot find account to {direction} {qty_remaining} {symbol}")
                 break
-            print(f"Selected Account_id: {account_id}")
-            print(f"\n🔍 Evaluating trade for {symbol}: {qty} ({direction})")
-            print(f"Remaining qty needed: {qty_remaining}")
-            print("📊 Account states:")
-            for acc in tam.accounts.values():
-                holding = acc.positions.get(symbol, 0)
-                cash = tam.cash_matrix[acc.account_number]
-                can_afford = int(cash // prices[symbol])
-                print(
-                    f"Account {acc.account_number} | Holds: {holding} | Cash: {cash:.2f} | Can afford: {can_afford} {symbol}"
-                )
 
             account = tam.accounts[account_id]
             if direction == "buy":
@@ -107,31 +129,28 @@ if __name__ == "__main__":
 
             if qty_to_trade == 0:
                 break
-
-            single_trade = {
-                account_id: {
-                    symbol: qty_to_trade if direction == "buy" else -qty_to_trade
-                }
-            }
+            single_trade = Trade(account_id, symbol, qty_to_trade if direction == "buy" else -qty_to_trade)
+            account_trades.append(single_trade)
             print(
                 f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
             )
-            tam.update(single_trade)
-
+            tam.update([single_trade])
             tam.update_portfolio_trades(target_shares)
-            print(
-                f"Is Trade Remaining: {is_trade_remaining(tam.portfolio_trades, tolerance=0.1)}"
-            )
-            break  # Re-evaluate trades after each execution
+            break  # Re-evaluate after each trade
+
         iteration += 1
 
     if iteration >= max_iterations:
-        print(
-            "⚠️ Maximum iterations reached. Possible infinite loop or unresolvable trade drift."
-        )
+        print("⚠️ Max iterations reached. Some trades may be unresolved.")
 
     print("\n=== Final Account States ===")
     for acc in accounts:
         print(
             f"{acc.account_number}: positions={acc.positions}, cash={tam.cash_matrix[acc.account_number]:.2f}"
         )
+    if args.exporter and args.export_path:
+        from realloc.plugins.core.base import Exporter
+
+        plugin = Exporter.load_export_plugin(args.exporter, args.export_path)
+        plugin.export(account_trades)
+    return [trade.to_dict() for trade in account_trades]

@@ -1,5 +1,5 @@
 import pytest
-from core import (
+from realloc import (
     Account,
     select_account_for_buy_trade,
     select_account_for_sell_trade,

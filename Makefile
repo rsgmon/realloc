@@ -2,10 +2,10 @@
 
 # Run unit tests with coverage
 test:
-	pytest --cov=core --cov-report=term --cov-report=html
+	pytest --cov=realloc --cov-report=term --cov-report=html
 
 coverage:
-	pytest --cov=core --cov-report=term --cov-report=html
+	pytest --cov=realloc --cov-report=term --cov-report=html
 	open htmlcov/index.html || xdg-open htmlcov/index.html || echo "Coverage report generated in htmlcov/index.html"
 
 # Clean Python bytecode and coverage
@@ -20,15 +20,15 @@ install-dev:
 
 # Format code with black
 format:
-	black core/ tests/
+	black src/ tests/
 
 # Lint with flake8
 lint:
-	flake8 core/ --max-line-length=100
+	flake8 src/ --max-line-length=100
 
 # Build package distributions
 build-clean:
-	rm -rf build/ dist/ *.egg-info/
+	rm -rf build/ dist/ src/*.egg-info/
 
 build:
 	python -m build

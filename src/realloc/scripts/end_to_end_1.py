@@ -1,47 +1,33 @@
-import argparse
-import json
-from core import (
-    Account,
-    PortfolioModel,
-    TradeAccountMatrix,
-    allocate_trades,
-    select_account_for_buy_trade,
-    select_account_for_sell_trade,
-)
+from realloc import *
 
+from typing import List, Optional, Dict
+import math
 
-def is_trade_remaining(trades, tolerance: float = 0.01) -> bool:
-    return any(abs(qty) > tolerance for qty in trades.values())
+from typing import List, Optional, Dict
+import math
 
+# (existing classes/functions here...)
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Run full rebalance using TradeAccountMatrix"
-    )
-    parser.add_argument(
-        "input_file", help="Path to input JSON file (accounts, model, prices)"
-    )
-    parser.add_argument(
-        "--iterations", type=int, default=10, help="Path to output JSON file"
-    )
-    parser.add_argument("--exporter", help="Optional exporter plugin name")
-    parser.add_argument("--export-path", help="Where to write output file")
-    args = parser.parse_args()
+# --- Rebalance Simulation Block ---
+if __name__ == "__main__":
+    prices = {"AAPL": 100, "GOOG": 100, "MSFT": 100, "IBM": 34.56}
 
-    with open(args.input_file, "r") as f:
-        data = json.load(f)
+    accounts = [
+        Account("Account A", "A", 99, {"AAPL": 10, "IBM": 5000}, {}),
+        Account("Account B", "B", 80000, {"GOOG": 4, "MSFT": 5}, {}),
+        Account("Account C", "C", 0, {"AAPL": 50}, {}),
+    ]
 
-    prices = data["prices"]
-    accounts = [Account(**acc) for acc in data["accounts"]]
-    model = PortfolioModel(**data["model"])
+    model = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.4, "MSFT": 0.1})
 
     print("=== Initial Account States ===")
     for acc in accounts:
         print(f"{acc.account_number}: positions={acc.positions}, cash={acc.cash}")
 
     combined_positions = {}
-    total_cash = sum(acc.cash for acc in accounts)
+    total_cash = 0
     for acc in accounts:
+        total_cash += acc.cash
         for sym, qty in acc.positions.items():
             combined_positions[sym] = combined_positions.get(sym, 0) + qty
 
@@ -67,14 +53,17 @@ def main():
 
     tam = TradeAccountMatrix(accounts, prices, trades)
 
-    max_iterations = args.iterations
+    def is_trade_remaining(trades: Dict[str, int], tolerance: float = 0.01) -> bool:
+        return any(abs(qty) > tolerance for qty in trades.values())
+
+    max_iterations = 10
     iteration = 0
-    account_trades = []
+
     while is_trade_remaining(tam.portfolio_trades) and iteration < max_iterations:
         sorted_trades = sorted(
             tam.portfolio_trades.items(), key=lambda item: (item[1] > 0, abs(item[1]))
         )
-
+        # print(f"sorted trades {sorted_trades}")
         for symbol, qty in sorted_trades:
             if abs(qty) < 0.1:
                 continue
@@ -97,6 +86,17 @@ def main():
             if account_id is None:
                 print(f"⚠️ Cannot find account to {direction} {qty_remaining} {symbol}")
                 break
+            print(f"Selected Account_id: {account_id}")
+            print(f"\n🔍 Evaluating trade for {symbol}: {qty} ({direction})")
+            print(f"Remaining qty needed: {qty_remaining}")
+            print("📊 Account states:")
+            for acc in tam.accounts.values():
+                holding = acc.positions.get(symbol, 0)
+                cash = tam.cash_matrix[acc.account_number]
+                can_afford = int(cash // prices[symbol])
+                print(
+                    f"Account {acc.account_number} | Holds: {holding} | Cash: {cash:.2f} | Can afford: {can_afford} {symbol}"
+                )
 
             account = tam.accounts[account_id]
             if direction == "buy":
@@ -107,32 +107,27 @@ def main():
 
             if qty_to_trade == 0:
                 break
+            single_trade = Trade(account_id, symbol, qty_to_trade if direction == "buy" else -qty_to_trade)
 
-            single_trade = {
-                account_id: {
-                    symbol: qty_to_trade if direction == "buy" else -qty_to_trade
-                }
-            }
-            account_trades.append(single_trade)
             print(
                 f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
             )
-            tam.update(single_trade)
-            tam.update_portfolio_trades(target_shares)
-            break  # Re-evaluate after each trade
+            tam.update([single_trade])
 
+            tam.update_portfolio_trades(target_shares)
+            print(
+                f"Is Trade Remaining: {is_trade_remaining(tam.portfolio_trades, tolerance=0.1)}"
+            )
+            break  # Re-evaluate trades after each execution
         iteration += 1
 
     if iteration >= max_iterations:
-        print("⚠️ Max iterations reached. Some trades may be unresolved.")
+        print(
+            "⚠️ Maximum iterations reached. Possible infinite loop or unresolvable trade drift."
+        )
 
     print("\n=== Final Account States ===")
     for acc in accounts:
         print(
             f"{acc.account_number}: positions={acc.positions}, cash={tam.cash_matrix[acc.account_number]:.2f}"
         )
-    if args.exporter and args.export_path:
-        from core.plugins.loader import load_export_plugin
-
-        plugin = load_export_plugin(args.exporter)
-        plugin.export(account_trades, args.export_path)

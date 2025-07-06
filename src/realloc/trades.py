@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, TYPE_CHECKING
 import math
 
 
-from core.utils import normalize_symbol_sets
+from realloc.utils import normalize_symbol_sets
 
 if TYPE_CHECKING:
     from .accounts import Account
@@ -87,6 +87,10 @@ class ScaledPortfolio:
             trades_by_account[account.account_number] = final_trades
 
         return trades_by_account
+
+
+def is_trade_remaining(trades, tolerance: float = 0.01) -> bool:
+    return any(abs(qty) > tolerance for qty in trades.values())
 
 
 def sell_position(current: float, target: float) -> float:

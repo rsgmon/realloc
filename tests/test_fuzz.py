@@ -1,11 +1,11 @@
 import pytest
 from hypothesis import given, strategies as st
-from core import (
+from realloc import (
     Account,
     PortfolioModel,
     PortfolioAllocator,
     TradeAccountMatrix,
-    select_account_for_buy_trade,
+    select_account_for_buy_trade, Trade,
 )
 
 
@@ -54,14 +54,13 @@ def test_tradeaccountmatrix_no_negative_position(
         enforce_no_negative_positions=True,
     )
     tam = TradeAccountMatrix([acc], {"AAPL": price})
-
-    trades = {"T1": {"AAPL": trade_shares}}
+    trade = Trade("T1", "AAPL", trade_shares)
 
     if initial_shares + trade_shares < 0:
         with pytest.raises(ValueError):
-            tam.update(trades)
+            tam.update([trade])
     else:
-        tam.update(trades)
+        tam.update([trade])
         assert acc.positions["AAPL"] >= 0
 
 

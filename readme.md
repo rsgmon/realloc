@@ -40,7 +40,7 @@ pip install -e .[dev]
 
 ## 🏁 Quick Start 
 
-from core import Account, PortfolioModel, PortfolioAllocator
+from realloc import Account, PortfolioModel, PortfolioAllocator
 
 ### Define accounts
 accounts = [
@@ -88,25 +88,61 @@ To use `rebalance-cli`, you must provide a JSON file with:
 ## 🗂 Project Structure
 
 ```
-core/
-  cli/
-    reblance-cli
-    portfolio-cli
-  accounts.py
-  models.py
-  trades.py
-  selectors.py
-  matrix.py
-  utils.py
-  allocator.py
-  __init__.py
-tests/
-  test_core.py
-Dockerfile
-Makefile
-README.md
-setup.py
+src/
+  realloc/
+    plugins/
+      base.py
+      csv_exporter.py
+      loader.py
+    cli/
+      reblance-cli
+      portfolio-cli
+    accounts.py
+    models.py
+    trades.py
+    selectors.py
+    matrix.py
+    utils.py
+    allocator.py
+    __init__.py
+  tests/
+    test_realloc.py
+  Dockerfile
+  Makefile
+  README.md
+  setup.py
+
+## 🔌 Export Plugins
+
+Realloc supports custom export plugins to output rebalancing data in different formats. Plugins are loaded dynamically using entry points.
+
+### Using Plugins
+
+To use an export plugin with the CLI:
+
+bash rebalance-cli --exporter plugin_name input.json
+
+### Available Plugins
+
+- `csv` - Built-in CSV exporter (included with realloc)
+- `csvplus` - Enhanced CSV export with metadata ([realloc-csvplus](https://github.com/yourusername/realloc-csvplus))
+
+### Creating Plugins
+
+To create your own export plugin, see our [Plugin Development Guide](docs/plugin-development.md).
+
+Basic example:
+
+```python
+from realloc.plugins import ExportPlugin
+
+
+class MyExporter(ExportPlugin):
+    def export(self, data):
+        # Your export logic here
+        pass
 ```
+
 
 ## 📄 License
 
