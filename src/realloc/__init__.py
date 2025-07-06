@@ -1,7 +1,7 @@
 from .accounts import Account
 from .allocator import PortfolioAllocator
 from .models import PortfolioModel
-from .matrix import TradeAccountMatrix
+from .matrix import Trade, TradeAccountMatrix
 from .trades import (
     ScaledPortfolio,
     buy_position,
@@ -22,6 +22,7 @@ __all__ = [
     "Account",
     "PortfolioModel",
     "TradeAccountMatrix",
+    "Trade",
     "ScaledPortfolio",
     "buy_position",
     "calculate_buy_amounts",

@@ -3,6 +3,7 @@ import json
 from realloc import (
     Account,
     PortfolioModel,
+    Trade,
     TradeAccountMatrix,
     allocate_trades,
     select_account_for_buy_trade,
@@ -77,7 +78,8 @@ def main():
                 break
             acc = tam.accounts[account_id]
             sell_qty = min(qty_remaining, acc.positions.get(sell_symbol, 0))
-            tam.update({account_id: {sell_symbol: -sell_qty}})
+            single_trade = Trade(account_id, sell_symbol, sell_qty)
+            tam.update([single_trade])
             print(f"✅ Sold {sell_qty} of {sell_symbol} from {account_id}")
             qty_remaining -= sell_qty
             if qty_remaining <= 0:
@@ -100,7 +102,8 @@ def main():
         if max_affordable == 0:
             break
         buy_qty = min(max_affordable, qty_remaining)
-        tam.update({account_id: {buy_symbol: buy_qty}})
+        single_trade = Trade(account_id, buy_symbol, buy_qty)
+        tam.update([single_trade])
         print(f"✅ Bought {buy_qty} of {buy_symbol} in {account_id}")
         qty_remaining -= buy_qty
         if qty_remaining <= 0:
@@ -139,7 +142,8 @@ def main():
                 qty_to_sell = min(
                     holding, int((qty_remaining * price) // prices[sym]) + 1
                 )
-                tam.update({acc.account_number: {sym: -qty_to_sell}})
+                single_trade = Trade(acc.account_number, sym, -qty_to_sell)
+                tam.update([single_trade])
                 print(
                     f"💸 Sold {qty_to_sell} of overweight {sym} from {acc.account_number}"
                 )
@@ -157,7 +161,8 @@ def main():
                 max_affordable = int(tam.cash_matrix[account_id] // price)
                 if max_affordable:
                     buy_qty = min(max_affordable, qty_remaining)
-                    tam.update({account_id: {buy_symbol: buy_qty}})
+                    single_trade = Trade(account_id, buy_symbol, buy_qty)
+                    tam.update([single_trade])
                     print(f"🔁 Bought {buy_qty} of {buy_symbol} in {account_id}")
                     qty_remaining -= buy_qty
                     if qty_remaining <= 0:

@@ -1,9 +1,17 @@
-from typing import List, Optional, Dict
+from dataclasses import dataclass
+from typing import List, Optional, Dict, Union
 
 from realloc.accounts import Account
 from realloc.plugins.core.base import TradeInfo
 from realloc.plugins.core.engine import PluginEngine, ValidationEngine
 from realloc.trades import allocate_trades
+
+@dataclass
+class Trade:
+    account_id: str
+    symbol: str
+    shares: float
+
 
 
 class TradeAccountMatrix:
@@ -27,18 +35,28 @@ class TradeAccountMatrix:
         self.plugin_engine = PluginEngine()
         self.validation_engine = ValidationEngine(self.plugin_engine)
 
-    def update(self, trades: Dict[str, Dict[str, int]]) -> None:
-        for account_number, trade_dict in trades.items():
-            account = self.accounts[account_number]
-            for symbol, qty in trade_dict.items():
+    def update(self, trades: List[Trade]) -> None:
+        # Group trades by account for efficient processing
+        account_trades = {}
+        for trade in trades:
+            if trade.account_id not in account_trades:
+                account_trades[trade.account_id] = []
+            account_trades[trade.account_id].append((trade.symbol, trade.shares))
+
+        # Process trades for each account
+        for account_id, account_trades_list in account_trades.items():
+            account = self.accounts[account_id]
+
+            # Update positions and cash for each trade
+            for symbol, qty in account_trades_list:
                 new_position = account.positions.get(symbol, 0) + qty
                 if account.enforce_no_negative_positions and new_position < 0:
                     raise ValueError(
-                        f"Trade would result in negative position for {symbol} in account {account_number}"
+                        f"Trade would result in negative position for {symbol} in account {account_id}"
                     )
                 account.positions[symbol] = new_position
                 trade_value = qty * self.prices.get(symbol, 0)
-                self.cash_matrix[account_number] -= trade_value
+                self.cash_matrix[account_id] -= trade_value
 
     def update_portfolio_trades(self, target_shares: Dict[str, float]):
         combined_current = {}

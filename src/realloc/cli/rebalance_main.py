@@ -3,6 +3,7 @@ import json
 from realloc import (
     Account,
     PortfolioModel,
+    Trade,
     TradeAccountMatrix,
     allocate_trades,
     select_account_for_buy_trade,
@@ -123,17 +124,12 @@ def main():
 
             if qty_to_trade == 0:
                 break
-
-            single_trade = {
-                account_id: {
-                    symbol: qty_to_trade if direction == "buy" else -qty_to_trade
-                }
-            }
+            single_trade = Trade(account_id, symbol, qty_to_trade if direction == "buy" else -qty_to_trade)
             account_trades.append(single_trade)
             print(
                 f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
             )
-            tam.update(single_trade)
+            tam.update([single_trade])
             tam.update_portfolio_trades(target_shares)
             break  # Re-evaluate after each trade
 

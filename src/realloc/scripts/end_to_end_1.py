@@ -107,16 +107,12 @@ if __name__ == "__main__":
 
             if qty_to_trade == 0:
                 break
+            single_trade = Trade(account_id, symbol, qty_to_trade if direction == "buy" else -qty_to_trade)
 
-            single_trade = {
-                account_id: {
-                    symbol: qty_to_trade if direction == "buy" else -qty_to_trade
-                }
-            }
             print(
                 f"🟢 Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
             )
-            tam.update(single_trade)
+            tam.update([single_trade])
 
             tam.update_portfolio_trades(target_shares)
             print(

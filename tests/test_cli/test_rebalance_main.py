@@ -4,6 +4,8 @@ import pytest
 from pathlib import Path
 import json
 from unittest.mock import Mock, patch
+
+from realloc import Trade
 from realloc.cli.rebalance_main import is_trade_remaining, main
 
 
@@ -164,17 +166,18 @@ def test_main_with_csv_exporter(input_file, mock_dependencies, tmp_path, capsys)
     mock_exporter.export.assert_called_once()
 
     # Get the trades that were passed to the export method
-    account_trades = mock_exporter.export.call_args[0][0]
+    trades = mock_exporter.export.call_args[0][0]
 
-    # Verify the structure of account_trades
-    assert isinstance(account_trades, list)
-    for trade in account_trades:
-        assert isinstance(trade, dict)
-        # Each trade should be {account_id: {symbol: quantity}}
-        assert len(trade) == 1  # One account per trade
-        account_id = list(trade.keys())[0]
-        assert isinstance(trade[account_id], dict)
-        assert len(trade[account_id]) == 1  # One symbol per trade
+    # Verify the structure of trades
+    assert isinstance(trades, list)
+    for trade in trades:
+        assert isinstance(trade, Trade)
+        assert hasattr(trade, 'account_id')
+        assert hasattr(trade, 'symbol')
+        assert hasattr(trade, 'shares')
+        assert isinstance(trade.account_id, str)
+        assert isinstance(trade.symbol, str)
+        assert isinstance(trade.shares, (int, float))
 
 
 def test_main_max_iterations(input_file, mock_dependencies, capsys):
