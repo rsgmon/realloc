@@ -35,6 +35,7 @@ dev = [
 portfolio-cli = "realloc.cli.rebalance_main:main"
 rebalance-cli = "realloc.cli.rebalance_main:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
+list-plugins = "realloc.plugins.core.discovery:list_plugins"
 
 
 [project.entry-points."realloc.plugins"]

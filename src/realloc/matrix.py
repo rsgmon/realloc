@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List, Optional, Dict, Union
+from dataclasses import dataclass, asdict
+from typing import List, Optional, Dict, Any
 
 from realloc.accounts import Account
 from realloc.plugins.core.base import TradeInfo
@@ -11,6 +11,16 @@ class Trade:
     account_id: str
     symbol: str
     shares: float
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the dataclass to a dictionary"""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'TradeInfo':
+        """Deserialize from a dictionary to create a new instance"""
+        return cls(**data)
+
 
 
 

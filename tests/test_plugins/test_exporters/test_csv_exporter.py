@@ -1,6 +1,8 @@
 import pytest
 import csv
 import os
+
+from realloc import Trade
 from realloc.plugins.exporters.csv_exporter import CSVExporter
 
 
@@ -8,12 +10,12 @@ from realloc.plugins.exporters.csv_exporter import CSVExporter
 def sample_data():
     return [
         {
-            'account': 'account1',
+            'account_id': 'account1',
             'symbol': 'AAPL',
             'shares': 100
         },
         {
-            'account': 'account2',
+            'account_id': 'account2',
             'symbol': 'MSFT',
             'shares': -50
         }
@@ -32,13 +34,13 @@ def test_csv_exporter_name():
 
 def test_csv_export_creates_file(temp_csv_path, sample_data):
     exporter = CSVExporter(temp_csv_path)
-    exporter.export(sample_data)
+    exporter.export([Trade.from_dict(single_trade) for single_trade in sample_data])
     assert os.path.exists(temp_csv_path)
 
 
 def test_csv_export_content(temp_csv_path, sample_data):
     exporter = CSVExporter(temp_csv_path)
-    exporter.export(sample_data)
+    exporter.export([Trade.from_dict(single_trade) for single_trade in sample_data])
 
     with open(temp_csv_path, 'r', newline='') as f:
         reader = csv.reader(f)

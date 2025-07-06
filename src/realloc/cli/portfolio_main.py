@@ -1,6 +1,9 @@
 import argparse
 import json
+import sys
 from realloc import Account, PortfolioModel, TradeAccountMatrix, allocate_trades
+from realloc.plugins.core.discovery import list_plugins
+
 
 
 def load_json(path):
@@ -9,6 +12,9 @@ def load_json(path):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "list-plugins":
+        list_plugins()
+        return
     parser = argparse.ArgumentParser(description="Portfolio Allocator CLI")
     parser.add_argument(
         "--rebalance", help="Path to input JSON with accounts, model, and prices"

@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from realloc import (
     Account,
     PortfolioModel,
@@ -10,9 +11,13 @@ from realloc import (
     select_account_for_sell_trade,
     is_trade_remaining,
 )
+from realloc.plugins.core.discovery import list_plugins
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "list-plugins":
+        list_plugins()
+        return
     parser = argparse.ArgumentParser(
         description="Run full rebalance using TradeAccountMatrix"
     )
@@ -148,3 +153,4 @@ def main():
 
         plugin = Exporter.load_export_plugin(args.exporter, args.export_path)
         plugin.export(account_trades)
+    return [trade.to_dict() for trade in account_trades]

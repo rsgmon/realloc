@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from realloc import (
     Account,
     PortfolioModel,
@@ -9,9 +10,13 @@ from realloc import (
     select_account_for_buy_trade,
     select_account_for_sell_trade,
 )
+from realloc.plugins.core.discovery import list_plugins
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "list-plugins":
+        list_plugins()
+        return
     parser = argparse.ArgumentParser(
         description="Perform partial rebalance for two symbols using model targets"
     )
