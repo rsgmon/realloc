@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from .accounts import Account
 
 
-def allocate_trades(
+def compute_portfolio_trades(
     current_shares: Dict[str, float],
     target_shares: Dict[str, float],
     prices: Optional[Dict[str, float]] = None,
@@ -25,7 +25,7 @@ def split_trades(
     target_shares: Dict[str, float],
     prices: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Dict[str, int]]:
-    net_trades = allocate_trades(current_shares, target_shares, prices)
+    net_trades = compute_portfolio_trades(current_shares, target_shares, prices)
     buys = {s: v for s, v in net_trades.items() if v > 0}
     sells = {s: abs(v) for s, v in net_trades.items() if v < 0}
     return {"buy": buys, "sell": sells}
@@ -62,7 +62,7 @@ class ScaledPortfolio:
             normalized_current, normalized_target = normalize_symbol_sets(
                 current, share_targets
             )
-            trade_shares = allocate_trades(
+            trade_shares = compute_portfolio_trades(
                 normalized_current, normalized_target, prices
             )
 

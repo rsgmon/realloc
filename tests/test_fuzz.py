@@ -50,7 +50,6 @@ def test_tradeaccountmatrix_no_negative_position(
         account_number="T1",
         cash=cash,
         positions={"AAPL": initial_shares},
-        targets={},
         enforce_no_negative_positions=True,
     )
     tam = TradeAccountMatrix([acc], {"AAPL": price})
@@ -85,7 +84,6 @@ def test_selector_picks_valid_account(account_cash, share_qty, price):
                 account_number=f"A{idx}",
                 cash=cash,
                 positions={"AAPL": qty},
-                targets={},
             )
         )
     cash_matrix = {a.account_number: a.cash for a in accounts}

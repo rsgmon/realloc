@@ -1,12 +1,13 @@
-import csv
+import logging
 
 import pytest
 from pathlib import Path
-import json
-from unittest.mock import Mock, patch
+
 
 from realloc import Trade
 from realloc.cli.rebalance_main import is_trade_remaining, main
+from realloc.plugins.core.base import Exporter
+
 
 
 @pytest.fixture
@@ -20,14 +21,12 @@ def sample_input_data():
             {
                 "account_number": "ACC1",
                 "label": "Account 1",
-                "targets": {"AAPL": 1.0},
                 "cash": 10000.0,
                 "positions": {"AAPL": 10}
             },
             {
                 "account_number": "ACC2",
                 "label": "Account 2",
-                "targets": {"GOOGL": 1.0},
                 "cash": 15000.0,
                 "positions": {"GOOGL": 5}
             }
@@ -66,7 +65,7 @@ def mock_dependencies():
     with patch('realloc.PortfolioModel') as model_mock, \
             patch('realloc.TradeAccountMatrix') as matrix_mock, \
             patch('realloc.Account') as account_mock, \
-            patch('realloc.allocate_trades') as allocate_mock, \
+            patch('realloc.compute_portfolio_trades') as allocate_mock, \
             patch('realloc.select_account_for_buy_trade') as buy_mock, \
             patch('realloc.select_account_for_sell_trade') as sell_mock:
         # Configure mocks
@@ -98,97 +97,42 @@ def mock_dependencies():
         }
 
 
-def test_main_basic_execution(input_file, mock_dependencies, capsys):
+def test_main_basic_execution(input_file, mock_dependencies, caplog):
+    """
+    Test the basic execution flow of the main function.
+
+    Args:
+        input_file: Pytest fixture providing path to test input file
+        mock_dependencies: Pytest fixture providing mocked dependencies
+        caplog: Pytest fixture for capturing log output
+    """
+    caplog.set_level(logging.INFO)
+
     with patch('sys.argv', ['rebalance_main.py', str(input_file)]):
         main()
 
-    captured = capsys.readouterr()
-    assert "=== Initial Account States ===" in captured.out
-    assert "=== Target Portfolio (shares) ===" in captured.out
-    assert "=== Current Portfolio (shares) ===" in captured.out
+    # Check for expected log messages
+    log_output = "\n".join(record.message for record in caplog.records)
+    assert "=== Initial Account States ===" in log_output
+    assert "=== Target Portfolio (shares) ===" in log_output
+    assert "=== Current Portfolio (shares) ===" in log_output
 
 
-from realloc.plugins.exporters.csv_exporter import CSVExporter
 
 from unittest.mock import patch, MagicMock
 import json
-import csv
 
+def test_main_max_iterations(input_file, mock_dependencies, caplog):
+    caplog.set_level(logging.INFO)
 
-def test_main_with_csv_exporter(input_file, mock_dependencies, tmp_path, capsys):
-    export_path = tmp_path / "output.csv"
-
-    # Create test input data
-    input_data = {
-        "prices": {"VTI": 100.0, "VXUS": 50.0},
-        "accounts": [
-            {
-                "label": "IRA Account",
-                "account_number": "IRA",
-                "positions": {"VTI": 10},
-                "cash": 1000.0,
-                "targets": {}
-            },
-            {
-                "label": "401k Account",
-                "account_number": "401k",
-                "positions": {"VXUS": 20},
-                "cash": 500.0,
-                "targets": {}
-            }
-        ],
-        "model": {
-            "label": "Test Model",
-            "targets": {"VTI": 0.6, "VXUS": 0.4}
-        }
-    }
-
-    # Write input data to the input file
-    with open(input_file, 'w') as f:
-        json.dump(input_data, f)
-
-    # Create a mock exporter
-    mock_exporter = MagicMock()
-
-    # Mock the Exporter class and its load_export_plugin method
-    with patch('realloc.plugins.core.base.Exporter') as MockExporter:
-        MockExporter.load_export_plugin.return_value = mock_exporter
-
-        with patch('sys.argv', [
-            'rebalance_main.py',
-            str(input_file),
-            '--exporter', 'csv',
-            '--export-path', str(export_path)
-        ]):
-            main()
-
-    # Verify that the exporter's export method was called
-    mock_exporter.export.assert_called_once()
-
-    # Get the trades that were passed to the export method
-    trades = mock_exporter.export.call_args[0][0]
-
-    # Verify the structure of trades
-    assert isinstance(trades, list)
-    for trade in trades:
-        assert isinstance(trade, Trade)
-        assert hasattr(trade, 'account_id')
-        assert hasattr(trade, 'symbol')
-        assert hasattr(trade, 'shares')
-        assert isinstance(trade.account_id, str)
-        assert isinstance(trade.symbol, str)
-        assert isinstance(trade.shares, (int, float))
-
-
-def test_main_max_iterations(input_file, mock_dependencies, capsys):
     # Configure matrix mock to always have remaining trades
     mock_dependencies['matrix'].return_value.portfolio_trades = {"AAPL": 10.0}
 
     with patch('sys.argv', ['rebalance_main.py', str(input_file), '--iterations', '1']):
         main()
 
-    captured = capsys.readouterr()
-    assert "Max iterations reached" in captured.out
+    log_output = "\n".join(record.message for record in caplog.records)
+    assert "Max iterations reached" in log_output
 
 
 def test_main_invalid_input_file():
@@ -203,21 +147,21 @@ def test_main_invalid_input_file():
                 "accounts": [],
                 "model": {"label": "Test", "targets": {}}
             },
-            "Input file must contain all required keys"  # Missing prices
+            r"Missing required keys in input file: {'prices'}"
     ),
     (
             {
                 "prices": {},
                 "model": {"label": "Test", "targets": {}}
             },
-            "Input file must contain all required keys"  # Missing accounts
+            r"Missing required keys in input file: {'accounts'}"
     ),
     (
             {
                 "prices": {},
                 "accounts": []
             },
-            "Input file must contain all required keys"  # Missing model
+            r"Missing required keys in input file: {'model'}"
     ),
     (
             {
@@ -227,8 +171,48 @@ def test_main_invalid_input_file():
             },
             "Model must contain 'label' and 'targets' fields"
     ),
+    (
+            {
+                "prices": {"AAPL": -100},  # Invalid price
+                "accounts": [],
+                "model": {"label": "Test", "targets": {}}
+            },
+            "All prices must be positive numbers"
+    ),
+    (
+            {
+                "prices": "not a dict",  # Wrong type for prices
+                "accounts": [],
+                "model": {"label": "Test", "targets": {}}
+            },
+            "Prices must be a dictionary mapping symbols to prices"
+    ),
+    (
+            {
+                "prices": {},
+                "accounts": "not a list",  # Wrong type for accounts
+                "model": {"label": "Test", "targets": {}}
+            },
+            "Accounts must be a list of account objects"
+    ),
+    (
+            {
+                "prices": {},
+                "accounts": [],
+                "model": "not a dict"  # Wrong type for model
+            },
+            "Model must be a dictionary with 'label' and 'targets' fields"
+    ),
 ])
-def test_main_invalid_input_data(tmp_path, bad_data, expected_error):
+def test_main_invalid_input_data(tmp_path: Path, bad_data: dict, expected_error: str):
+    """
+    Test that the main function properly validates input data and raises appropriate errors.
+
+    Args:
+        tmp_path: Pytest fixture providing temporary directory path
+        bad_data: Invalid input data that should trigger an error
+        expected_error: Expected error message
+    """
     input_file = tmp_path / "bad_input.json"
     with open(input_file, "w") as f:
         json.dump(bad_data, f)

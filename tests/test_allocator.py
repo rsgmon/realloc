@@ -12,14 +12,12 @@ def sample_accounts():
             account_number="A1",
             cash=1000,
             positions={"AAPL": 5},
-            targets={},
         ),
         Account(
             label="Taxable",
             account_number="A2",
             cash=2000,
             positions={"GOOG": 3},
-            targets={},
         ),
     ]
 

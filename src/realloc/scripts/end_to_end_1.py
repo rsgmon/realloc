@@ -41,7 +41,7 @@ if __name__ == "__main__":
     target_shares = {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
 
     current_shares = combined_positions
-    trades = allocate_trades(current_shares, target_shares, prices)
+    trades = compute_portfolio_trades(current_shares, target_shares, prices)
 
     print("=== Target Portfolio (shares) ===")
     print(target_shares)

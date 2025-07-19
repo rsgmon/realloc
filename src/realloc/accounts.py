@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict
 
-from realloc.trades import allocate_trades, split_trades
+from realloc.trades import compute_portfolio_trades, split_trades
 
 
 class Account:
@@ -10,14 +10,12 @@ class Account:
         account_number: str,
         cash: float,
         positions: Dict[str, float],
-        targets: Dict[str, float],
         enforce_no_negative_positions: bool = False,
     ):
         self.label = label
         self.account_number = account_number
         self.cash = cash
         self.positions = positions
-        self.targets = targets
         self.enforce_no_negative_positions = enforce_no_negative_positions
 
         if self.enforce_no_negative_positions:
@@ -27,13 +25,6 @@ class Account:
                         f"Negative position for {symbol} not allowed in account {account_number}"
                     )
 
-    def allocate(self, prices: Optional[Dict[str, float]] = None) -> Dict[str, int]:
-        return allocate_trades(self.positions, self.targets, prices)
-
-    def split_allocation(
-        self, prices: Optional[Dict[str, float]] = None
-    ) -> Dict[str, Dict[str, int]]:
-        return split_trades(self.positions, self.targets, prices)
 
     def to_dict(self) -> Dict:
         return {
@@ -41,7 +32,6 @@ class Account:
             "account_number": self.account_number,
             "cash": self.cash,
             "positions": self.positions,
-            "targets": self.targets,
             "enforce_no_negative_positions": self.enforce_no_negative_positions,
         }
 
@@ -52,7 +42,6 @@ class Account:
             account_number=data.get("account_number", ""),
             cash=data.get("cash", 0.0),
             positions=data.get("positions", {}),
-            targets=data.get("targets", {}),
             enforce_no_negative_positions=data.get(
                 "enforce_no_negative_positions", False
             ),

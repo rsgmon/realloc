@@ -1,7 +1,7 @@
 import argparse
 import json
 import sys
-from realloc import Account, PortfolioModel, TradeAccountMatrix, allocate_trades
+from realloc import Account, PortfolioModel, TradeAccountMatrix, compute_portfolio_trades
 from realloc.plugins.core.discovery import list_plugins
 
 
@@ -48,7 +48,7 @@ def main():
             for sym, weight in model.normalize().items()
         }
 
-        trades = allocate_trades(combined, target_shares, prices)
+        trades = compute_portfolio_trades(combined, target_shares, prices)
         tam = TradeAccountMatrix(accounts, prices, trades)
 
         print("📈 Planned Trades:")

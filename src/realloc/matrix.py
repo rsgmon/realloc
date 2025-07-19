@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from realloc.accounts import Account
 from realloc.plugins.core.base import TradeInfo
 from realloc.plugins.core.engine import PluginEngine, ValidationEngine
-from realloc.trades import allocate_trades
+from realloc.trades import compute_portfolio_trades
 
 @dataclass
 class Trade:
@@ -73,7 +73,7 @@ class TradeAccountMatrix:
         for account in self.accounts.values():
             for sym, qty in account.positions.items():
                 combined_current[sym] = combined_current.get(sym, 0.0) + qty
-        self.portfolio_trades = allocate_trades(combined_current, target_shares)
+        self.portfolio_trades = compute_portfolio_trades(combined_current, target_shares)
 
     def validate_trade(self, account_id: str, symbol: str, quantity: float) -> tuple[bool, str]:
         account = self.accounts[account_id]

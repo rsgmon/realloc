@@ -15,14 +15,14 @@ def partial_input_json():
                 "account_number": "A",
                 "cash": 0,
                 "positions": {"MSFT": 5},
-                "targets": {},
+
             },
             {
                 "label": "Test B",
                 "account_number": "B",
                 "cash": 500,
                 "positions": {"GOOG": 3},
-                "targets": {},
+
             },
         ],
         "model": {"name": "Simple", "targets": {"AAPL": 0.5, "GOOG": 0.3, "MSFT": 0.2}},

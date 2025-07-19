@@ -8,7 +8,7 @@ from .trades import (
     calculate_buy_amounts,
     sell_position,
     calculate_sell_amounts,
-    allocate_trades,
+    compute_portfolio_trades,
     split_trades,
     is_trade_remaining,
 )
@@ -28,7 +28,7 @@ __all__ = [
     "calculate_buy_amounts",
     "sell_position",
     "calculate_sell_amounts",
-    "allocate_trades",
+    "compute_portfolio_trades",
     "split_trades",
     "select_account_for_buy_trade",
     "select_account_for_sell_trade",

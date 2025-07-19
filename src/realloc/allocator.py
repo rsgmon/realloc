@@ -2,7 +2,7 @@ from typing import List, Dict, Optional
 from realloc.accounts import Account
 from realloc.models import PortfolioModel
 from realloc.matrix import TradeAccountMatrix
-from realloc.trades import allocate_trades
+from realloc.trades import compute_portfolio_trades
 
 
 class PortfolioAllocator:
@@ -38,7 +38,7 @@ class PortfolioAllocator:
             for sym, weight in normalized.items()
         }
 
-        self._portfolio_trades = allocate_trades(combined, target_shares, self.prices)
+        self._portfolio_trades = compute_portfolio_trades(combined, target_shares, self.prices)
         return self._portfolio_trades
 
     def rebalance(self) -> Dict[str, int]:
