@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from realloc.accounts import Account
 from realloc.models import PortfolioModel
-from realloc.matrix import TradeAccountMatrix
+from realloc.matrix import PortfolioStateManager
 from realloc.trades import compute_portfolio_trades
 
 
@@ -17,7 +17,7 @@ class PortfolioAllocator:
         self.model = model
         self.prices = prices
         self.selector = selector
-        self.tam: Optional[TradeAccountMatrix] = None
+        self.tam: Optional[PortfolioStateManager] = None
         self._portfolio_trades: Optional[Dict[str, int]] = None
 
     def compute_portfolio_trades(self):
@@ -45,7 +45,7 @@ class PortfolioAllocator:
         if self._portfolio_trades is None:
             self.compute_portfolio_trades()
 
-        self.tam = TradeAccountMatrix(
+        self.tam = PortfolioStateManager(
             self.accounts, self.prices, self._portfolio_trades
         )
         return self.tam.portfolio_trades

@@ -79,7 +79,7 @@ Then open a Pull Request against the main branch on GitHub.
 
 * All new features must include at least one test.
 * Tests should be written using pytest.
-* Aim for high coverage, especially around critical logic (TradeAccountMatrix, PortfolioAllocator, selectors).
+* Aim for high coverage, especially around critical logic (PortfolioStateManager, PortfolioAllocator, selectors).
 
 ### 💬 Need Help?
 

@@ -9,7 +9,7 @@ from realloc import (
     Account,
     PortfolioModel,
     Trade,
-    TradeAccountMatrix,
+    PortfolioStateManager,
     compute_portfolio_trades,
     select_account_for_buy_trade,
     select_account_for_sell_trade,
@@ -113,7 +113,7 @@ def calculate_target_shares(
 
 
 def execute_rebalance(
-        tam: TradeAccountMatrix,
+        tam: PortfolioStateManager,
         target_shares: Dict[str, float],
         max_iterations: int
 ) -> List[Trade]:
@@ -205,7 +205,7 @@ def main():
         return
 
     parser = argparse.ArgumentParser(
-        description="Run full rebalance using TradeAccountMatrix"
+        description="Run full rebalance using PortfolioStateManager"
     )
     parser.add_argument(
         "input_file",
@@ -249,7 +249,7 @@ def main():
     logger.info(portfolio_level_trades)
 
     # Execute rebalance
-    tam = TradeAccountMatrix(accounts, prices, portfolio_level_trades)
+    tam = PortfolioStateManager(accounts, prices, portfolio_level_trades)
     account_trades = execute_rebalance(tam, target_shares, args.iterations)
 
     # Log final state

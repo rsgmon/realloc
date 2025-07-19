@@ -5,7 +5,7 @@ from realloc import (
     Account,
     PortfolioModel,
     Trade,
-    TradeAccountMatrix,
+    PortfolioStateManager,
     compute_portfolio_trades,
     select_account_for_buy_trade,
     select_account_for_sell_trade,
@@ -36,7 +36,7 @@ def main():
     accounts = [Account(**acc) for acc in data["accounts"]]
     model = PortfolioModel(**data["model"])
 
-    tam = TradeAccountMatrix(accounts, prices)
+    tam = PortfolioStateManager(accounts, prices)
 
     # Step 1: Compute current portfolio holdings
     combined_positions = {}

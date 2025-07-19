@@ -63,7 +63,7 @@ def test_is_trade_remaining():
 @pytest.fixture
 def mock_dependencies():
     with patch('realloc.PortfolioModel') as model_mock, \
-            patch('realloc.TradeAccountMatrix') as matrix_mock, \
+            patch('realloc.PortfolioStateManager') as matrix_mock, \
             patch('realloc.Account') as account_mock, \
             patch('realloc.compute_portfolio_trades') as allocate_mock, \
             patch('realloc.select_account_for_buy_trade') as buy_mock, \

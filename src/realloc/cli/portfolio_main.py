@@ -1,7 +1,7 @@
 import argparse
 import json
 import sys
-from realloc import Account, PortfolioModel, TradeAccountMatrix, compute_portfolio_trades
+from realloc import Account, PortfolioModel, PortfolioStateManager, compute_portfolio_trades
 from realloc.plugins.core.discovery import list_plugins
 
 
@@ -49,7 +49,7 @@ def main():
         }
 
         trades = compute_portfolio_trades(combined, target_shares, prices)
-        tam = TradeAccountMatrix(accounts, prices, trades)
+        tam = PortfolioStateManager(accounts, prices, trades)
 
         print("📈 Planned Trades:")
         print(json.dumps(tam.portfolio_trades, indent=2))

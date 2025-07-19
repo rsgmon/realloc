@@ -1,7 +1,7 @@
 import pytest
 from realloc import (
     Account,
-    TradeAccountMatrix,
+    PortfolioStateManager,
     compute_portfolio_trades, Trade,
 )
 
@@ -36,7 +36,7 @@ def sample_portfolio_trades():
 
 @pytest.fixture
 def tam(sample_accounts, sample_prices, sample_portfolio_trades):
-    return TradeAccountMatrix(sample_accounts, sample_prices, sample_portfolio_trades)
+    return PortfolioStateManager(sample_accounts, sample_prices, sample_portfolio_trades)
 
 
 # --------------------------------------------------------
@@ -53,7 +53,7 @@ def tam(sample_accounts, sample_prices, sample_portfolio_trades):
 )
 def test_trade_account_matrix_update(initial_positions, trade_shares, expected_positions):
     account = Account("Test", "A1", 1000, initial_positions)
-    tam = TradeAccountMatrix(accounts=[account], prices={"AAPL": 100})
+    tam = PortfolioStateManager(accounts=[account], prices={"AAPL": 100})
 
     # Create a single Trade object with the test parameters
     trade = Trade(account_id="A1", symbol="AAPL", shares=trade_shares)
@@ -66,7 +66,7 @@ def test_trade_account_matrix_prevents_negative_position():
     acc = Account(
         "Test", "001", 1000.0, {"AAPL": 5},  enforce_no_negative_positions=True
     )
-    tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
+    tam = PortfolioStateManager([acc], {"AAPL": 100.0})
     trade = Trade(account_id="001", symbol="AAPL", shares=-10)
     with pytest.raises(ValueError):
         tam.update([trade])
@@ -76,7 +76,7 @@ def test_trade_account_matrix_allows_valid_trades():
     acc = Account(
         "Test", "001", 1000.0, {"AAPL": 5},  enforce_no_negative_positions=True
     )
-    tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
+    tam = PortfolioStateManager([acc], {"AAPL": 100.0})
     trade = Trade(account_id="001", symbol="AAPL", shares=-2)
     tam.update([trade])
     assert acc.positions["AAPL"] == 3
@@ -84,7 +84,7 @@ def test_trade_account_matrix_allows_valid_trades():
 
 def test_trade_matrix_blocks_negative_position_update():
     acc = Account("T", "1", 1000, {"AAPL": 1},  enforce_no_negative_positions=True)
-    tam = TradeAccountMatrix([acc], {"AAPL": 100})
+    tam = PortfolioStateManager([acc], {"AAPL": 100})
     trade = Trade(account_id="1", symbol="AAPL", shares=-2)
     with pytest.raises(ValueError):
         tam.update([trade])
@@ -97,10 +97,10 @@ def test_trade_matrix_blocks_negative_position_update():
 
 def test_trade_account_matrix_to_dict_and_from_dict(tam, sample_accounts):
     serialized = tam.to_dict()
-    deserialized = TradeAccountMatrix.from_dict(serialized, sample_accounts)
+    deserialized = PortfolioStateManager.from_dict(serialized, sample_accounts)
 
     assert isinstance(serialized, dict)
-    assert isinstance(deserialized, TradeAccountMatrix)
+    assert isinstance(deserialized, PortfolioStateManager)
     assert deserialized.cash_matrix == tam.cash_matrix
     assert deserialized.model_only == tam.model_only
     assert deserialized.prices == tam.prices
@@ -111,13 +111,13 @@ def test_trade_account_matrix_model_only_detection():
     accounts = [Account("ModelOnly", "M001", 0,  {})]
     prices = {"FAKE": 100}
     portfolio_trades = {"FAKE": 10}  # Symbol not held by any account
-    tam = TradeAccountMatrix(accounts, prices, portfolio_trades)
+    tam = PortfolioStateManager(accounts, prices, portfolio_trades)
 
     assert tam.model_only == {"FAKE": 10}
 
 
 def test_trade_account_matrix_update_portfolio_trades(sample_accounts, sample_prices):
-    tam = TradeAccountMatrix(sample_accounts, sample_prices)
+    tam = PortfolioStateManager(sample_accounts, sample_prices)
     target_shares = {"AAPL": 10, "GOOG": 3}  # Slightly different than current
     tam.update_portfolio_trades(target_shares)
 
@@ -130,7 +130,7 @@ def test_trade_account_matrix_empty_update_does_nothing():
     acc = Account(
         "Test", "001", 1000.0, {"AAPL": 5},  enforce_no_negative_positions=True
     )
-    tam = TradeAccountMatrix([acc], {"AAPL": 100.0})
+    tam = PortfolioStateManager([acc], {"AAPL": 100.0})
     tam.update([])
     assert acc.positions["AAPL"] == 5
     assert tam.cash_matrix["001"] == 1000.0
@@ -140,7 +140,7 @@ def test_trade_account_matrix_handles_missing_price_gracefully():
     acc = Account(
         "Test", "001", 1000.0, {"AAPL": 5},  enforce_no_negative_positions=False
     )
-    tam = TradeAccountMatrix([acc], {})  # Empty prices dict
+    tam = PortfolioStateManager([acc], {})  # Empty prices dict
     trade = Trade(acc.account_number, symbol="AAPL", shares=1)
     tam.update([trade])
     assert acc.positions["AAPL"] == 6

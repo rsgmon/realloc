@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print(trades)
     print()
 
-    tam = TradeAccountMatrix(accounts, prices, trades)
+    tam = PortfolioStateManager(accounts, prices, trades)
 
     def is_trade_remaining(trades: Dict[str, int], tolerance: float = 0.01) -> bool:
         return any(abs(qty) > tolerance for qty in trades.values())
