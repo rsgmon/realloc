@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict, TYPE_CHECKING
+from dataclasses import dataclass, asdict
+from typing import List, Optional, Dict, TYPE_CHECKING, Any
 import math
 
 
@@ -6,6 +7,35 @@ from realloc.utils import normalize_symbol_sets
 
 if TYPE_CHECKING:
     from .accounts import Account
+
+
+
+@dataclass
+class Trade:
+    account_id: str
+    symbol: str
+    shares: float
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the dataclass to a dictionary"""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'TradeInfo':
+        """Deserialize from a dictionary to create a new instance"""
+        return cls(**data)
+
+
+@dataclass
+class TradeInfo:
+    """Information about a trade for validation purposes"""
+    symbol: str
+    quantity: float
+    price: float
+    minimum_value: Optional[float] = None
+    current_position: Optional[float] = None
+    account_balance: Optional[float] = None
+
 
 
 def compute_portfolio_trades(

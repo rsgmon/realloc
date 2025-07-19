@@ -19,8 +19,7 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["realloc*"]
-exclude = ["tests*", "docs*", "examples*"]  # exclude what you definitely don't want
-
+exclude = ["tests*", "docs*", "examples*"]
 
 [project.optional-dependencies]
 dev = [
@@ -37,9 +36,17 @@ rebalance-cli = "realloc.cli.rebalance_main:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
 list-plugins = "realloc.plugins.core.discovery:list_plugins"
 
-
 [project.entry-points."realloc.plugins"]
+# Exporter plugins
 csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+
+# Validator plugins
 max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
 minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
 
+[project.entry-points."realloc.exporters"]
+csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+
+[project.entry-points."realloc.validators"]
+max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
+minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"

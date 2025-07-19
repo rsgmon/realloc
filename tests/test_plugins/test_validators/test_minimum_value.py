@@ -1,6 +1,7 @@
 import pytest
 from realloc.plugins.validators.minimum_value import MinimumValueValidator
-from realloc.plugins.core.base import TradeInfo
+from realloc.trades import TradeInfo
+
 
 def test_minimum_value_validator_name():
     validator = MinimumValueValidator()

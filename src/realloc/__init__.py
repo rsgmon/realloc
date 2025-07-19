@@ -1,8 +1,10 @@
 from .accounts import Account
 from .allocator import PortfolioAllocator
 from .models import PortfolioModel
-from .portfolio import Trade, PortfolioStateManager
+from .portfolio import PortfolioStateManager
 from .trades import (
+    Trade,
+    TradeInfo,
     ScaledPortfolio,
     buy_position,
     calculate_buy_amounts,
@@ -10,7 +12,7 @@ from .trades import (
     calculate_sell_amounts,
     compute_portfolio_trades,
     split_trades,
-    is_trade_remaining,
+    is_trade_remaining, Trade,
 )
 from .selectors import (
     select_account_for_buy_trade,

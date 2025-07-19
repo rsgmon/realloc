@@ -1,28 +1,8 @@
-from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict, Any, Tuple
 
-from realloc import Account
 from realloc.accounts import Account
-from realloc.plugins.core.base import TradeInfo
 from realloc.plugins.core.engine import PluginEngine, ValidationEngine
-from realloc.trades import compute_portfolio_trades
-
-@dataclass
-class Trade:
-    account_id: str
-    symbol: str
-    shares: float
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialize the dataclass to a dictionary"""
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TradeInfo':
-        """Deserialize from a dictionary to create a new instance"""
-        return cls(**data)
-
-
+from .trades import compute_portfolio_trades, TradeInfo, Trade
 
 
 class PortfolioStateManager:
@@ -46,7 +26,7 @@ class PortfolioStateManager:
             if not any(sym in a.positions for a in accounts)
         }
         self.plugin_engine = PluginEngine()
-        self.validation_engine = ValidationEngine(self.plugin_engine)
+        self.validation_engine = ValidationEngine()
 
     @property
     def portfolio_trades(self) -> Dict[str, int]:
@@ -55,6 +35,10 @@ class PortfolioStateManager:
     @portfolio_trades.setter
     def portfolio_trades(self, value: Dict[str, int]) -> None:
         self._portfolio_trades = value.copy() if value else {}
+
+    def add_validator(self, name: str, **kwargs: Any) -> None:
+        """Add a validator to the portfolio manager"""
+        self.validation_engine.add_validator(name, **kwargs)
 
     def get_total_portfolio_value(self) -> float:
         """Calculate total portfolio value including cash across all accounts."""

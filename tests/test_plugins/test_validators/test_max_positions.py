@@ -1,6 +1,7 @@
 import pytest
 from realloc.plugins.validators.max_position import MaxPositionValidator
-from realloc.plugins.core.base import TradeInfo
+from realloc.trades import TradeInfo
+
 
 @pytest.fixture
 def max_position_validator():
