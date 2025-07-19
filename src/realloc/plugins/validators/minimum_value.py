@@ -1,4 +1,5 @@
-from ..core.base import TradeValidator, TradeInfo
+from ..core.base import TradeValidator
+from ...trades import TradeInfo
 
 
 class MinimumValueValidator(TradeValidator):

@@ -59,7 +59,7 @@ portfolio_trades (property)
 
 ---
 
-## TradeAccountMatrix
+## PortfolioStateManager
 Internal state manager for accounts during rebalance.
 
 ### Key Methods:
@@ -105,7 +105,7 @@ calculate_buy_amounts(current_amounts, target_amounts)
 
 - selectors.py: Trade selection strategies
 - utils.py: Symbol normalization helpers
-- matrix.py: TradeAccountMatrix internals
+- matrix.py: PortfolioStateManager internals
 - trades.py: Allocation calculation logic
 
 ## 📚 Notes

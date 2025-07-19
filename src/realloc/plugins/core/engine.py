@@ -1,5 +1,6 @@
-from typing import Dict, List, Type, TypeVar, Tuple
-from .base import Plugin, TradeValidator, Exporter, TradeInfo
+from typing import Dict, List, Type, TypeVar, Tuple, Any
+from .base import Plugin, TradeValidator, Exporter
+from ...trades import TradeInfo
 
 T = TypeVar('T', bound=Plugin)
 
@@ -20,15 +21,19 @@ class PluginEngine:
 
 
 class ValidationEngine:
-    """Specialized engine for trade validation test_plugins"""
+    """Specialized engine for trade validation plugins"""
 
-    def __init__(self, plugin_engine: PluginEngine):
-        self.plugin_engine = plugin_engine
+    def __init__(self):
+        self.validators: List[TradeValidator] = []
+
+    def add_validator(self, name: str, **kwargs: Any) -> None:
+        """Add a validator by name"""
+        validator = TradeValidator.load_validator(name, **kwargs)
+        self.validators.append(validator)
 
     def validate_trade(self, trade_info: TradeInfo) -> Tuple[bool, str]:
         """Run all registered validators on a trade"""
-        validators = self.plugin_engine.get_plugins_of_type(TradeValidator)
-        for validator in validators:
+        for validator in self.validators:
             is_valid, reason = validator.validate(trade_info)
             if not is_valid:
                 return False, reason

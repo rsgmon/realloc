@@ -1,10 +1,8 @@
 from realloc import *
 
-from typing import List, Optional, Dict
-import math
+from typing import Dict
 
-from typing import List, Optional, Dict
-import math
+from realloc import Trade
 
 # (existing classes/functions here...)
 
@@ -41,7 +39,7 @@ if __name__ == "__main__":
     target_shares = {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
 
     current_shares = combined_positions
-    trades = allocate_trades(current_shares, target_shares, prices)
+    trades = compute_portfolio_trades(current_shares, target_shares, prices)
 
     print("=== Target Portfolio (shares) ===")
     print(target_shares)
@@ -51,7 +49,7 @@ if __name__ == "__main__":
     print(trades)
     print()
 
-    tam = TradeAccountMatrix(accounts, prices, trades)
+    tam = PortfolioStateManager(accounts, prices, trades)
 
     def is_trade_remaining(trades: Dict[str, int], tolerance: float = 0.01) -> bool:
         return any(abs(qty) > tolerance for qty in trades.values())

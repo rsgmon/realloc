@@ -40,6 +40,22 @@ class PortfolioModel:
         return self.targets.get(symbol)
 
     def normalize(self) -> Dict[str, float]:
+        """
+        Normalizes target weights to sum to 1 (100%) while maintaining their relative proportions.
+
+        This method takes the raw target weights and scales them so they sum to 1 while keeping
+        their relative relationships intact. For example, targets of {A: 2, B: 2, C: 1} would
+        become {A: 0.4, B: 0.4, C: 0.2}.
+
+        Returns:
+            Dict[str, float]: A dictionary mapping symbols to their normalized weights.
+            If the sum of target weights is 0, returns the original targets unchanged.
+
+        Example:
+            >>> model = PortfolioModel("Example", {"AAPL": 40, "MSFT": 40, "GOOG": 20})
+            >>> model.normalize()
+            {'AAPL': 0.4, 'MSFT': 0.4, 'GOOG': 0.2}
+        """
         total = sum(self.targets.values())
         if total == 0:
             return self.targets

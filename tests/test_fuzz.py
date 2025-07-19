@@ -4,7 +4,7 @@ from realloc import (
     Account,
     PortfolioModel,
     PortfolioAllocator,
-    TradeAccountMatrix,
+    PortfolioStateManager,
     select_account_for_buy_trade, Trade,
 )
 
@@ -42,7 +42,7 @@ def test_allocator_never_overspends(cash, shares, price):
     trade_shares=st.integers(min_value=-50, max_value=50),
     price=st.floats(min_value=1, max_value=500),
 )
-def test_tradeaccountmatrix_no_negative_position(
+def test_portfolio_state_manager_no_negative_position(
     cash, initial_shares, trade_shares, price
 ):
     acc = Account(
@@ -50,10 +50,9 @@ def test_tradeaccountmatrix_no_negative_position(
         account_number="T1",
         cash=cash,
         positions={"AAPL": initial_shares},
-        targets={},
         enforce_no_negative_positions=True,
     )
-    tam = TradeAccountMatrix([acc], {"AAPL": price})
+    tam = PortfolioStateManager([acc], {"AAPL": price})
     trade = Trade("T1", "AAPL", trade_shares)
 
     if initial_shares + trade_shares < 0:
@@ -85,7 +84,6 @@ def test_selector_picks_valid_account(account_cash, share_qty, price):
                 account_number=f"A{idx}",
                 cash=cash,
                 positions={"AAPL": qty},
-                targets={},
             )
         )
     cash_matrix = {a.account_number: a.cash for a in accounts}

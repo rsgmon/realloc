@@ -1,5 +1,6 @@
 import pytest
-from realloc.plugins.core.base import TradeInfo
+from realloc.trades import TradeInfo
+
 
 @pytest.fixture
 def basic_trade():

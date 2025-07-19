@@ -2,7 +2,7 @@ import pytest
 from realloc import (
     Account,
     ScaledPortfolio,
-    allocate_trades,
+    compute_portfolio_trades,
     split_trades,
     PortfolioModel,
     select_account_for_buy_trade,
@@ -19,8 +19,8 @@ def sample_portfoliomodel():
 @pytest.fixture
 def sample_accounts():
     return [
-        Account("Taxable", "A001", 10000.0, {"AAPL": 10, "GOOG": 5}, {}),
-        Account("IRA", "A002", 5000.0, {"AAPL": 2, "MSFT": 3}, {}),
+        Account("Taxable", "A001", 10000.0, {"AAPL": 10, "GOOG": 5}),
+        Account("IRA", "A002", 5000.0, {"AAPL": 2, "MSFT": 3}),
     ]
 
 
@@ -35,7 +35,7 @@ def sample_accounts():
     ],
 )
 def test_allocate_trades(current, target, expected):
-    assert allocate_trades(current, target) == expected
+    assert compute_portfolio_trades(current, target) == expected
 
 
 @pytest.mark.parametrize(
@@ -102,13 +102,12 @@ def test_account_disallows_negative_starting_position():
             account_number="001",
             cash=1000.0,
             positions={"AAPL": -10},
-            targets={},
             enforce_no_negative_positions=True,
         )
 
 
 def test_allocate_trades_handles_empty_input():
-    assert allocate_trades({}, {}) == {}
+    assert compute_portfolio_trades({}, {}) == {}
 
 
 def test_split_trades_with_zero_positions():
@@ -130,7 +129,7 @@ def test_calculate_buy_and_sell_with_missing_targets():
 def test_account_rejects_negative_positions_when_enforced():
     with pytest.raises(ValueError):
         Account(
-            "Test", "123", 1000, {"AAPL": -5}, {}, enforce_no_negative_positions=True
+            "Test", "123", 1000, {"AAPL": -5}, enforce_no_negative_positions=True
         )
 
 
@@ -232,8 +231,8 @@ def test_calculate_sell_amounts_cases(current, target, expected):
         # Full holder exists
         (
             [
-                Account("A", "1", 1000, {"GOOG": 0}, {}),
-                Account("B", "2", 3000, {"GOOG": 10}, {}),
+                Account("A", "1", 1000, {"GOOG": 0}),
+                Account("B", "2", 3000, {"GOOG": 10}),
             ],
             {"1": 1000, "2": 3000},
             "1",
@@ -241,8 +240,8 @@ def test_calculate_sell_amounts_cases(current, target, expected):
         # Partial holder vs full non-holder
         (
             [
-                Account("A", "1", 1000, {"GOOG": 5}, {}),
-                Account("B", "2", 3000, {}, {}),
+                Account("A", "1", 1000, {"GOOG": 5}),
+                Account("B", "2", 3000, {}),
             ],
             {"1": 1000, "2": 3000},
             "1",
@@ -250,8 +249,8 @@ def test_calculate_sell_amounts_cases(current, target, expected):
         # No holder, fallback to non-holder
         (
             [
-                Account("A", "1", 0, {"GOOG": 5}, {}),
-                Account("B", "2", 1000, {}, {}),
+                Account("A", "1", 0, {"GOOG": 5}),
+                Account("B", "2", 1000, {}),
             ],
             {"1": 0, "2": 1000},
             "2",

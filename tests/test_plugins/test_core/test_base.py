@@ -2,7 +2,8 @@ import pytest
 
 from pathlib import Path
 
-from realloc.plugins.core.base import TradeValidator, TradeInfo
+from realloc.plugins.core.base import TradeValidator
+from realloc.trades import TradeInfo
 from realloc.plugins.core.engine import PluginEngine, ValidationEngine
 from realloc.plugins.core.base import Exporter
 from realloc.plugins.exporters.csv_exporter import CSVExporter
@@ -26,46 +27,44 @@ class RejectingValidator(TradeValidator):
         return False, "Always reject"
 
 
-def test_validation_engine_passes_valid_trade(basic_trade):
-    engine = PluginEngine()
-    validation = ValidationEngine(engine)
-    engine.register(SimpleValidator())
-
-    is_valid, reason = validation.validate_trade(basic_trade)
-    assert is_valid
-    assert reason == ""
-
-
 def test_validation_engine_fails_on_first_rejection(basic_trade):
-    engine = PluginEngine()
-    validation = ValidationEngine(engine)
-    engine.register(SimpleValidator())
-    engine.register(RejectingValidator())
+    validation = ValidationEngine()
+    validation.validators.append(SimpleValidator())  # Add directly to validators list
+    validation.validators.append(RejectingValidator())
 
     is_valid, reason = validation.validate_trade(basic_trade)
     assert not is_valid
     assert reason == "Always reject"
 
 
-def test_validation_engine_with_no_validators(basic_trade):
-    engine = PluginEngine()
-    validation = ValidationEngine(engine)
+def test_validation_engine_passes_valid_trade(basic_trade):
+    validation = ValidationEngine()
+    validation.validators.append(SimpleValidator())  # Add directly to validators list
 
     is_valid, reason = validation.validate_trade(basic_trade)
     assert is_valid
     assert reason == ""
 
 
+def test_validation_engine_with_no_validators(basic_trade):
+    validation = ValidationEngine()
+
+    is_valid, reason = validation.validate_trade(basic_trade)
+    assert is_valid
+    assert reason == ""
+
+
+
 def test_load_export_plugin_success(tmp_path):
     test_path = tmp_path / "test.csv"
-    plugin = Exporter.load_export_plugin("csv", path=test_path)
+    plugin = Exporter.load_exporter("csv", path=test_path)
     assert isinstance(plugin, CSVExporter)
 
 
 def test_load_export_plugin_nonexistent():
     with pytest.raises(ValueError) as exc_info:
-        Exporter.load_export_plugin("nonexistent", path=Path("dummy.csv"))
-    assert "No export plugin named 'nonexistent' found" in str(exc_info.value)
+        Exporter.load_exporter("nonexistent", path=Path("dummy.csv"))
+    assert "No plugin named 'nonexistent' found" in str(exc_info.value)
 
 
 def test_load_export_plugin_invalid(monkeypatch):
@@ -94,5 +93,5 @@ def test_load_export_plugin_invalid(monkeypatch):
     monkeypatch.setattr(importlib.metadata, 'entry_points', mock_entry_points)
 
     with pytest.raises(ValueError) as exc_info:
-        Exporter.load_export_plugin("invalid", path=Path("dummy.csv"))
+        Exporter.load_exporter("invalid", path=Path("dummy.csv"))
     assert "Plugin 'invalid' is not a valid Exporter" in str(exc_info.value)
