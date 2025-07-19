@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any
 
 from realloc import (
     Account,
@@ -17,6 +17,7 @@ from realloc import (
 )
 from realloc.plugins.core.discovery import list_plugins
 from realloc.plugins.core.base import Exporter
+from realloc.portfolio import calculate_portfolio_positions
 
 # Constants
 MIN_TRADE_QTY = 0.1
@@ -62,26 +63,6 @@ def load_and_validate_input(input_file: Path) -> Dict[str, Any]:
         raise ValueError("Model must contain 'label' and 'targets' fields")
 
     return data
-
-
-def calculate_combined_positions(accounts: List[Account]) -> Tuple[Dict[str, float], float]:
-    """
-    Calculate combined positions across all accounts and total cash.
-
-    Args:
-        accounts: List of Account objects
-
-    Returns:
-        Tuple of (combined positions dictionary, total cash)
-    """
-    combined_positions = {}
-    total_cash = sum(acc.cash for acc in accounts)
-
-    for acc in accounts:
-        for sym, qty in acc.positions.items():
-            combined_positions[sym] = combined_positions.get(sym, 0) + qty
-
-    return combined_positions, total_cash
 
 
 def calculate_target_shares(
@@ -236,7 +217,7 @@ def main():
         logger.info(f"{acc.account_number}: positions={acc.positions}, cash={acc.cash}")
 
     # Calculate target portfolio
-    combined_positions, total_cash = calculate_combined_positions(accounts)
+    combined_positions, total_cash = calculate_portfolio_positions(accounts)
     target_shares = calculate_target_shares(combined_positions, total_cash, prices, model)
     portfolio_level_trades = compute_portfolio_trades(combined_positions, target_shares, prices)
 

@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from realloc.accounts import Account
 from realloc.models import PortfolioModel
-from realloc.matrix import PortfolioStateManager
+from realloc.portfolio import PortfolioStateManager
 from realloc.trades import compute_portfolio_trades
 
 

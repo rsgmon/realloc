@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 
+from realloc import Account
 from realloc.accounts import Account
 from realloc.plugins.core.base import TradeInfo
 from realloc.plugins.core.engine import PluginEngine, ValidationEngine
@@ -185,3 +186,52 @@ class PortfolioStateManager:
         instance.model_only = data.get("model_only", {})
         return instance
 
+
+def calculate_portfolio_positions(accounts: List[Account]) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate combined positions across all accounts and total cash.
+
+    Args:
+        accounts: List of Account objects
+
+    Returns:
+        Tuple of (combined positions dictionary, total cash)
+    """
+    combined_positions = {}
+    total_cash = sum(acc.cash for acc in accounts)
+
+    for acc in accounts:
+        for sym, qty in acc.positions.items():
+            combined_positions[sym] = combined_positions.get(sym, 0) + qty
+
+    return combined_positions, total_cash
+
+
+def calculate_portfolio_positions_from_dicts(accounts_data: List[Dict[str, Any]]) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate combined positions across all accounts and total cash from dictionary data.
+
+    Args:
+        accounts_data: List of dictionaries, each containing 'cash' and 'positions' keys
+                      where 'positions' is a dictionary of symbol-quantity pairs
+
+    Returns:
+        Tuple of (combined positions dictionary, total cash)
+
+    Example:
+        >>> accounts = [
+        ...     {"cash": 1000.0, "positions": {"AAPL": 10, "MSFT": 5}},
+        ...     {"cash": 500.0, "positions": {"AAPL": 5, "GOOG": 3}}
+        ... ]
+        >>> positions, cash = calculate_portfolio_positions_from_dicts(accounts)
+        >>> print(positions)  # {"AAPL": 15, "MSFT": 5, "GOOG": 3}
+        >>> print(cash)  # 1500.0
+    """
+    combined_positions = {}
+    total_cash = sum(acc.get("cash", 0.0) for acc in accounts_data)
+
+    for acc in accounts_data:
+        for sym, qty in acc.get("positions", {}).items():
+            combined_positions[sym] = combined_positions.get(sym, 0) + qty
+
+    return combined_positions, total_cash
