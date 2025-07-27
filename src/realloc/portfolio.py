@@ -2,6 +2,7 @@ from typing import List, Optional, Dict, Any, Tuple
 
 from realloc.accounts import Account
 from realloc.plugins.core.engine import PluginEngine, ValidationEngine
+from realloc.models import PortfolioModel
 from .trades import compute_portfolio_trades, TradeInfo, Trade
 
 
@@ -219,3 +220,69 @@ def calculate_portfolio_positions_from_dicts(accounts_data: List[Dict[str, Any]]
             combined_positions[sym] = combined_positions.get(sym, 0) + qty
 
     return combined_positions, total_cash
+
+
+def calculate_target_shares(
+        combined_positions: Dict[str, float],
+        total_cash: float,
+        prices: Dict[str, float],
+        model: PortfolioModel
+) -> Dict[str, float]:
+    """
+    Calculate target shares for each symbol based on the model and total portfolio value.
+
+    Args:
+        combined_positions: Dictionary of current positions
+        total_cash: Total cash across all accounts
+        prices: Dictionary of current prices
+        model: Portfolio model with target weights
+
+    Returns:
+        Dictionary mapping symbols to target shares
+    """
+    total_value = total_cash + sum(
+        qty * prices[sym] for sym, qty in combined_positions.items()
+    )
+    normalized_model = model.normalize()
+    target_dollars = {
+        sym: weight * total_value for sym, weight in normalized_model.items()
+    }
+    return {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
+
+
+def calculate_target_shares_from_accounts(
+        accounts: List[Account],
+        prices: Dict[str, float],
+        model: PortfolioModel
+) -> Dict[str, float]:
+    """
+    Calculate target shares for each symbol based on the model and accounts.
+
+    Args:
+        accounts: List of Account objects
+        prices: Dictionary of current prices
+        model: Portfolio model with target weights
+
+    Returns:
+        Dictionary mapping symbols to target shares
+    """
+    # Calculate combined positions and total cash
+    combined_positions = {}
+    total_cash = 0
+
+    for account in accounts:
+        total_cash += account.cash
+        for sym, qty in account.positions.items():
+            combined_positions[sym] = combined_positions.get(sym, 0) + qty
+
+    # Calculate total portfolio value
+    total_value = total_cash + sum(
+        qty * prices[sym] for sym, qty in combined_positions.items()
+    )
+
+    # Calculate target shares using normalized model weights
+    normalized_model = model.normalize()
+    target_dollars = {
+        sym: weight * total_value for sym, weight in normalized_model.items()
+    }
+    return {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
