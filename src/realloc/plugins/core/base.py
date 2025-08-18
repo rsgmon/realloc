@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import importlib.metadata
-from typing import TypeVar, Type, Any, List, TYPE_CHECKING
+from typing import TypeVar, Type, Any, List, TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from ...trades import Trade
@@ -81,4 +81,33 @@ class Exporter(Plugin):
     @classmethod
     def load_exporter(cls, name: str, **kwargs: Any) -> 'Exporter':
         """Convenience method for loading exporter plugins"""
+        return cls.load_plugin(name, **kwargs)
+
+
+class RebalancerPlugin(Plugin):
+    """Base class for rebalancing plugins"""
+
+    @abstractmethod
+    def execute_rebalance(
+            self,
+            tam: "PortfolioStateManager",
+            target_shares: Dict[str, float],
+            max_iterations: int
+    ) -> List["Trade"]:
+        """
+        Execute the rebalancing trades across accounts.
+
+        Args:
+            tam: Trade Account Matrix instance
+            target_shares: Dictionary of target shares per symbol
+            max_iterations: Maximum number of iterations to attempt
+
+        Returns:
+            List of executed trades
+        """
+        pass
+
+    @classmethod
+    def load_rebalancer(cls, name: str, **kwargs: Any) -> 'RebalancerPlugin':
+        """Convenience method for loading rebalancer plugins"""
         return cls.load_plugin(name, **kwargs)

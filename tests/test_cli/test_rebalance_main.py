@@ -98,15 +98,20 @@ def mock_dependencies():
 
 
 def test_main_basic_execution(input_file, mock_dependencies, caplog):
-    """
-    Test the basic execution flow of the main function.
-
-    Args:
-        input_file: Pytest fixture providing path to test input file
-        mock_dependencies: Pytest fixture providing mocked dependencies
-        caplog: Pytest fixture for capturing log output
-    """
+    """Test the basic execution flow of the main function."""
     caplog.set_level(logging.INFO)
+
+    # Configure mock to return a valid account ID
+    mock_dependencies['buy'].return_value = "A1"
+    mock_dependencies['sell'].return_value = "A2"
+
+    # Configure matrix mock with some trades
+    mock_dependencies['matrix'].return_value.portfolio_trades = {"AAPL": 10.0}
+    mock_dependencies['matrix'].return_value.cash_matrix = {"A1": 1000, "A2": 2000}
+    mock_dependencies['matrix'].return_value.accounts = {
+        "A1": Mock(account_number="A1", positions={"AAPL": 5}),
+        "A2": Mock(account_number="A2", positions={"GOOG": 3})
+    }
 
     with patch('sys.argv', ['rebalance_main.py', str(input_file)]):
         main()
@@ -118,8 +123,7 @@ def test_main_basic_execution(input_file, mock_dependencies, caplog):
     assert "=== Current Portfolio (shares) ===" in log_output
 
 
-
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 import json
 
 def test_main_max_iterations(input_file, mock_dependencies, caplog):

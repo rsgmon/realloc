@@ -31,7 +31,6 @@ dev = [
 ]
 
 [project.scripts]
-portfolio-cli = "realloc.cli.rebalance_main:main"
 rebalance-cli = "realloc.cli.rebalance_main:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
 list-plugins = "realloc.plugins.core.discovery:list_plugins"
@@ -44,9 +43,6 @@ csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
 max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
 minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
 
-[project.entry-points."realloc.exporters"]
-csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+# Rebalancer plugins
+default = "realloc.plugins.rebalancers.default_rebalancer:DefaultRebalancer"
 
-[project.entry-points."realloc.validators"]
-max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
-minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
