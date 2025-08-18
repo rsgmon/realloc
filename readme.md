@@ -75,7 +75,7 @@ Example:
 {
   "prices": { "AAPL": 100, "GOOG": 100 },
   "accounts": [
-    { "label": "A", "account_number": "1", "cash": 1000, "positions": { "AAPL": 5 }, "targets": {} }
+    { "label": "A", "account_number": "1", "cash": 1000, "positions": { "AAPL": 5 } }
   ],
   "model": {
     "label": "Balanced",
