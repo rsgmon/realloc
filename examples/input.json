@@ -14,7 +14,6 @@
         "AAPL": 10,
         "IBM": 5000
       },
-      "targets": {},
       "enforce_no_negative_positions": false
     },
     {
@@ -25,7 +24,6 @@
         "GOOG": 4,
         "MSFT": 5
       },
-      "targets": {},
       "enforce_no_negative_positions": false
     },
     {
@@ -35,12 +33,11 @@
       "positions": {
         "AAPL": 50
       },
-      "targets": {},
       "enforce_no_negative_positions": false
     }
   ],
   "model": {
-    "name": "Balanced",
+    "label": "Balanced",
     "targets": {
       "AAPL": 0.5,
       "GOOG": 0.4,

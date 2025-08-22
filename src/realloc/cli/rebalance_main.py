@@ -17,7 +17,7 @@ from realloc import (
 )
 from realloc.plugins.core.discovery import list_plugins
 from realloc.plugins.core.base import Exporter
-from realloc.portfolio import calculate_portfolio_positions
+from realloc.portfolio import calculate_portfolio_positions, calculate_target_shares
 
 # Constants
 MIN_TRADE_QTY = 0.1
@@ -63,34 +63,6 @@ def load_and_validate_input(input_file: Path) -> Dict[str, Any]:
         raise ValueError("Model must contain 'label' and 'targets' fields")
 
     return data
-
-
-def calculate_target_shares(
-        combined_positions: Dict[str, float],
-        total_cash: float,
-        prices: Dict[str, float],
-        model: PortfolioModel
-) -> Dict[str, float]:
-    """
-    Calculate target shares for each symbol based on the model and total portfolio value.
-
-    Args:
-        combined_positions: Dictionary of current positions
-        total_cash: Total cash across all accounts
-        prices: Dictionary of current prices
-        model: Portfolio model with target weights
-
-    Returns:
-        Dictionary mapping symbols to target shares
-    """
-    total_value = total_cash + sum(
-        qty * prices[sym] for sym, qty in combined_positions.items()
-    )
-    normalized_model = model.normalize()
-    target_dollars = {
-        sym: weight * total_value for sym, weight in normalized_model.items()
-    }
-    return {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
 
 
 def execute_rebalance(
