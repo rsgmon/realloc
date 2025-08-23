@@ -60,9 +60,7 @@ So back to basic rebalancing. Essentially, it's iterative (trial and error). We 
 
 The next step is to calculate portfolio level trades. For that we've provided three functions:
 
-`calculate_portfolio_positions`
-`calculate_target_shares`
-`compute_portfolio_trades`
+`calculate_portfolio_positions`,`calculate_target_shares`, `compute_portfolio_trades`
 
 Call these in this order to get a list of portfolio level trades. Yeah, we could have a wrapper, maybe we'll make one, maybe not.
 
@@ -70,13 +68,24 @@ Call these in this order to get a list of portfolio level trades. Yeah, we could
 
 Instantiate a new `PortfolioStateManager`.
 
-Now you're ready to try to rebalance. For this quick start we have a basic but tested built in rebalancer. It's in pluggable but you can import directly.
+Now you're ready to try to rebalance. For this quick start we have a basic but tested built-in rebalancer. It's in pluggable but you can import directly.
 
-`from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer`
-`rebalancer = DefaultRebalancer(...)`
-`rebalancer.execute_rebalance`
+```
+from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer
 
-BOOM! Trades.
+rebalancer = DefaultRebalancer(...)
+rebalancer.execute_rebalance
+```
+
+BOOM! Trades. They're not tax-aware, and no constraints like "Don't buy stock DVL" are in place. But that's actually more common than you'd think. So if you're not concerned about taxes or constraints, you'll probably be ok.
+
+But how do I get the trades into a format, so I don't have to hand input. Ah, we have a plugin for exporting. Ours is basic, but you can build a broker-specific one.
+
+```
+from realloc.plugins.exporters import csv_exporters
+```
+
+But wait, there's more! 
 
 ### `rebalance-cli` 
 This is a ready-made script that demonstrates a full re-balance (not just a slice re-balance) of realloc. 
@@ -104,8 +113,7 @@ Example:
 ```
 
 # Several Plugin Types are available
-### 1. Rebalancer Plugins
-Customize how trades are allocated across accounts:
+### 1. Rebalancer PluginsCustomize how trades are allocated across accounts:
 ```
 from realloc import PortfolioModel, Account, PortfolioStateManager from realloc.plugins.core.base import RebalancerPlugin
 ```
