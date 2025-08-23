@@ -10,28 +10,6 @@ from realloc import (
 
 
 # --------------------------------------------------------
-# 🔥 Fuzz Allocator: No Overspending
-# --------------------------------------------------------
-
-
-@given(
-    cash=st.floats(min_value=100, max_value=50000),
-    shares=st.integers(min_value=0, max_value=100),
-    price=st.floats(min_value=1, max_value=1000),
-)
-def test_allocator_never_overspends(cash, shares, price):
-    acc = Account("Test", "001", cash, {"AAPL": shares}, {})
-    model = PortfolioModel(name="TestModel", targets={"AAPL": 1.0})
-    prices = {"AAPL": price}
-
-    allocator = PortfolioAllocator([acc], model, prices)
-    trades = allocator.rebalance()
-
-    spent_cash = sum(max(0, qty) * price for sym, qty in trades.items())
-    assert spent_cash <= cash + 1e-2  # allow tiny float error
-
-
-# --------------------------------------------------------
 # 🔥 Fuzz TAM: No Negative Positions
 # --------------------------------------------------------
 

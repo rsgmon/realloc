@@ -20,10 +20,9 @@ It handles account-aware trade allocation, portfolio-level targets, and executio
 
 - Allocate trades across multiple accounts
 - Enforce constraints (e.g. no negative positions, long-only models)
-- Simulate rebalancing with real-time cash and price updates
-- Split trades into buys and sells
 - Fully tested with `pytest`
 - Clean, modular, extensible API
+- Includes plugin architecture allowing for custom exporters, validators, and rebalancers.
 
 ---
 
@@ -53,11 +52,31 @@ model = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.5})
 ### Define prices
 prices = {"AAPL": 100, "GOOG": 200}
 
-### Allocate trades
-allocator = PortfolioAllocator(accounts, model, prices)
-trades = allocator.rebalance()
+Ok now what? You've got everything you need to do a basic trade, but how? This is where we try to allow the user to take control. Don't get us wrong! We've built ready-made objects to do the work and they do. 
 
-print(trades)
+However, if you professionally rebalanced portfolios, you'll know there's an art to it and there's not always one answer. We're just saying we recognize that. But, that topic is for another day.
+
+So back to basic rebalancing. Essentially, it's iterative (trial and error). We loop through accounts and positions checking cash, checking targets vs. actual until we arrive at a set of trades.
+
+The next step is to calculate portfolio level trades. For that we've provided three functions:
+
+`calculate_portfolio_positions`
+`calculate_target_shares`
+`compute_portfolio_trades`
+
+Call these in this order to get a list of portfolio level trades. Yeah, we could have a wrapper, maybe we'll make one, maybe not.
+
+`PortfolioStateManager`, while not required will help you manage the state of everything while calculating trades. You can roll your own but why?
+
+Instantiate a new `PortfolioStateManager`.
+
+Now you're ready to try to rebalance. For this quick start we have a basic but tested built in rebalancer. It's in pluggable but you can import directly.
+
+`from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer`
+`rebalancer = DefaultRebalancer(...)`
+`rebalancer.execute_rebalance`
+
+BOOM! Trades.
 
 ### `rebalance-cli` 
 This is a ready-made script that demonstrates a full re-balance (not just a slice re-balance) of realloc. 
@@ -67,8 +86,8 @@ Input Format
 To use `rebalance-cli`, you must provide a JSON file with:
 
 - `prices`: { symbol → float }
-- `accounts`: list of account dictionaries
-- `model`: portfolio model with `name` and `targets`
+- `accounts`: list of "account" dictionaries
+- `model`: `Portfolio` model with `name` and `targets`
 
 Example:
 ```json

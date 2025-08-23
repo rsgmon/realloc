@@ -10,14 +10,12 @@ from realloc import (
     PortfolioModel,
     Trade,
     PortfolioStateManager,
-    compute_portfolio_trades,
-    select_account_for_buy_trade,
-    select_account_for_sell_trade,
     is_trade_remaining,
 )
 from realloc.plugins.core.discovery import list_plugins
 from realloc.plugins.core.base import Exporter
-from realloc.portfolio import calculate_portfolio_positions, calculate_target_shares
+from realloc.portfolio import calculate_portfolio_positions, calculate_target_shares, compute_portfolio_trades
+from realloc.selectors import select_account_for_buy_trade, select_account_for_sell_trade
 
 # Constants
 MIN_TRADE_QTY = 0.1
