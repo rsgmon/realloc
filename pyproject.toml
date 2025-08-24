@@ -39,6 +39,15 @@ list-plugins = "realloc.plugins.core.discovery:list_plugins"
 # Exporter plugins
 csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
 
+# Account Importer Plugins
+csv_account = "realloc.plugins.importers.account.acount_csv:CSVAccountImporter"
+
+#Prices Importer Plugins
+price_csv = "realloc.plugins.importers.prices.prices_csv:PriceCSVImporter"
+
+#Allocation Importer Plugins
+allocation_csv = "realloc.plugins.importers.allocation.allocation_csv_importer:AllocationCSVImporter"
+
 # Validator plugins
 max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
 minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
