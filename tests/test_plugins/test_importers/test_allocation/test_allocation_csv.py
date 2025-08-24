@@ -1,18 +1,13 @@
-# tests/test_plugins/test_importers/test_allocation/test_allocation_csv.py
-
 import pytest
 from pathlib import Path
 from realloc.plugins.importers.allocation.allocation_csv import AllocationCSVImporter
 from realloc.plugins.core.base import AllocationImporter
+from realloc.models import PortfolioModel
 
 
 @pytest.fixture
 def importer():
     return AllocationCSVImporter()
-
-
-def test_inheritance(importer):
-    assert isinstance(importer, AllocationImporter)
 
 
 @pytest.fixture
@@ -26,6 +21,10 @@ MSFT,0.3'''
     return csv_file
 
 
+def test_inheritance(importer):
+    assert isinstance(importer, AllocationImporter)
+
+
 def test_name(importer):
     assert importer.name == "allocation_csv"
 
@@ -34,14 +33,34 @@ def test_supported_extensions(importer):
     assert importer.supported_extensions == ['.csv']
 
 
-def test_import_allocations(importer, sample_csv):
-    allocations = importer.import_allocations(sample_csv)
+def test_import_portfolio_model(importer, sample_csv):
+    result = importer.import_allocations(sample_csv)
 
-    assert len(allocations) == 3
-    assert allocations['AAPL'] == 0.4
-    assert allocations['GOOG'] == 0.3
-    assert allocations['MSFT'] == 0.3
-    assert sum(allocations.values()) == 1.0
+    assert isinstance(result, PortfolioModel)
+    assert result.name == "CSV Import"
+    assert result.targets == {
+        "AAPL": 0.4,
+        "GOOG": 0.3,
+        "MSFT": 0.3
+    }
+
+
+def test_import_dict(importer, sample_csv):
+    result = importer.import_allocations(sample_csv, return_dict=True)
+
+    assert isinstance(result, dict)
+    assert result == {
+        "AAPL": 0.4,
+        "GOOG": 0.3,
+        "MSFT": 0.3
+    }
+
+
+def test_custom_model_name(importer, sample_csv):
+    result = importer.import_allocations(sample_csv, model_name="Test Model")
+
+    assert isinstance(result, PortfolioModel)
+    assert result.name == "Test Model"
 
 
 def test_invalid_weight(importer, tmp_path):

@@ -31,7 +31,8 @@ dev = [
 ]
 
 [project.scripts]
-rebalance-cli = "realloc.cli.rebalance_main:main"
+rebalance-cli-json = "realloc.cli.rebalance_json_input:main"
+rebalance-cli-csv = "realloc.cli.rebalance_csv_input:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
 list-plugins = "realloc.plugins.core.discovery:list_plugins"
 

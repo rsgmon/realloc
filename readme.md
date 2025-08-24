@@ -41,6 +41,9 @@ pip install -e .[dev]
 from realloc import Account, PortfolioModel, PortfolioAllocator
 
 ### Define accounts
+
+Accounts must always have a label, account number, Cash balance, and positions
+
 accounts = [
     Account("IRA", "A1", 1000, {"AAPL": 5}, {}),
     Account("Taxable", "A2", 2000, {"GOOG": 3}, {})

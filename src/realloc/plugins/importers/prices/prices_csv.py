@@ -6,7 +6,7 @@ from typing import Dict, List
 from realloc.plugins.core.base import PriceImporter
 
 
-class PriceCSVImporter(PriceImporter):
+class PricesCSVImporter(PriceImporter):
     """CSV implementation of price importer plugin"""
 
     @property

@@ -1,13 +1,13 @@
 import pytest
 from datetime import datetime
 from pathlib import Path
-from realloc.plugins.importers.prices.prices_csv import PriceCSVImporter
+from realloc.plugins.importers.prices.prices_csv import PricesCSVImporter
 from realloc.plugins.core.base import PriceImporter
 
 
 @pytest.fixture
 def importer():
-    return PriceCSVImporter()
+    return PricesCSVImporter()
 
 
 def test_inheritance(importer):
