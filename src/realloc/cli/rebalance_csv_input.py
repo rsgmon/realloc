@@ -1,6 +1,9 @@
-from pathlib import Path
-from datetime import datetime
+#!/usr/bin/env python3
+
+import argparse
 import logging
+from pathlib import Path
+from typing import List, Optional
 
 from realloc.plugins.importers.account.account_csv import CSVAccountImporter
 from realloc.plugins.importers.allocation.allocation_csv import AllocationCSVImporter
@@ -12,33 +15,60 @@ from realloc.portfolio import (
     calculate_target_shares,
     compute_portfolio_trades
 )
+from realloc.trades import Trade
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def main():
+def process_rebalance(
+    accounts_path: Path,
+    allocations_path: Path,
+    prices_path: Path,
+    max_iterations: int = 100
+) -> List[Trade]:
+    """
+    Process rebalancing using CSV input files.
+
+    Args:
+        accounts_path: Path to accounts CSV file
+        allocations_path: Path to allocations CSV file
+        prices_path: Path to prices CSV file
+        max_iterations: Maximum number of rebalancing iterations
+
+    Returns:
+        List of trades to execute
+
+    Raises:
+        FileNotFoundError: If any input file is missing
+        ValueError: If input data is invalid
+    """
+    # Validate input files exist
+    for path in [accounts_path, allocations_path, prices_path]:
+        if not path.exists():
+            raise FileNotFoundError(f"Input file not found: {path}")
+
     # Initialize importers
     account_importer = CSVAccountImporter()
     allocation_importer = AllocationCSVImporter()
     price_importer = PricesCSVImporter()
     rebalancer = DefaultRebalancer()
 
-    # Import data from CSV files
-    accounts = account_importer.account_importer(Path("../../sample_positions.csv"))
+    # Import data
+    accounts = account_importer.account_importer(accounts_path)
     model = allocation_importer.import_allocations(
-        Path("../../sample_allocations.csv"),
-        model_name="Portfolio Model"
+        allocations_path,
+        model_name="CSV Portfolio Model"
     )
-    prices = price_importer.import_prices(Path("../../sample_prices.csv"))
+    prices = price_importer.import_prices(prices_path)
 
     # Calculate portfolio-level information
     combined_positions, total_cash = calculate_portfolio_positions(accounts)
     target_shares = calculate_target_shares(
+        model=model,
         combined_positions=combined_positions,
         total_cash=total_cash,
-        prices=prices,
-        model=model
+        prices=prices
     )
 
     # Calculate portfolio-level trades
@@ -48,81 +78,112 @@ def main():
         prices=prices
     )
 
-    # Initialize portfolio state manager with the portfolio-level trades
+    # Initialize portfolio state manager and execute rebalance
     psm = PortfolioStateManager(
         accounts=accounts,
         prices=prices,
         portfolio_trades=portfolio_trades
     )
 
-    # Execute rebalancing
-    trades = rebalancer.execute_rebalance(
+    return rebalancer.execute_rebalance(
         tam=psm,
         target_shares=target_shares,
-        max_iterations=100
+        max_iterations=max_iterations
     )
 
-    # Print results
-    print("\n=== Initial State ===")
-    total_value = total_cash + sum(
-        shares * prices[symbol]
-        for symbol, shares in combined_positions.items()
+
+def main(args: Optional[List[str]] = None) -> int:
+    """
+    Main entry point for the CSV rebalance CLI.
+
+    Args:
+        args: Command line arguments (optional)
+
+    Returns:
+        Exit code (0 for success, non-zero for error)
+    """
+    parser = argparse.ArgumentParser(
+        description="Rebalance portfolio using CSV input files"
     )
-    print(f"Total Portfolio Value: ${total_value:,.2f}")
-    print(f"Total Cash: ${total_cash:,.2f}")
+    parser.add_argument(
+        "--accounts",
+        type=Path,
+        required=True,
+        help="Path to accounts CSV file"
+    )
+    parser.add_argument(
+        "--allocations",
+        type=Path,
+        required=True,
+        help="Path to allocations CSV file"
+    )
+    parser.add_argument(
+        "--prices",
+        type=Path,
+        required=True,
+        help="Path to prices CSV file"
+    )
+    parser.add_argument(
+        "--export",
+        type=Path,
+        help="Optional path to export trades CSV"
+    )
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=100,
+        help="Maximum number of rebalancing iterations"
+    )
 
-    print("\nCurrent Positions:")
-    for symbol, shares in combined_positions.items():
-        current_value = shares * prices[symbol]
-        current_weight = current_value / total_value
-        print(f"{symbol}: {shares:.2f} shares (${current_value:,.2f}, {current_weight:.1%})")
+    try:
+        parsed_args = parser.parse_args(args)
+    except SystemExit as e:
+        return e.code
 
-    print("\n=== Target Allocations ===")
-    normalized_weights = model.normalize()
-    for symbol, weight in normalized_weights.items():
-        target_value = weight * total_value
-        print(f"{symbol}: {weight:.1%} (${target_value:,.2f})")
+    try:
+        trades = process_rebalance(
+            parsed_args.accounts,
+            parsed_args.allocations,
+            parsed_args.prices,
+            parsed_args.max_iterations
+        )
 
-    print("\n=== Portfolio Level Trades Required ===")
-    for symbol, quantity in portfolio_trades.items():
-        value = abs(quantity * prices[symbol])
-        print(f"{symbol}: {quantity:+.2f} shares (${value:,.2f})")
+        # Print results
+        print("\nTrades to Execute:")
+        if not trades:
+            print("No trades required.")
+            return 0
 
-    print("\n=== Account Level Trades to Execute ===")
-    trades_by_account = {}
-    for trade in trades:
-        if trade.account_id not in trades_by_account:
-            trades_by_account[trade.account_id] = []
-        trades_by_account[trade.account_id].append(trade)
+        trades_by_account = {}
+        for trade in trades:
+            if trade.account_id not in trades_by_account:
+                trades_by_account[trade.account_id] = []
+            trades_by_account[trade.account_id].append(trade)
 
-    for account_id, account_trades in trades_by_account.items():
-        account = next(acc for acc in accounts if acc.account_number == account_id)
-        print(f"\nAccount: {account.label} ({account_id})")
-        total_buys = 0
-        total_sells = 0
-        for trade in account_trades:
-            action = "BUY" if trade.shares > 0 else "SELL"
-            value = abs(trade.shares * prices[trade.symbol])
-            if trade.shares > 0:
-                total_buys += value
-            else:
-                total_sells += value
-            print(f"  {action} {abs(trade.shares):.2f} {trade.symbol} (${value:,.2f})")
-        print(f"  Total Buys: ${total_buys:,.2f}")
-        print(f"  Total Sells: ${total_sells:,.2f}")
+        for account_id, account_trades in trades_by_account.items():
+            print(f"\nAccount: {account_id}")
+            for trade in account_trades:
+                action = "BUY" if trade.shares > 0 else "SELL"
+                print(f"  {action} {abs(trade.shares):.2f} {trade.symbol}")
 
-    print("\n=== Final State ===")
-    for account in accounts:
-        print(f"\nAccount: {account.label} ({account.account_number})")
-        print(f"Cash: ${psm.cash_matrix[account.account_number]:,.2f}")
-        print("Positions:")
-        account_value = psm.cash_matrix[account.account_number]
-        for symbol, shares in account.positions.items():
-            value = shares * prices[symbol]
-            account_value += value
-            print(f"  {symbol}: {shares:.2f} shares (${value:,.2f})")
-        print(f"Total Account Value: ${account_value:,.2f}")
+        # Export trades if requested
+        if parsed_args.export:
+            from realloc.plugins.exporters.csv_exporter import CSVExporter
+            exporter = CSVExporter(str(parsed_args.export))
+            exporter.export(trades)
+            print(f"\nTrades exported to: {parsed_args.export}")
 
+        return 0
+
+    except FileNotFoundError as e:
+        logger.error(f"File not found: {e}")
+        return 1
+    except ValueError as e:
+        logger.error(f"Invalid input: {e}")
+        return 1
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        return 1
 
 if __name__ == "__main__":
-    main()
+    exit(main())
