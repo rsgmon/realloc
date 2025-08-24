@@ -163,6 +163,8 @@ def main(args: Optional[List[str]] = None) -> int:
         for account_id, account_trades in trades_by_account.items():
             print(f"\nAccount: {account_id}")
             for trade in account_trades:
+                if trade.symbol == "CASH":
+                    continue
                 action = "BUY" if trade.shares > 0 else "SELL"
                 print(f"  {action} {abs(trade.shares):.2f} {trade.symbol}")
 
