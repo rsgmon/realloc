@@ -4,7 +4,7 @@ from importlib.metadata import entry_points
 
 
 def get_plugin_list() -> Dict[str, List[str]]:
-    plugins = {"exporters": [], "validators": []}
+    plugins = {"exporters": [], "validators": [], "rebalancers": []}
 
     discovered_plugins = entry_points().get('realloc.plugins', [])
     print("DEBUG - All discovered plugins:")
@@ -17,6 +17,8 @@ def get_plugin_list() -> Dict[str, List[str]]:
             plugins["exporters"].append(plugin.name)
         elif class_name.endswith('Validator'):
             plugins["validators"].append(plugin.name)
+        elif class_name.endswith('Rebalancer'):
+            plugins["rebalancers"].append(plugin.name)
 
     return plugins
 
@@ -44,4 +46,9 @@ def list_plugins() -> None:
     if plugins["validators"]:
         print("\nValidators:")
         for plugin in plugins["validators"]:
+            print(f"  - {plugin}")
+
+    if plugins["rebalancers"]:
+        print("\nRebalancers:")
+        for plugin in plugins["rebalancers"]:
             print(f"  - {plugin}")

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "realloc"
-version = "0.1.3"
+version = "0.1.4"
 description = "A modular Python library for multi-account portfolio trade allocation"
 authors = [
     { name = "Ryeland Gongora", email = "rsgmon@gmail.com" }
@@ -19,8 +19,7 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["realloc*"]
-exclude = ["tests*", "docs*", "examples*"]  # exclude what you definitely don't want
-
+exclude = ["tests*", "docs*", "examples*"]
 
 [project.optional-dependencies]
 dev = [
@@ -32,14 +31,18 @@ dev = [
 ]
 
 [project.scripts]
-portfolio-cli = "realloc.cli.rebalance_main:main"
 rebalance-cli = "realloc.cli.rebalance_main:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
 list-plugins = "realloc.plugins.core.discovery:list_plugins"
 
-
 [project.entry-points."realloc.plugins"]
+# Exporter plugins
 csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+
+# Validator plugins
 max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
 minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
+
+# Rebalancer plugins
+default = "realloc.plugins.rebalancers.default_rebalancer:DefaultRebalancer"
 

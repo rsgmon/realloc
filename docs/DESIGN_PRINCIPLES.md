@@ -22,7 +22,7 @@ Following these principles ensures the system remains modular, extensible, and r
 
 - realloc functions (like `allocate_trades`, `split_trades`) are **pure functions** wherever possible.
 - No hidden mutation or implicit side-effects.
-- Classes like `TradeAccountMatrix` explicitly manage portfolio/account state transitions.
+- Classes like `PortfolioStateManager` explicitly manage portfolio/account state transitions.
 
 ✅ Predictable behavior  
 ✅ Safer concurrency in future versions  
@@ -62,7 +62,7 @@ Following these principles ensures the system remains modular, extensible, and r
 
 ## 🛠 6. Transparent State Transitions
 
-- No hidden changes: rebalancing **explicitly updates** the `TradeAccountMatrix`.
+- No hidden changes: rebalancing **explicitly updates** the `PortfolioStateManager`.
 - Users can inspect:
   - Planned portfolio trades
   - Updated cash positions

@@ -5,8 +5,8 @@ from realloc import (
     Account,
     PortfolioModel,
     Trade,
-    TradeAccountMatrix,
-    allocate_trades,
+    PortfolioStateManager,
+    compute_portfolio_trades,
     select_account_for_buy_trade,
     select_account_for_sell_trade,
 )
@@ -36,7 +36,7 @@ def main():
     accounts = [Account(**acc) for acc in data["accounts"]]
     model = PortfolioModel(**data["model"])
 
-    tam = TradeAccountMatrix(accounts, prices)
+    tam = PortfolioStateManager(accounts, prices)
 
     # Step 1: Compute current portfolio holdings
     combined_positions = {}
@@ -52,7 +52,7 @@ def main():
     normalized = model.normalize()
     target_dollars = {sym: weight * total_value for sym, weight in normalized.items()}
     target_shares = {sym: target_dollars[sym] / prices[sym] for sym in target_dollars}
-    all_trades = allocate_trades(combined_positions, target_shares, prices)
+    all_trades = compute_portfolio_trades(combined_positions, target_shares, prices)
 
     # Step 3: Extract only the two symbols
     buy_symbol = args.buy_symbol

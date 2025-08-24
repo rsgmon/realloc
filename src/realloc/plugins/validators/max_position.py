@@ -1,4 +1,5 @@
-from realloc.plugins.core.base import TradeValidator, TradeInfo
+from realloc.plugins.core.base import TradeValidator
+from realloc.trades import TradeInfo
 
 
 class MaxPositionValidator(TradeValidator):

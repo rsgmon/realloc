@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict, TYPE_CHECKING
+from dataclasses import dataclass, asdict
+from typing import List, Optional, Dict, TYPE_CHECKING, Any
 import math
 
 
@@ -8,7 +9,36 @@ if TYPE_CHECKING:
     from .accounts import Account
 
 
-def allocate_trades(
+
+@dataclass
+class Trade:
+    account_id: str
+    symbol: str
+    shares: float
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the dataclass to a dictionary"""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'TradeInfo':
+        """Deserialize from a dictionary to create a new instance"""
+        return cls(**data)
+
+
+@dataclass
+class TradeInfo:
+    """Information about a trade for validation purposes"""
+    symbol: str
+    quantity: float
+    price: float
+    minimum_value: Optional[float] = None
+    current_position: Optional[float] = None
+    account_balance: Optional[float] = None
+
+
+
+def compute_portfolio_trades(
     current_shares: Dict[str, float],
     target_shares: Dict[str, float],
     prices: Optional[Dict[str, float]] = None,
@@ -25,7 +55,7 @@ def split_trades(
     target_shares: Dict[str, float],
     prices: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Dict[str, int]]:
-    net_trades = allocate_trades(current_shares, target_shares, prices)
+    net_trades = compute_portfolio_trades(current_shares, target_shares, prices)
     buys = {s: v for s, v in net_trades.items() if v > 0}
     sells = {s: abs(v) for s, v in net_trades.items() if v < 0}
     return {"buy": buys, "sell": sells}
@@ -62,7 +92,7 @@ class ScaledPortfolio:
             normalized_current, normalized_target = normalize_symbol_sets(
                 current, share_targets
             )
-            trade_shares = allocate_trades(
+            trade_shares = compute_portfolio_trades(
                 normalized_current, normalized_target, prices
             )
 
