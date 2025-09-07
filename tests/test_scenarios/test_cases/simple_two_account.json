@@ -1,0 +1,43 @@
+{
+    "name": "simple_two_account_json",
+    "description": "Basic two account rebalancing from JSON",
+    "accounts": [
+        {
+            "label": "IRA",
+            "account_number": "A1",
+            "cash": 1000,
+            "positions": {"AAPL": 5}
+        },
+        {
+            "label": "Taxable",
+            "account_number": "A2",
+            "cash": 2000,
+            "positions": {"GOOG": 3}
+        }
+    ],
+    "model": {
+        "label": "50-50",
+        "targets": {"AAPL": 0.5, "GOOG": 0.5}
+    },
+    "prices": {
+        "AAPL": 100,
+        "GOOG": 200
+    },
+    "expected_trades": [
+        {
+            "account_id": "A2",
+            "symbol": "AAPL",
+            "shares": 5
+        },
+        {
+            "account_id": "A2",
+            "symbol": "GOOG",
+            "shares": 7
+        },
+        {
+            "account_id": "A1",
+            "symbol": "AAPL",
+            "shares": 10
+        }
+    ]
+}

@@ -1,5 +1,7 @@
+import datetime
 from abc import ABC, abstractmethod
 import importlib.metadata
+from pathlib import Path
 from typing import TypeVar, Type, Any, List, TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
@@ -73,6 +75,47 @@ class TradeValidator(Plugin):
         """Convenience method for loading validator plugins"""
         return cls.load_plugin(name, **kwargs)
 
+
+class AccountImporter(Plugin):
+    @abstractmethod
+    def account_importer(self, path: Path) -> None:
+        pass
+
+    @classmethod
+    def load_account_importer(cls, name: str, **kwargs: Any) -> 'AccountImporter':
+        """Convenience method for loading exporter plugins"""
+        return cls.load_plugin(name, **kwargs)
+
+
+class AllocationImporter(Plugin):
+    """Base class for allocation importers"""
+
+    @property
+    @abstractmethod
+    def supported_extensions(self) -> List[str]:
+        """List of supported file extensions"""
+        pass
+
+    @abstractmethod
+    def import_allocations(self, path: Path) -> Dict[str, float]:
+        """
+        Import allocation data from a file
+
+        Args:
+            path: Path to the allocation file
+
+        Returns:
+            Dict mapping symbols to their target allocation weights
+        """
+        pass
+
+    @classmethod
+    def load_allocation_importer(cls, name: str, **kwargs: Any) -> 'AllocationImporter':
+        """Convenience method for loading allocation importer plugins"""
+        return cls.load_plugin(name, **kwargs)
+
+
+
 class Exporter(Plugin):
     @abstractmethod
     def export(self, trades: List['Trade']) -> None:
@@ -82,6 +125,8 @@ class Exporter(Plugin):
     def load_exporter(cls, name: str, **kwargs: Any) -> 'Exporter':
         """Convenience method for loading exporter plugins"""
         return cls.load_plugin(name, **kwargs)
+
+
 
 
 class RebalancerPlugin(Plugin):
@@ -110,4 +155,33 @@ class RebalancerPlugin(Plugin):
     @classmethod
     def load_rebalancer(cls, name: str, **kwargs: Any) -> 'RebalancerPlugin':
         """Convenience method for loading rebalancer plugins"""
+        return cls.load_plugin(name, **kwargs)
+
+
+class PriceImporter(Plugin):
+    """Base class for price importers"""
+
+    @property
+    @abstractmethod
+    def supported_extensions(self) -> List[str]:
+        """List of supported file extensions"""
+        pass
+
+    @abstractmethod
+    def import_prices(self, path: Path, date: datetime = None) -> Dict[str, float]:
+        """
+        Import price data from a file
+
+        Args:
+            path: Path to the price file
+            date: Optional date for historical prices. If None, uses most recent price.
+
+        Returns:
+            Dict mapping symbols to their prices
+        """
+        pass
+
+    @classmethod
+    def load_price_importer(cls, name: str, **kwargs: Any) -> 'PriceImporter':
+        """Convenience method for loading price importer plugins"""
         return cls.load_plugin(name, **kwargs)
