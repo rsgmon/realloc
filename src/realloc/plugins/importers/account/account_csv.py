@@ -29,7 +29,15 @@ class CSVAccountImporter(AccountImporter):
 
         with open(path, 'r', newline='', encoding='utf-8-sig') as csvfile:
             reader = csv.DictReader(csvfile)
-            # ... [field validation code remains the same]
+
+            # Clean up field names to handle BOM and whitespace
+            expected_fields = {'Account Label', 'Account Id', 'Symbol', 'Shares'}
+            actual_fields = {field.strip() for field in reader.fieldnames or []}
+
+            # Validate required columns
+            if not expected_fields.issubset(actual_fields):
+                missing = expected_fields - actual_fields
+                raise ValueError(f"Missing required columns: {missing}")
 
             for row in reader:
                 row = {k.strip(): v.strip() for k, v in row.items()}
