@@ -41,6 +41,9 @@ pip install -e .[dev]
 from realloc import Account, PortfolioModel, PortfolioAllocator
 
 ### Define accounts
+
+Accounts must always have a label, account number, Cash balance, and positions
+
 accounts = [
     Account("IRA", "A1", 1000, {"AAPL": 5}, {}),
     Account("Taxable", "A2", 2000, {"GOOG": 3}, {})
@@ -68,7 +71,7 @@ Call these in this order to get a list of portfolio level trades. Yeah, we could
 
 Instantiate a new `PortfolioStateManager`.
 
-Now you're ready to try to rebalance. For this quick start we have a basic but tested built-in rebalancer. It's in pluggable but you can import directly.
+Now you're ready to try to rebalance. For this quick start we have a basic but tested built-in rebalancer. It's in plugins but you can import directly.
 
 ```
 from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer

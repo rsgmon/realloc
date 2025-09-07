@@ -3,7 +3,6 @@ from hypothesis import given, strategies as st
 from realloc import (
     Account,
     PortfolioModel,
-    PortfolioAllocator,
     PortfolioStateManager,
     select_account_for_buy_trade, Trade,
 )

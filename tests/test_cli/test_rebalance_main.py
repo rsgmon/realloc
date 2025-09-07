@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 from realloc import Trade
-from realloc.cli.rebalance_main import is_trade_remaining, main
+from realloc.cli.rebalance_json_input import is_trade_remaining, main
 from realloc.plugins.core.base import Exporter
 
 
@@ -113,7 +113,7 @@ def test_main_basic_execution(input_file, mock_dependencies, caplog):
         "A2": Mock(account_number="A2", positions={"GOOG": 3})
     }
 
-    with patch('sys.argv', ['rebalance_main.py', str(input_file)]):
+    with patch('sys.argv', ['rebalance_json_input.py', str(input_file)]):
         main()
 
     # Check for expected log messages
@@ -132,7 +132,7 @@ def test_main_max_iterations(input_file, mock_dependencies, caplog):
     # Configure matrix mock to always have remaining trades
     mock_dependencies['matrix'].return_value.portfolio_trades = {"AAPL": 10.0}
 
-    with patch('sys.argv', ['rebalance_main.py', str(input_file), '--iterations', '1']):
+    with patch('sys.argv', ['rebalance_json_input.py', str(input_file), '--iterations', '1']):
         main()
 
     log_output = "\n".join(record.message for record in caplog.records)
@@ -141,7 +141,7 @@ def test_main_max_iterations(input_file, mock_dependencies, caplog):
 
 def test_main_invalid_input_file():
     with pytest.raises(FileNotFoundError):
-        with patch('sys.argv', ['rebalance_main.py', 'nonexistent.json']):
+        with patch('sys.argv', ['rebalance_json_input.py', 'nonexistent.json']):
             main()
 
 
@@ -222,5 +222,5 @@ def test_main_invalid_input_data(tmp_path: Path, bad_data: dict, expected_error:
         json.dump(bad_data, f)
 
     with pytest.raises(ValueError, match=expected_error):
-        with patch('sys.argv', ['rebalance_main.py', str(input_file)]):
+        with patch('sys.argv', ['rebalance_json_input.py', str(input_file)]):
             main()

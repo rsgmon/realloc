@@ -31,13 +31,23 @@ dev = [
 ]
 
 [project.scripts]
-rebalance-cli = "realloc.cli.rebalance_main:main"
+rebalance-cli-json = "realloc.cli.rebalance_json_input:main"
+rebalance-cli-csv = "realloc.cli.rebalance_csv_input:main"
 partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
 list-plugins = "realloc.plugins.core.discovery:list_plugins"
 
 [project.entry-points."realloc.plugins"]
 # Exporter plugins
 csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+
+# Account Importer Plugins
+csv_account = "realloc.plugins.importers.account.acount_csv:CSVAccountImporter"
+
+#Prices Importer Plugins
+price_csv = "realloc.plugins.importers.prices.prices_csv:PriceCSVImporter"
+
+#Allocation Importer Plugins
+allocation_csv = "realloc.plugins.importers.allocation.allocation_csv_importer:AllocationCSVImporter"
 
 # Validator plugins
 max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
