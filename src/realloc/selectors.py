@@ -24,12 +24,12 @@ def select_account_for_buy_trade(
         a
         for a in accounts
         if symbol in a.positions
-        and int(cash_matrix[a.account_number] // price) >= trade_amount
+           and int(cash_matrix[a.account_number] // price) >= trade_amount
     ]
     if holder_full:
-        return holder_full[
-            0
-        ].account_number  # highest position not required — any is fine
+        # Sort by position size to concentrate positions
+        holder_full.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
+        return holder_full[0].account_number
 
     # Step 2: Holder who can partially fulfill
     holder_partials = [
@@ -71,10 +71,9 @@ def select_account_for_sell_trade(
     Select the most appropriate account for a given sell trade.
 
     Priority:
-    1. Accounts that already hold the symbol.
-    2. Among them, the one with the largest position.
-    3. Return the first one that can fulfill the full sell.
-    4. If none can do it fully, choose the one that can do the largest partial.
+    1. Accounts where the position will be fully liquidated (position <= trade_amount)
+    2. Accounts that can fulfill the full sell with remaining position
+    3. Account with the largest position if no complete fills are possible
     """
     candidates = [
         a for a in accounts if symbol in a.positions and a.positions[symbol] > 0
@@ -82,12 +81,26 @@ def select_account_for_sell_trade(
     if not candidates:
         return None
 
-    candidates.sort(key=lambda a: a.positions.get(symbol, 0), reverse=True)
-    for account in candidates:
-        if account.positions[symbol] >= trade_amount:
-            return account.account_number
+    # First priority: accounts where position will be fully liquidated
+    full_liquidations = [
+        account for account in candidates
+        if account.positions[symbol] <= trade_amount
+    ]
+    if full_liquidations:
+        # Among full liquidations, prefer the largest position
+        full_liquidations.sort(key=lambda a: a.positions[symbol], reverse=True)
+        return full_liquidations[0].account_number
 
-    # Fallback to the one with the largest position
+    # Second priority: accounts that can fulfill the full sell
+    full_sellers = [
+        account for account in candidates
+        if account.positions[symbol] >= trade_amount
+    ]
+    if full_sellers:
+        return full_sellers[0].account_number
+
+    # Fallback: account with largest position
+    candidates.sort(key=lambda a: a.positions[symbol], reverse=True)
     return candidates[0].account_number if candidates else None
 
 

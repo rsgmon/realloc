@@ -71,7 +71,7 @@ Call these in this order to get a list of portfolio level trades. Yeah, we could
 
 Instantiate a new `PortfolioStateManager`.
 
-Now you're ready to try to rebalance. For this quick start we have a basic but tested built-in rebalancer. It's in pluggable but you can import directly.
+Now you're ready to try to rebalance. For this quick start we have a basic but tested built-in rebalancer. It's in plugins but you can import directly.
 
 ```
 from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer
