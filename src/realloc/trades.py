@@ -37,17 +37,28 @@ class TradeInfo:
     account_balance: Optional[float] = None
 
 
-
 def compute_portfolio_trades(
-    current_shares: Dict[str, float],
-    target_shares: Dict[str, float],
-    prices: Optional[Dict[str, float]] = None,
+        current_shares: Dict[str, float],
+        target_shares: Dict[str, float],
+        prices: Optional[Dict[str, float]] = None,
+        min_trade_quantity: float = 0
 ) -> Dict[str, int]:
+    """Compute required trades with minimum quantity filter"""
     current_shares, target_shares = normalize_symbol_sets(current_shares, target_shares)
-    return {
+    trades = {
         symbol: int(math.floor(target_shares[symbol] - current_shares[symbol]))
         for symbol in current_shares
     }
+
+    # Filter out trades below minimum quantity
+    if min_trade_quantity > 0:
+        trades = {
+            symbol: qty
+            for symbol, qty in trades.items()
+            if abs(qty) >= min_trade_quantity
+        }
+
+    return trades
 
 
 def split_trades(

@@ -11,7 +11,7 @@ from realloc import (
 
 logger = logging.getLogger(__name__)
 
-MIN_TRADE_QTY = 0.1
+MIN_TRADE_QTY = 1
 
 class DefaultRebalancer(RebalancerPlugin):
     """Default implementation of the rebalancer plugin"""
@@ -37,9 +37,6 @@ class DefaultRebalancer(RebalancerPlugin):
             )
 
             for symbol, qty in sorted_trades:
-                if abs(qty) < MIN_TRADE_QTY:
-                    continue
-
                 direction = "buy" if qty > 0 else "sell"
                 qty_remaining = abs(qty)
 

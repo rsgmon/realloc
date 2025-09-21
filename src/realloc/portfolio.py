@@ -6,17 +6,20 @@ from realloc.models import PortfolioModel
 from .trades import compute_portfolio_trades, TradeInfo, Trade
 
 
+
 class PortfolioStateManager:
     def __init__(
         self,
         accounts: List[Account],
         prices: Dict[str, float],
         portfolio_trades: Optional[Dict[str, int]] = None,
+        min_trade_quantity: float = 0,
     ):
         self.accounts = {a.account_number: a for a in accounts}
         if any(price <= 0 for price in prices.values()):
             raise ValueError("All prices must be positive")
         self.prices = prices.copy()
+        self.min_trade_quantity = min_trade_quantity
         self.portfolio_trades = portfolio_trades.copy() if portfolio_trades else {}
         self.cash_matrix: Dict[str, float] = {
             a.account_number: a.cash for a in accounts
@@ -116,12 +119,18 @@ class PortfolioStateManager:
             for acc in self.accounts.values()
         ]
 
-    def update_portfolio_trades(self, target_shares: Dict[str, float]):
+    def update_portfolio_trades(self, target_shares: Dict[str, float]) -> None:
+        """Update portfolio trades using current positions and target shares"""
         combined_current = {}
         for account in self.accounts.values():
             for sym, qty in account.positions.items():
                 combined_current[sym] = combined_current.get(sym, 0.0) + qty
-        self.portfolio_trades = compute_portfolio_trades(combined_current, target_shares)
+
+        self.portfolio_trades = compute_portfolio_trades(
+            combined_current,
+            target_shares,
+            min_trade_quantity=self.min_trade_quantity
+        )
 
     def validate_trade(self, account_id: str, symbol: str, quantity: float) -> tuple[bool, str]:
         account = self.accounts[account_id]
