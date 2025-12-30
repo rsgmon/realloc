@@ -74,7 +74,7 @@ def verify_scenario(scenario, rebalancer):
 
     # Execute rebalance
     actual_trades = rebalancer.execute_rebalance(
-        tam=tam,
+        portfolio_state=tam,
         target_shares=target_shares,
         max_iterations=10
     )

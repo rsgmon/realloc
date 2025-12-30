@@ -14,6 +14,7 @@ from realloc import (
 )
 from realloc.plugins.core.discovery import list_plugins
 from realloc.plugins.core.base import Exporter
+from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer
 from realloc.portfolio import calculate_portfolio_positions, calculate_target_shares, compute_portfolio_trades
 from realloc.selectors import select_account_for_buy_trade, select_account_for_sell_trade
 
@@ -180,6 +181,7 @@ def main():
     prices = data["prices"]
     accounts = [Account(**acc) for acc in data["accounts"]]
     model = PortfolioModel(data["model"]["label"], data["model"]["targets"])
+    rebalancer = DefaultRebalancer()
 
     # Log initial state
     logger.info("=== Initial Account States ===")
@@ -201,7 +203,7 @@ def main():
 
     # Execute rebalance
     tam = PortfolioStateManager(accounts, prices, portfolio_level_trades)
-    account_trades = execute_rebalance(tam, target_shares, args.iterations)
+    account_trades = rebalancer.execute_rebalance(portfolio_state=tam, target_shares=target_shares)
 
     # Log final state
     logger.info("\n=== Final Account States ===")

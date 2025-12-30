@@ -21,20 +21,20 @@ class DefaultRebalancer(RebalancerPlugin):
         return "default"
 
     def execute_rebalance(
-        self,
-        tam: PortfolioStateManager,
-        target_shares: Dict[str, float],
-        max_iterations: int
+            self,
+            portfolio_state: PortfolioStateManager,
+            target_shares: Dict[str, float],
+            max_iterations: int
     ) -> List[Trade]:
         iteration = 0
         account_trades = []
 
-        while is_trade_remaining(tam.portfolio_trades) and iteration < max_iterations:
-
+        while is_trade_remaining(portfolio_state.portfolio_trades) and iteration < max_iterations:
             sorted_trades = sorted(
-                tam.portfolio_trades.items(),
+                portfolio_state.portfolio_trades.items(),
                 key=lambda item: (item[1] > 0, abs(item[1]))
             )
+            made_trade = False
 
             for symbol, qty in sorted_trades:
                 direction = "buy" if qty > 0 else "sell"
@@ -44,29 +44,29 @@ class DefaultRebalancer(RebalancerPlugin):
                     select_account_for_buy_trade(
                         symbol,
                         qty_remaining,
-                        list(tam.accounts.values()),
-                        tam.prices,
-                        tam.cash_matrix,
+                        list(portfolio_state.accounts.values()),
+                        portfolio_state.prices,
+                        portfolio_state.cash_matrix,
                     )
                     if direction == "buy"
                     else select_account_for_sell_trade(
-                        symbol, qty_remaining, list(tam.accounts.values())
+                        symbol, qty_remaining, list(portfolio_state.accounts.values())
                     )
                 )
 
                 if account_id is None:
                     logger.warning(f"Cannot find account to {direction} {qty_remaining} {symbol}")
-                    break
+                    continue
 
-                account = tam.accounts[account_id]
+                account = portfolio_state.accounts[account_id]
                 if direction == "buy":
-                    max_affordable = int(tam.cash_matrix[account_id] // tam.prices[symbol])
+                    max_affordable = int(portfolio_state.cash_matrix[account_id] // portfolio_state.prices[symbol])
                     qty_to_trade = min(qty_remaining, max_affordable)
                 else:
                     qty_to_trade = min(qty_remaining, int(account.positions.get(symbol, 0)))
 
                 if qty_to_trade == 0:
-                    break
+                    continue
 
                 trade_qty = qty_to_trade if direction == "buy" else -qty_to_trade
                 single_trade = Trade(account_id, symbol, trade_qty)
@@ -76,8 +76,12 @@ class DefaultRebalancer(RebalancerPlugin):
                     f"Executing {direction} of {qty_to_trade} {symbol} in account {account_id}"
                 )
 
-                tam.update([single_trade])
-                tam.update_portfolio_trades(target_shares)
+                portfolio_state.update([single_trade])
+                portfolio_state.update_portfolio_trades(target_shares)
+                made_trade = True
+
+            if not made_trade:
+                # If we couldn't make any trades in this iteration, break to avoid infinite loop
                 break
 
             iteration += 1

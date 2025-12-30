@@ -86,7 +86,7 @@ def process_rebalance(
     )
 
     return rebalancer.execute_rebalance(
-        tam=psm,
+        portfolio_state=psm,
         target_shares=target_shares,
         max_iterations=max_iterations
     )
