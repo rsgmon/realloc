@@ -119,8 +119,21 @@ class PortfolioStateManager:
             for acc in self.accounts.values()
         ]
 
-    def update_portfolio_trades(self, target_shares: Dict[str, float]) -> None:
-        """Update portfolio trades using current positions and target shares"""
+    def cleanup_zero_trades(self) -> None:
+        """Remove any trades with zero quantity from portfolio trades."""
+        self.portfolio_trades = {
+            symbol: qty for symbol, qty in self.portfolio_trades.items()
+            if abs(qty) > 0
+        }
+
+    def update_portfolio_trades(self, target_shares: Dict[str, float], cleanup_zeros: bool = True) -> None:
+        """
+        Update portfolio trades using current positions and target shares.
+
+        Args:
+            target_shares: Dictionary mapping symbols to their target shares
+            cleanup_zeros: If True (default), removes trades with zero quantity
+        """
         combined_current = {}
         for account in self.accounts.values():
             for sym, qty in account.positions.items():
@@ -131,6 +144,9 @@ class PortfolioStateManager:
             target_shares,
             min_trade_quantity=self.min_trade_quantity
         )
+
+        if cleanup_zeros:
+            self.cleanup_zero_trades()
 
     def validate_trade(self, account_id: str, symbol: str, quantity: float) -> tuple[bool, str]:
         account = self.accounts[account_id]
