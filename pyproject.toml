@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "realloc"
-version = "0.1.5.1"
+version = "0.1.5.2"
 description = "A modular Python library for multi-account portfolio trade allocation"
 authors = [
     { name = "Ryeland Gongora", email = "rsgmon@gmail.com" }
