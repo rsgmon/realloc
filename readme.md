@@ -166,10 +166,20 @@ from realloc.plugins.core.base import TradeValidator
 validator = TradeValidator.load_validator("minimum_value", min_value=100) is_valid, message = validator.validate(trade)
 ``` 
 
+## Command Line Tools
+
+After installing realloc, the following CLI commands are available:
+
+- `rebalance-cli-json`: Rebalance portfolio using JSON input format
+- `rebalance-cli-csv`: Rebalance portfolio using CSV input format
+- `partial-rebalance-cli`: Perform partial portfolio rebalancing
+- `list-plugins`: Display all available plugins in the system
+
+
 ### Using Plugins with CLI
 The `rebalance-cli` supports plugins through command-line arguments:
 ```
-bash
+#bash
 # List available plugins
 list-plugins
 # Use an exporter plugin

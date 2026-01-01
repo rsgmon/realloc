@@ -203,7 +203,7 @@ def main():
 
     # Execute rebalance
     tam = PortfolioStateManager(accounts, prices, portfolio_level_trades)
-    account_trades = rebalancer.execute_rebalance(portfolio_state=tam, target_shares=target_shares)
+    account_trades = rebalancer.execute_rebalance(portfolio_state=tam, target_shares=target_shares, max_iterations=args.iterations)
 
     # Log final state
     logger.info("\n=== Final Account States ===")
