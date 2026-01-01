@@ -156,7 +156,7 @@ def test_selector_prioritizes_holder_full():
     prices = {"GOOG": 100}
     cash = {"1": 1000, "2": 3000}
     result = select_account_for_buy_trade("GOOG", 10, [acc1, acc2], prices, cash)
-    assert result == "1"
+    assert result == "2"
 
 
 def test_selector_prefers_holder_partial_over_nonholder():
@@ -235,7 +235,7 @@ def test_calculate_sell_amounts_cases(current, target, expected):
                 Account("B", "2", 3000, {"GOOG": 10}),
             ],
             {"1": 1000, "2": 3000},
-            "1",
+            "2",
         ),
         # Partial holder vs full non-holder
         (

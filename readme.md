@@ -38,46 +38,55 @@ pip install -e .[dev]
 
 ## Quick Start 
 
+```
 from realloc import Account, PortfolioModel, PortfolioAllocator
+```
 
 ### Define accounts
 
 Accounts must always have a label, account number, Cash balance, and positions
 
+```
 accounts = [
     Account("IRA", "A1", 1000, {"AAPL": 5}, {}),
     Account("Taxable", "A2", 2000, {"GOOG": 3}, {})
 ]
+```
 
-### Define target model
+### Define a portfolio level target model
+```
 model = PortfolioModel("Balanced", {"AAPL": 0.5, "GOOG": 0.5})
-
+```
 ### Define prices
+```
 prices = {"AAPL": 100, "GOOG": 200}
-
-Ok now what? You've got everything you need to do a basic trade, but how? This is where we try to allow the user to take control. Don't get us wrong! We've built ready-made objects to do the work and they do. 
-
-However, if you professionally rebalanced portfolios, you'll know there's an art to it and there's not always one answer. We're just saying we recognize that. But, that topic is for another day.
-
-So back to basic rebalancing. Essentially, it's iterative (trial and error). We loop through accounts and positions checking cash, checking targets vs. actual until we arrive at a set of trades.
+```
 
 The next step is to calculate portfolio level trades. For that we've provided three functions:
 
-`calculate_portfolio_positions`,`calculate_target_shares`, `compute_portfolio_trades`
+```
+from realloc.portfolio import calculate_portfolio_positions, calculate_target_shares
+from realloc.trades import compute_portfolio_trades
 
-Call these in this order to get a list of portfolio level trades. Yeah, we could have a wrapper, maybe we'll make one, maybe not.
+portfolio_positions = calculate_portfolio_positions(accounts)
+target_shares = calculate_target_shares(portfolio_positions[0], portfolio_positions[1], prices, model)
+portfolio_trade = compute_portfolio_trades(portfolio_positions[0], target_shares)
+```
 
 `PortfolioStateManager`, while not required will help you manage the state of everything while calculating trades. You can roll your own but why?
 
-Instantiate a new `PortfolioStateManager`.
+```
+from realloc.portfolio import PortfolioStateManager
+portfolio_state = PortfolioStateManager(accounts, prices, portfolio_trade)
+```
 
 Now you're ready to try to rebalance. For this quick start we have a basic but tested built-in rebalancer. It's in plugins but you can import directly.
 
 ```
 from realloc.plugins.rebalancers.default_rebalancer import DefaultRebalancer
 
-rebalancer = DefaultRebalancer(...)
-rebalancer.execute_rebalance
+rebalancer = DefaultRebalancer()
+rebalancer.execute_rebalance(portfolio_state, target_shares, 10)
 ```
 
 BOOM! Trades. They're not tax-aware, and no constraints like "Don't buy stock DVL" are in place. But that's actually more common than you'd think. So if you're not concerned about taxes or constraints, you'll probably be ok.
@@ -113,6 +122,12 @@ Example:
     "targets": { "AAPL": 0.6, "GOOG": 0.4 }
   }
 }
+
+Ok now what? This is where we try to allow you to take control. Do not get us wrong! We have built ready-made objects to do the work. 
+
+However, if you professionally rebalanced portfolios, you will know there is an art to it and there is not always one answer. But, that topic is for another day.
+
+The api is meant to allow you to do everything from just running our premade scripts to interacting with low level details functions and classes.
 ```
 
 # Several Plugin Types are available
@@ -151,10 +166,20 @@ from realloc.plugins.core.base import TradeValidator
 validator = TradeValidator.load_validator("minimum_value", min_value=100) is_valid, message = validator.validate(trade)
 ``` 
 
+## Command Line Tools
+
+After installing realloc, the following CLI commands are available:
+
+- `rebalance-cli-json`: Rebalance portfolio using JSON input format
+- `rebalance-cli-csv`: Rebalance portfolio using CSV input format
+- `partial-rebalance-cli`: Perform partial portfolio rebalancing
+- `list-plugins`: Display all available plugins in the system
+
+
 ### Using Plugins with CLI
 The `rebalance-cli` supports plugins through command-line arguments:
 ```
-bash
+#bash
 # List available plugins
 list-plugins
 # Use an exporter plugin
